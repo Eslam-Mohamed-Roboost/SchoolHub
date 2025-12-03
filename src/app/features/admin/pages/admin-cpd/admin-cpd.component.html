@@ -1,0 +1,209 @@
+<div class="cpd-dashboard">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">CPD Dashboard Report</h1>
+      <p class="page-subtitle">Teacher Professional Development Summary</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="exportToExcel()">
+        📊 Export to Excel
+      </button>
+      <button class="btn btn-secondary" (click)="exportToPDF()">
+        📄 Export to PDF
+      </button>
+      <button class="btn btn-primary" (click)="emailToTeachers()">
+        📧 Email to Teachers
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stats-section">
+    <div class="stat-card">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Teachers</div>
+        <div class="stat-value">{{ cpdStats().totalTeachers }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-label">Active Teachers</div>
+        <div class="stat-value">{{ cpdStats().activeTeachers }}</div>
+        <div class="stat-sublabel">{{ ((cpdStats().activeTeachers / cpdStats().totalTeachers) * 100).toFixed(0) }}% participation</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📚</div>
+      <div class="stat-content">
+        <div class="stat-label">Total CPD Hours</div>
+        <div class="stat-value">{{ cpdStats().totalCPDHours }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-label">Average Hours</div>
+        <div class="stat-value">{{ cpdStats().averageHoursPerTeacher }}</div>
+        <div class="stat-sublabel">per teacher</div>
+      </div>
+    </div>
+
+    <div class="stat-card highlight">
+      <div class="stat-icon">🏆</div>
+      <div class="stat-content">
+        <div class="stat-label">Top Performer</div>
+        <div class="stat-value-sm">{{ cpdStats().topPerformer }}</div>
+        <div class="stat-sublabel">{{ cpdStats().topPerformerHours }} CPD hours</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Section -->
+  <div class="charts-section">
+    <!-- CPD Hours by Month -->
+    <div class="chart-card">
+      <h3 class="chart-title">CPD Hours by Month</h3>
+      <p class="chart-subtitle">Last 12 months</p>
+      <div class="bar-chart">
+        @for (item of cpdByMonth(); track item.month) {
+          <div class="bar-item">
+            <div class="bar-container">
+              <div class="bar" [style.height.%]="getBarWidth(item.hours, getMaxChartValue(cpdByMonth()))">
+                <span class="bar-value">{{ item.hours }}</span>
+              </div>
+            </div>
+            <div class="bar-label">{{ item.month }}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Badges by Category -->
+    <div class="chart-card">
+      <h3 class="chart-title">Badges by Category</h3>
+      <p class="chart-subtitle">Distribution of earned badges</p>
+      <div class="horizontal-bars">
+        @for (cat of badgesByCategory().slice(0, 6); track cat.category) {
+          <div class="h-bar-item">
+            <div class="h-bar-label">{{ cat.category }}</div>
+            <div class="h-bar-container">
+              <div class="h-bar" [style.width.%]="getBarWidth(cat.count, badgesByCategory()[0].count)">
+                {{ cat.count }}
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Teacher Participation -->
+    <div class="chart-card">
+      <h3 class="chart-title">Teacher Participation</h3>
+      <p class="chart-subtitle">Active vs Inactive</p>
+      <div class="pie-chart-container">
+        <div class="pie-stats">
+          <div class="pie-stat">
+            <div class="pie-stat-color active"></div>
+            <div>
+              <div class="pie-stat-label">Active</div>
+              <div class="pie-stat-value">{{ teacherParticipation().active }}</div>
+            </div>
+          </div>
+          <div class="pie-stat">
+            <div class="pie-stat-color inactive"></div>
+            <div>
+              <div class="pie-stat-label">Inactive</div>
+              <div class="pie-stat-value">{{ teacherParticipation().inactive }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="pie-visual">
+          <div class="pie-segment active" 
+               [style.--percentage]="(teacherParticipation().active / (teacherParticipation().active + teacherParticipation().inactive)) * 100">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teacher Details Table -->
+  <div class="table-section">
+    <h2 class="section-title">Teacher Details</h2>
+    
+    <div class="table-container">
+      <table class="cpd-table">
+        <thead>
+          <tr>
+            <th (click)="sortBy('name')" class="sortable">
+              Teacher Name
+              @if (sortColumn() === 'name') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+              }
+            </th>
+            <th>Email</th>
+            <th (click)="sortBy('badgeCount')" class="sortable">
+              Badge Count
+              @if (sortColumn() === 'badgeCount') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+              }
+            </th>
+            <th (click)="sortBy('cpdHours')" class="sortable">
+              CPD Hours
+              @if (sortColumn() === 'cpdHours') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+              }
+            </th>
+            <th (click)="sortBy('lastBadgeDate')" class="sortable">
+              Last Badge
+              @if (sortColumn() === 'lastBadgeDate') {
+                <span class="sort-icon">{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+              }
+            </th>
+            <th>Categories</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (teacher of sortedTeachers(); track teacher.id) {
+            <tr>
+              <td class="teacher-name">{{ teacher.name }}</td>
+              <td>
+                <a [href]="'mailto:' + teacher.email" class="email-link">{{ teacher.email }}</a>
+              </td>
+              <td class="center">
+                <span class="badge-count">{{ teacher.badgeCount }}</span>
+              </td>
+              <td class="center">
+                <span class="cpd-hours">{{ teacher.cpdHours }}</span>
+              </td>
+              <td>{{ formatDate(teacher.lastBadgeDate) }}</td>
+              <td>
+                <div class="categories">
+                  @for (cat of teacher.categories.slice(0, 2); track cat) {
+                    <span class="category-tag">{{ cat }}</span>
+                  }
+                  @if (teacher.categories.length > 2) {
+                    <span class="category-more">+{{ teacher.categories.length - 2 }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <button class="btn-icon" title="View Details">👁️</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="no-data">No teacher data available</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

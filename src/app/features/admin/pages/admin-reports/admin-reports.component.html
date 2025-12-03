@@ -1,0 +1,167 @@
+<div class="reports-page">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Reports</h1>
+      <p class="page-subtitle">Generate and export comprehensive system reports</p>
+    </div>
+  </div>
+
+  <div class="reports-layout">
+    <!-- Report Selection -->
+    <div class="reports-grid">
+      <h2 class="section-title">Select Report Type</h2>
+      <div class="report-cards">
+        @for (report of reports; track report.id) {
+          <div 
+            class="report-card"
+            [class.selected]="selectedReport() === report.id"
+            (click)="selectReport(report.id)">
+            <div class="report-icon">{{ report.icon }}</div>
+            <h3 class="report-name">{{ report.name }}</h3>
+            <p class="report-description">{{ report.description }}</p>
+            @if (selectedReport() === report.id) {
+              <div class="selected-indicator">✓ Selected</div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Parameters & Preview -->
+    @if (selectedReport()) {
+      <div class="report-config">
+        <!-- Parameters -->
+        <div class="parameters-section">
+          <h2 class="section-title">Report Parameters</h2>
+          
+          <div class="parameter-group">
+            <label class="parameter-label">Date Range</label>
+            <div class="date-inputs">
+              <div class="date-field">
+                <label for="dateFrom">From</label>
+                <input 
+                  type="date"
+                  id="dateFrom"
+                  [value]="formatDate(parameters().dateFrom)"
+                  (change)="onDateChange('dateFrom', $any($event.target).value)"
+                  class="date-input" />
+              </div>
+              <div class="date-field">
+                <label for="dateTo">To</label>
+                <input 
+                  type="date"
+                  id="dateTo"
+                  [value]="formatDate(parameters().dateTo)"
+                  (change)="onDateChange('dateTo', $any($event.target).value)"
+                  class="date-input" />
+              </div>
+            </div>
+          </div>
+
+          <div class="parameter-group">
+            <label class="parameter-label">User Type</label>
+            <div class="user-type-buttons">
+              @for (type of userTypes; track type) {
+                <button 
+                  class="type-btn"
+                  [class.active]="parameters().userType === type"
+                  (click)="updateParameter('userType', type)">
+                  {{ type }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="parameter-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox"
+                [checked]="parameters().includeCharts"
+                (change)="updateParameter('includeCharts', $any($event.target).checked)" />
+              <span>Include Charts and Visualizations</span>
+            </label>
+          </div>
+
+          <div class="action-buttons">
+            <button class="btn btn-primary btn-large" (click)="generateReport()">
+              <span class="icon">🔍</span>
+              Generate Report
+            </button>
+            <button class="btn btn-secondary" (click)="clearSelection()">
+              Clear Selection
+            </button>
+          </div>
+        </div>
+
+        <!-- Report Preview/Actions -->
+        <div class="preview-section">
+          <h2 class="section-title">Report Actions</h2>
+          
+          <div class="report-info">
+            <div class="info-icon">{{ getSelectedReportInfo()?.icon }}</div>
+            <div>
+              <h3 class="info-name">{{ getSelectedReportInfo()?.name }}</h3>
+              <p class="info-description">{{ getSelectedReportInfo()?.description }}</p>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <h3 class="subsection-title">Quick Actions</h3>
+            
+            @if (getSelectedReportInfo()?.route) {
+              <a [routerLink]="getSelectedReportInfo()?.route" class="action-card">
+                <span class="action-icon">👁️</span>
+                <div>
+                  <div class="action-name">View Live Dashboard</div>
+                  <div class="action-desc">Open interactive report</div>
+                </div>
+              </a>
+            }
+
+            <button class="action-card" (click)="exportReport('excel')">
+              <span class="action-icon">📊</span>
+              <div>
+                <div class="action-name">Export to Excel</div>
+                <div class="action-desc">Download as spreadsheet</div>
+              </div>
+            </button>
+
+            <button class="action-card" (click)="exportReport('pdf')">
+              <span class="action-icon">📄</span>
+              <div>
+                <div class="action-name">Export to PDF</div>
+                <div class="action-desc">Download formatted PDF</div>
+              </div>
+            </button>
+
+            <button class="action-card" (click)="scheduleReport()">
+              <span class="action-icon">⏰</span>
+              <div>
+                <div class="action-name">Schedule Report</div>
+                <div class="action-desc">Set up automatic generation</div>
+              </div>
+            </button>
+          </div>
+
+          <div class="tips-section">
+            <h4>💡 Tips</h4>
+            <ul>
+              <li>Use date range to filter historical data</li>
+              <li>Select specific user types for focused insights</li>
+              <li>Include charts for visual presentations</li>
+              <li>Export to Excel for data analysis</li>
+              <li>Schedule reports for regular updates</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    } @else {
+      <div class="no-selection">
+        <div class="no-selection-icon">📊</div>
+        <h3>No Report Selected</h3>
+        <p>Please select a report type from the options above to continue</p>
+      </div>
+    }
+  </div>
+</div>
