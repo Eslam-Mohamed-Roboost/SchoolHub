@@ -1,9 +1,7 @@
 import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
 import { UserService } from '../../services/user.service';
 import { BadgeService } from '../../services/badge.service';
-import { User } from '../../models/admin.models';
 
 interface TeacherCPD {
   id: string;
@@ -26,7 +24,7 @@ interface CPDStats {
 
 @Component({
   selector: 'app-admin-cpd',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './admin-cpd.component.html',
   styleUrl: './admin-cpd.component.css',
 })

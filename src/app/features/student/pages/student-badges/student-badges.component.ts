@@ -3,106 +3,459 @@ import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-student-badges',
-  standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="student-badges container mx-auto px-4 py-8">
-      <h2 class="fw-bold mb-4 text-center text-3xl font-extrabold text-slate-800 mb-8">
-        🏆 Hall of Fame
-      </h2>
+    <div class="page-container">
+      <header class="page-header">
+        <div class="header-icon">🏆</div>
+        <div class="header-content">
+          <h1>My Badge Collection</h1>
+          <p>Show off what you've earned!</p>
+        </div>
+      </header>
 
-      <div class="row g-4 mb-5 grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-        <!-- Earned Badge -->
-        <div class="col-md-3">
-          <div
-            class="text-center p-4 bg-white rounded-4 shadow-sm border border-warning bg-white rounded-2xl shadow-sm border border-yellow-400 p-6 flex flex-col items-center"
-          >
-            <i
-              class="fas fa-shield-alt text-warning text-yellow-500 mb-4"
-              style="font-size: 4rem;"
-            ></i>
-            <h5 class="fw-bold mt-3 text-lg font-bold text-slate-800">Digital Defender</h5>
-            <span
-              class="badge bg-success mt-2 bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold"
-              >EARNED</span
-            >
+      <!-- Stats Summary -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🎖️</div>
+          <div class="stat-info">
+            <div class="stat-value">4</div>
+            <div class="stat-label">Badges Earned</div>
+            <div class="stat-sub">4 more to go!</div>
           </div>
         </div>
-        <!-- Locked Badge -->
-        <div class="col-md-3">
-          <div
-            class="text-center p-4 bg-light rounded-4 border opacity-75 bg-gray-50 rounded-2xl border border-gray-200 p-6 flex flex-col items-center opacity-75"
-          >
-            <i class="fas fa-lock text-secondary text-gray-400 mb-4" style="font-size: 4rem;"></i>
-            <h5 class="fw-bold mt-3 text-muted text-lg font-bold text-gray-500">Cyber Scout</h5>
-            <span
-              class="badge bg-secondary mt-2 bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-xs font-bold"
-              >LOCKED</span
-            >
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-info">
+            <div class="stat-value">Digital Scout</div>
+            <div class="stat-label">Current Level</div>
+            <div class="stat-sub">1 more to level up!</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🌟</div>
+          <div class="stat-info">
+            <div class="stat-value">Safety Shield</div>
+            <div class="stat-label">Latest Badge</div>
+            <div class="stat-sub">Earned 2 days ago</div>
           </div>
         </div>
       </div>
 
-      <div class="card border-0 shadow-sm rounded-4 p-4 bg-white rounded-2xl shadow-sm p-6">
-        <h4 class="fw-bold mb-4 text-xl font-bold text-slate-800 mb-6">📊 Class Leaderboard</h4>
-        <div class="table-responsive overflow-x-auto">
-          <table class="table table-hover align-middle w-full text-left border-collapse">
-            <thead class="table-light bg-gray-50 text-gray-600 uppercase text-xs font-semibold">
-              <tr>
-                <th class="p-4 rounded-tl-lg">Rank</th>
-                <th class="p-4">Student</th>
-                <th class="p-4">Badges</th>
-                <th class="p-4 rounded-tr-lg">XP</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              <tr class="table-warning bg-yellow-50 hover:bg-yellow-100 transition-colors">
-                <td class="fw-bold p-4 font-bold text-yellow-700">#1 🥇</td>
-                <td class="p-4 flex items-center gap-3">
-                  <img
-                    src="https://ui-avatars.com/api/?name=Ali&background=random"
-                    class="rounded-circle me-2 w-8 h-8 rounded-full"
-                    width="30"
-                  />
-                  <span class="font-medium text-slate-800">Ali Ahmed</span>
-                </td>
-                <td class="p-4 text-slate-600">15</td>
-                <td class="fw-bold p-4 font-bold text-slate-800">2,400</td>
-              </tr>
-              <tr class="hover:bg-gray-50 transition-colors">
-                <td class="fw-bold p-4 font-bold text-gray-500">#2 🥈</td>
-                <td class="p-4 flex items-center gap-3">
-                  <img
-                    src="https://ui-avatars.com/api/?name=Omar&background=random"
-                    class="rounded-circle me-2 w-8 h-8 rounded-full"
-                    width="30"
-                  />
-                  <span class="font-medium text-slate-800">Omar K.</span>
-                </td>
-                <td class="p-4 text-slate-600">14</td>
-                <td class="fw-bold p-4 font-bold text-slate-800">2,150</td>
-              </tr>
-              <tr
-                class="table-light border-start border-4 border-primary bg-cyan-50 border-l-4 border-cyan-500 hover:bg-cyan-100 transition-colors"
-              >
-                <td class="fw-bold p-4 font-bold text-cyan-700">#5</td>
-                <td class="p-4 flex items-center gap-3">
-                  <img
-                    src="https://ui-avatars.com/api/?name=You&background=random"
-                    class="rounded-circle me-2 w-8 h-8 rounded-full"
-                    width="30"
-                  />
-                  <span class="font-bold text-slate-900">You</span>
-                </td>
-                <td class="p-4 text-slate-600">12</td>
-                <td class="fw-bold p-4 font-bold text-slate-800">1,250</td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- Badge Gallery -->
+      <div class="gallery-section">
+        <div class="filter-tabs">
+          <button class="tab active">All Badges (8)</button>
+          <button class="tab">Earned (4) ✨</button>
+          <button class="tab">Locked (4) 🔒</button>
+        </div>
+
+        <div class="badges-grid">
+          @for (badge of badges; track badge.id) {
+          <div class="badge-card" [class.locked]="!badge.earned">
+            <div class="badge-visual">
+              <span class="badge-emoji">{{ badge.icon }}</span>
+              @if (!badge.earned) {
+              <div class="lock-overlay">🔒</div>
+              }
+            </div>
+            <div class="badge-info">
+              <h3>{{ badge.name }}</h3>
+              <div class="badge-status">
+                @if (badge.earned) {
+                <span class="earned-tag">✅ EARNED</span>
+                <span class="earn-date">{{ badge.date }}</span>
+                } @else {
+                <span class="locked-tag">NOT EARNED</span>
+                <span class="requirement">{{ badge.requirement }}</span>
+                }
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Level Roadmap -->
+      <div class="roadmap-section">
+        <h2>Level Roadmap</h2>
+        <div class="roadmap-container">
+          <div class="level-step active">
+            <div class="step-marker">🌱</div>
+            <div class="step-info">
+              <h4>Digital Scout</h4>
+              <p>1-3 Badges</p>
+            </div>
+          </div>
+          <div class="step-connector active"></div>
+          <div class="level-step next">
+            <div class="step-marker">🔍</div>
+            <div class="step-info">
+              <h4>Digital Explorer</h4>
+              <p>4-6 Badges</p>
+            </div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="level-step">
+            <div class="step-marker">🏆</div>
+            <div class="step-info">
+              <h4>Digital Champion</h4>
+              <p>7 Badges</p>
+            </div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="level-step">
+            <div class="step-marker">⭐</div>
+            <div class="step-info">
+              <h4>Digital Leader</h4>
+              <p>8 Badges</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
   `,
-  styleUrls: ['../../student.css'],
+  styles: [
+    `
+      .page-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding-bottom: 4rem;
+      }
+      .page-header {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        margin-bottom: 2rem;
+        background: white;
+        padding: 2rem;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .header-icon {
+        font-size: 3rem;
+        background: #fff9e6;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+      }
+      h1 {
+        margin: 0 0 0.5rem 0;
+        color: #333;
+        font-size: 2rem;
+      }
+      p {
+        margin: 0;
+        color: #666;
+        font-size: 1.1rem;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 3rem;
+      }
+      .stat-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .stat-icon {
+        font-size: 2.5rem;
+        background: #e6f8fd;
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+      }
+      .stat-value {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #333;
+      }
+      .stat-label {
+        font-weight: 600;
+        color: #666;
+        font-size: 0.9rem;
+      }
+      .stat-sub {
+        font-size: 0.85rem;
+        color: #00bcf2;
+        margin-top: 0.25rem;
+      }
+
+      .gallery-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 3rem;
+      }
+      .filter-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 1rem;
+      }
+      .tab {
+        background: none;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        font-weight: 600;
+        color: #666;
+        cursor: pointer;
+        border-radius: 20px;
+        transition: all 0.2s;
+      }
+      .tab.active {
+        background: #00bcf2;
+        color: white;
+      }
+      .tab:hover:not(.active) {
+        background: #f0f0f0;
+      }
+
+      .badges-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 2rem;
+      }
+      .badge-card {
+        text-align: center;
+        padding: 1.5rem;
+        border-radius: 16px;
+        border: 2px solid #eee;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .badge-card:hover {
+        transform: translateY(-5px);
+        border-color: #00bcf2;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+      }
+      .badge-card.locked {
+        opacity: 0.7;
+        background: #f9f9f9;
+      }
+      .badge-card.locked .badge-emoji {
+        filter: grayscale(100%);
+        opacity: 0.5;
+      }
+
+      .badge-visual {
+        position: relative;
+        height: 100px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+      .badge-emoji {
+        font-size: 5rem;
+      }
+      .lock-overlay {
+        position: absolute;
+        font-size: 2rem;
+        background: rgba(255, 255, 255, 0.8);
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .badge-info h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.1rem;
+        color: #333;
+      }
+      .badge-status {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        font-size: 0.85rem;
+      }
+      .earned-tag {
+        color: #107c10;
+        font-weight: 700;
+      }
+      .earn-date {
+        color: #888;
+      }
+      .locked-tag {
+        color: #666;
+        font-weight: 700;
+      }
+      .requirement {
+        color: #888;
+        font-style: italic;
+      }
+
+      .roadmap-section {
+        background: white;
+        padding: 2rem;
+        border-radius: 24px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      }
+      .roadmap-section h2 {
+        margin-top: 0;
+        margin-bottom: 2rem;
+        text-align: center;
+      }
+      .roadmap-container {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        max-width: 800px;
+        margin: 0 auto;
+        position: relative;
+      }
+
+      .level-step {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+      }
+      .step-marker {
+        width: 60px;
+        height: 60px;
+        background: white;
+        border: 4px solid #eee;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        margin: 0 auto 1rem auto;
+        transition: all 0.3s;
+      }
+      .level-step.active .step-marker {
+        border-color: #ffb900;
+        background: #fff9e6;
+        transform: scale(1.1);
+      }
+      .level-step.next .step-marker {
+        border-color: #00bcf2;
+        border-style: dashed;
+      }
+
+      .step-info h4 {
+        margin: 0;
+        font-size: 1rem;
+        color: #333;
+      }
+      .step-info p {
+        margin: 0;
+        font-size: 0.85rem;
+        color: #888;
+      }
+
+      .step-connector {
+        flex: 1;
+        height: 4px;
+        background: #eee;
+        margin: 0 -10px;
+        position: relative;
+        top: -35px;
+        z-index: 1;
+      }
+      .step-connector.active {
+        background: #ffb900;
+      }
+
+      @media (max-width: 768px) {
+        .roadmap-container {
+          flex-direction: column;
+          gap: 2rem;
+        }
+        .step-connector {
+          width: 4px;
+          height: 50px;
+          margin: -10px 0;
+          top: 0;
+        }
+      }
+    `,
+  ],
 })
-export class StudentBadgesComponent {}
+export class StudentBadgesComponent {
+  badges = [
+    {
+      id: 1,
+      name: 'Digital Citizen',
+      icon: '🌍',
+      earned: true,
+      date: 'Oct 10, 2023',
+      requirement: '',
+    },
+    {
+      id: 2,
+      name: 'Footprint Tracker',
+      icon: '👣',
+      earned: true,
+      date: 'Oct 15, 2023',
+      requirement: '',
+    },
+    {
+      id: 3,
+      name: 'Safety Shield',
+      icon: '🛡️',
+      earned: true,
+      date: 'Oct 20, 2023',
+      requirement: '',
+    },
+    {
+      id: 4,
+      name: 'Kindness Champion',
+      icon: '🤝',
+      earned: true,
+      date: 'Oct 25, 2023',
+      requirement: '',
+    },
+    {
+      id: 5,
+      name: 'Truth Seeker',
+      icon: '🔍',
+      earned: false,
+      date: '',
+      requirement: 'Complete Mission 5',
+    },
+    {
+      id: 6,
+      name: 'Communication Pro',
+      icon: '💬',
+      earned: false,
+      date: '',
+      requirement: 'Complete Mission 6',
+    },
+    {
+      id: 7,
+      name: 'Balance Master',
+      icon: '⚖️',
+      earned: false,
+      date: '',
+      requirement: 'Complete Mission 7',
+    },
+    {
+      id: 8,
+      name: 'Digital Leader',
+      icon: '📜',
+      earned: false,
+      date: '',
+      requirement: 'Complete Mission 8',
+    },
+  ];
+}
