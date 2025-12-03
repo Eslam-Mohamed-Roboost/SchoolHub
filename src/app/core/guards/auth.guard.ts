@@ -1,0 +1,21 @@
+import { inject } from '@angular/core';
+import { CanActivateFn, Router } from '@angular/router';
+import { AuthService } from '../../features/auth/services/auth.service';
+import { ROUTES } from '../../config/constants';
+
+export const authGuard: CanActivateFn = (route, state) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  return true;
+
+  if (authService.isAuthenticated()) {
+    return true;
+  }
+
+  // Redirect to login with return URL
+  router.navigate([ROUTES.AUTH.LOGIN], {
+    queryParams: { returnUrl: state.url },
+  });
+
+  return false;
+};

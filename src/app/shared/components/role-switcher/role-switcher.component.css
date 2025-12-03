@@ -1,0 +1,77 @@
+.role-switcher-float {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: white;
+    padding: 10px;
+    border-radius: 50px;
+    box-shadow: var(--shadow-lg);
+    z-index: 9999;
+    display: flex;
+    gap: 5px;
+    border: 1px solid rgba(0,0,0,0.1);
+    animation: bounceInUp 1s;
+}
+
+.role-btn {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    opacity: 0.7;
+    background-color: #e2e8f0;
+}
+
+.role-btn:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+.role-btn.active {
+    opacity: 1;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.role-btn[data-role="teacher"] {
+    background: #e0e7ff;
+    color: var(--teacher-primary);
+}
+
+.role-btn[data-role="teacher"].active {
+    background: var(--teacher-primary);
+    color: white;
+}
+
+.role-btn[data-role="student"] {
+    background: #e0e7ff;
+    color: var(--teacher-primary);
+}
+
+.role-btn[data-role="student"].active {
+    background: var(--teacher-primary);
+    color: white;
+}
+
+.role-btn[data-role="admin"] {
+    background: #e2e8f0;
+    color: var(--admin-primary);
+}
+
+.role-btn[data-role="admin"].active {
+    background: var(--admin-primary);
+    color: white;
+}
+
+@keyframes bounceInUp {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 100%, 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}

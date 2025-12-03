@@ -1,0 +1,341 @@
+<div class="admin-users-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">User Management</h1>
+      <p class="page-subtitle">Manage all users, roles, and permissions</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="openBulkImportModal()">
+        <span class="icon">📤</span>
+        Bulk Import
+      </button>
+      <button class="btn btn-primary" (click)="openAddUserModal()">
+        <span class="icon">➕</span>
+        Add User
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="search-box">
+      <input 
+        type="text"
+        placeholder="Search by name or email..."
+        [value]="searchQuery()"
+        (input)="onSearch($any($event.target).value)"
+        class="search-input" />
+      <span class="search-icon">🔍</span>
+    </div>
+
+    <div class="filter-group">
+      <select 
+        [value]="roleFilter()"
+        (change)="onRoleFilter($any($event.target).value)"
+        class="filter-select">
+        <option value="">All Roles</option>
+        @for (role of roles; track role) {
+          <option [value]="role">{{ role }}</option>
+        }
+      </select>
+
+      <select 
+        [value]="statusFilter()"
+        (change)="onStatusFilter($any($event.target).value)"
+        class="filter-select">
+        <option value="">All Status</option>
+        @for (status of statuses; track status) {
+          <option [value]="status">{{ status }}</option>
+        }
+      </select>
+
+      <button class="btn btn-text" (click)="exportUsers()">
+        <span class="icon">📊</span>
+        Export to Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- Users Table -->
+  <div class="table-container">
+    <table class="users-table">
+      <thead>
+        <tr>
+          <th>
+            <input type="checkbox" />
+          </th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Role</th>
+          <th>Status</th>
+          <th>Last Login</th>
+          <th>Badge Count</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of paginatedUsers(); track user.id) {
+          <tr>
+            <td>
+              <input type="checkbox" />
+            </td>
+            <td>
+              <div class="user-cell">
+                <img [src]="user.avatar" [alt]="user.name" class="user-avatar" />
+                <span class="user-name">{{ user.name }}</span>
+              </div>
+            </td>
+            <td>
+              <a [href]="'mailto:' + user.email" class="email-link">{{ user.email }}</a>
+            </td>
+            <td>
+              <span class="role-badge" [class]="getRoleBadgeClass(user.role)">
+                {{ user.role }}
+              </span>
+            </td>
+            <td>
+              <span class="status-badge" [class.status-active]="user.status === 'Active'" 
+                    [class.status-inactive]="user.status === 'Inactive'">
+                {{ user.status }}
+              </span>
+            </td>
+            <td>{{ formatDate(user.lastLogin) }}</td>
+            <td>
+              <span class="badge-count">{{ user.badgeCount }}</span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon" title="View Profile">
+                  👁️
+                </button>
+                <button class="btn-icon" title="Edit User" (click)="openEditUserModal(user)">
+                  ✏️
+                </button>
+                <button class="btn-icon" title="Delete User" (click)="openDeleteConfirm(user)">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="no-data">
+              <p>No users found</p>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-section">
+    <div class="pagination-info">
+      Showing {{ (currentPage() - 1) * itemsPerPage() + 1 }} - 
+      {{ Math.min(currentPage() * itemsPerPage(), filteredUsers().length) }} 
+      of {{ filteredUsers().length }} users
+    </div>
+
+    <div class="pagination-controls">
+      <button 
+        class="pagination-btn"
+        [disabled]="currentPage() === 1"
+        (click)="goToPage(currentPage() - 1)">
+        Previous
+      </button>
+
+      @for (page of getPageNumbers(); track $index) {
+        @if (page === -1) {
+          <span class="pagination-ellipsis">...</span>
+        } @else {
+          <button 
+            class="pagination-btn"
+            [class.active]="page === currentPage()"
+            (click)="goToPage(page)">
+            {{ page }}
+          </button>
+        }
+      }
+
+      <button 
+        class="pagination-btn"
+        [disabled]="currentPage() === totalPages()"
+        (click)="goToPage(currentPage() + 1)">
+        Next
+      </button>
+    </div>
+
+    <div class="items-per-page">
+      <label>Rows per page:</label>
+      <select 
+        [value]="itemsPerPage()"
+        (change)="onItemsPerPageChange(+$any($event.target).value)">
+        @for (option of itemsPerPageOptions; track option) {
+          <option [value]="option">{{ option }}</option>
+        }
+      </select>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit User Modal -->
+@if (showAddUserModal() || showEditUserModal()) {
+  <div class="modal-overlay" (click)="closeUserModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ showEditUserModal() ? 'Edit User' : 'Add New User' }}</h2>
+        <button class="modal-close" (click)="closeUserModal()">✕</button>
+      </div>
+
+      <form [formGroup]="userForm" (ngSubmit)="saveUser()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="name">Name *</label>
+            <input 
+              type="text"
+              id="name"
+              formControlName="name"
+              class="form-input"
+              placeholder="Enter full name" />
+            @if (userForm.get('name')?.invalid && userForm.get('name')?.touched) {
+              <span class="error-text">Name is required</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input 
+              type="email"
+              id="email"
+              formControlName="email"
+              class="form-input"
+              placeholder="user@school.ae" />
+            @if (userForm.get('email')?.invalid && userForm.get('email')?.touched) {
+              <span class="error-text">Valid email is required</span>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="role">Role *</label>
+              <select id="role" formControlName="role" class="form-select">
+                <option value="">Select role</option>
+                @for (role of roles; track role) {
+                  <option [value]="role">{{ role }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="status">Status *</label>
+              <select id="status" formControlName="status" class="form-select">
+                @for (status of statuses; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          @if (userForm.get('role')?.value === 'Student') {
+            <div class="form-group">
+              <label for="class">Class</label>
+              <select id="class" formControlName="class" class="form-select">
+                <option value="">Select class</option>
+                @for (cls of classes; track cls) {
+                  <option [value]="cls">{{ cls }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="form-group">
+            <label for="notes">Notes</label>
+            <textarea 
+              id="notes"
+              formControlName="notes"
+              class="form-textarea"
+              rows="3"
+              placeholder="Additional notes (optional)"></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeUserModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="userForm.invalid">
+            {{ showEditUserModal() ? 'Update User' : 'Add User' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirm()) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button class="modal-close" (click)="cancelDelete()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p>Are you sure you want to delete <strong>{{ selectedUser()?.name }}</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDelete()">
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="confirmDelete()">
+          Delete User
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Bulk Import Modal -->
+@if (showBulkImportModal()) {
+  <div class="modal-overlay" (click)="closeBulkImportModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Bulk Import Users</h2>
+        <button class="modal-close" (click)="closeBulkImportModal()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="import-instructions">
+          <h3>Instructions</h3>
+          <ol>
+            <li>Download the CSV template</li>
+            <li>Fill in user details (Name, Email, Role, Class for students)</li>
+            <li>Upload the completed CSV file</li>
+          </ol>
+        </div>
+
+        <div class="upload-section">
+          <a href="#" class="download-link">📥 Download CSV Template</a>
+          
+          <div class="dropzone">
+            <p>Drag and drop CSV file here or click to browse</p>
+            <input type="file" accept=".csv" style="display: none;" />
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="closeBulkImportModal()">
+          Close
+        </button>
+        <button class="btn btn-primary">
+          Upload & Import
+        </button>
+      </div>
+    </div>
+  </div>
+}

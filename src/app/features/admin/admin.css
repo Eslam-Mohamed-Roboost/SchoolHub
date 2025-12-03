@@ -1,0 +1,15 @@
+/* Admin Feature Shared Styles */
+
+:root {
+    --admin-primary: #00bcd4;
+    --admin-secondary: #008b9c;
+    --admin-accent: #00d9e8;
+}
+
+.admin-stat-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--admin-accent);
+    box-shadow: 0 2px 8px rgba(0, 188, 212, 0.15);
+}

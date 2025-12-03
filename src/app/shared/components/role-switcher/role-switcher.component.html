@@ -1,0 +1,28 @@
+@if (isDevMode) {
+<div class="role-switcher-float">
+  <button 
+    class="role-btn"
+    [class.active]="activeRole() === 'teacher'" 
+    (click)="switchRole('teacher')" 
+    data-role="teacher"
+  >
+    <i class="fas fa-chalkboard-teacher me-2"></i>Teacher
+  </button>
+  <button 
+    class="role-btn"
+    [class.active]="activeRole() === 'student'"  
+    (click)="switchRole('student')" 
+    data-role="student"
+  >
+    <i class="fas fa-gamepad me-2"></i>Student
+  </button>
+  <button 
+    class="role-btn"
+    [class.active]="activeRole() === 'admin'"
+    (click)="switchRole('admin')" 
+    data-role="admin"
+  >
+    <i class="fas fa-chart-line me-2"></i>Admin
+  </button>
+</div>
+}

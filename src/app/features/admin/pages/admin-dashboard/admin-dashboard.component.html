@@ -1,0 +1,125 @@
+<div class="admin-dashboard">
+  <div class="dashboard-header">
+    <div class="welcome-section">
+      <h1 class="dashboard-title">Welcome back, Rahmah!</h1>
+      <p class="dashboard-subtitle">{{ currentDate() | date:'fullDate' }}</p>
+    </div>
+  </div>
+
+  <!-- Quick Stats Cards -->
+  <div class="stats-grid">
+    @for (card of statsCards(); track card.title) {
+      <div class="stats-card">
+        <div class="stats-card-header">
+          <span class="stats-icon">{{ card.icon }}</span>
+          <h3 class="stats-title">{{ card.title }}</h3>
+        </div>
+        <div class="stats-value">{{ card.value }}</div>
+        @if (card.breakdown) {
+          <div class="stats-breakdown">{{ card.breakdown }}</div>
+        }
+        @if (card.comparison) {
+          <div class="stats-comparison" [class.trend-up]="card.trend === 'up'">
+            {{ card.comparison }}
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Quick Actions Panel -->
+  <div class="quick-actions-section">
+    <h2 class="section-title">Quick Actions</h2>
+    <div class="quick-actions-grid">
+      @for (action of quickActions; track action.label) {
+        <button 
+          class="quick-action-btn"
+          [routerLink]="action.route"
+          (click)="action.action && handleQuickAction(action.action)"
+          [attr.title]="action.description">
+          <span class="action-icon">{{ action.icon }}</span>
+          <span class="action-label">{{ action.label }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="dashboard-content">
+    <!-- Activity Feed Section -->
+    <div class="activity-section">
+      <div class="section-header">
+        <h2 class="section-title">Recent Activity</h2>
+        <button class="refresh-btn" title="Refresh">
+          <span class="icon">🔄</span>
+        </button>
+      </div>
+
+      <div class="activity-filters">
+        @for (filter of activityFilters; track filter) {
+          <button 
+            class="filter-btn"
+            [class.active]="selectedActivityFilter() === filter"
+            (click)="filterActivities(filter)">
+            {{ filter }}
+          </button>
+        }
+      </div>
+
+      <div class="activity-feed">
+        @for (activity of filteredActivities(); track activity.id) {
+          <div class="activity-item" [class]="getActivityTypeClass(activity.type)">
+            <div class="activity-avatar">
+              <img [src]="activity.userAvatar" [alt]="activity.userName" />
+            </div>
+            <div class="activity-content">
+              <div class="activity-user">
+                <span class="user-name">{{ activity.userName }}</span>
+                <span class="activity-action">{{ activity.action }}</span>
+              </div>
+              <div class="activity-time">{{ formatTimeAgo(activity.timestamp) }}</div>
+            </div>
+          </div>
+        }
+        @empty {
+          <div class="no-activities">
+            <p>No activities found</p>
+          </div>
+        }
+      </div>
+
+      <a routerLink="/admin/logs" class="view-all-link">View All Activity →</a>
+    </div>
+
+    <!-- Pending Approvals Widget -->
+    <div class="approvals-section">
+      <div class="section-header">
+        <h2 class="section-title">Pending Approvals</h2>
+        @if (pendingApprovals().length > 0) {
+          <span class="badge-count">{{ pendingApprovals().length }}</span>
+        }
+      </div>
+
+      @if (pendingApprovals().length > 0) {
+        <div class="pending-approvals">
+          @for (submission of pendingApprovals().slice(0, 3); track submission.id) {
+            <div class="approval-preview">
+              <div class="approval-icon">{{ submission.badgeIcon }}</div>
+              <div class="approval-info">
+                <div class="approval-badge">{{ submission.badgeName }}</div>
+                <div class="approval-user">{{ submission.userName }}</div>
+              </div>
+            </div>
+          }
+        </div>
+        <a routerLink="/admin/evidence" class="review-btn">
+          Review Now
+        </a>
+      } @else {
+        <div class="no-approvals">
+          <p>✅ All caught up!</p>
+          <p class="text-muted">No pending badge approvals</p>
+        </div>
+      }
+    </div>
+  </div>
+</div>
