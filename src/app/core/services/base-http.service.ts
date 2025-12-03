@@ -28,26 +28,13 @@ export interface ApiConfig<TRequest = any, TResponse = any> {
   errorHandler?: (error: any) => Observable<never>;
 }
 
-/**
- * Generic HTTP Service for making API calls with customizable transformations
- *
- * Features:
- * - Automatic base URL injection
- * - Request/Response transformers
- * - Custom error handling
- * - Type-safe operations
- *
- * @example
- * ```typescript
- * export class MyService extends BaseHttpService {
- *   getItems() {
- *     return this.get<Item[]>('/items', {
- *       responseTransformer: (data) => data.map(item => ({ ...item, processed: true }))
- *     });
- *   }
- * }
- * ```
- */
+export interface RequestResult<T> {
+  data: T;
+  isSuccess: boolean;
+  message: string;
+  errorCode: any;
+}
+
 export abstract class BaseHttpService {
   protected readonly http = inject(HttpClient);
   protected readonly baseUrl = environment.apiUrl;
@@ -62,7 +49,7 @@ export abstract class BaseHttpService {
   ): Observable<TResponse> {
     const url = this.buildUrl(endpoint);
 
-    return this.http.get<any>(url, options).pipe(
+    return this.http.get<RequestResult<TResponse> | TResponse>(url, options).pipe(
       map((response) => this.transformResponse<TResponse>(response, config?.responseTransformer)),
       catchError((error) => this.handleError(error, config?.errorHandler))
     );
@@ -71,7 +58,7 @@ export abstract class BaseHttpService {
   /**
    * Generic POST request
    */
-  protected post<TRequest = any, TResponse = any>(
+  public post<TRequest = any, TResponse = any>(
     endpoint: string,
     data: TRequest,
     options?: HttpOptions,
@@ -80,7 +67,7 @@ export abstract class BaseHttpService {
     const url = this.buildUrl(endpoint);
     const transformedData = this.transformRequest(data, config?.requestTransformer);
 
-    return this.http.post<any>(url, transformedData, options).pipe(
+    return this.http.post<RequestResult<TResponse> | TResponse>(url, transformedData, options).pipe(
       map((response) => this.transformResponse<TResponse>(response, config?.responseTransformer)),
       catchError((error) => this.handleError(error, config?.errorHandler))
     );
@@ -98,7 +85,7 @@ export abstract class BaseHttpService {
     const url = this.buildUrl(endpoint);
     const transformedData = this.transformRequest(data, config?.requestTransformer);
 
-    return this.http.put<any>(url, transformedData, options).pipe(
+    return this.http.put<RequestResult<TResponse> | TResponse>(url, transformedData, options).pipe(
       map((response) => this.transformResponse<TResponse>(response, config?.responseTransformer)),
       catchError((error) => this.handleError(error, config?.errorHandler))
     );
@@ -116,10 +103,12 @@ export abstract class BaseHttpService {
     const url = this.buildUrl(endpoint);
     const transformedData = this.transformRequest(data, config?.requestTransformer);
 
-    return this.http.patch<any>(url, transformedData, options).pipe(
-      map((response) => this.transformResponse<TResponse>(response, config?.responseTransformer)),
-      catchError((error) => this.handleError(error, config?.errorHandler))
-    );
+    return this.http
+      .patch<RequestResult<TResponse> | TResponse>(url, transformedData, options)
+      .pipe(
+        map((response) => this.transformResponse<TResponse>(response, config?.responseTransformer)),
+        catchError((error) => this.handleError(error, config?.errorHandler))
+      );
   }
 
   /**
@@ -132,7 +121,7 @@ export abstract class BaseHttpService {
   ): Observable<TResponse> {
     const url = this.buildUrl(endpoint);
 
-    return this.http.delete<any>(url, options).pipe(
+    return this.http.delete<RequestResult<TResponse> | TResponse>(url, options).pipe(
       map((response) => this.transformResponse<TResponse>(response, config?.responseTransformer)),
       catchError((error) => this.handleError(error, config?.errorHandler))
     );
@@ -169,11 +158,36 @@ export abstract class BaseHttpService {
   /**
    * Transform response data after receiving
    */
-  private transformResponse<T>(data: any, transformer?: ResponseTransformer<T>): T {
+  private transformResponse<T>(response: any, transformer?: ResponseTransformer<T>): T {
+    let data: T;
+
+    // Check if response matches RequestResult structure (checking both camelCase and PascalCase just in case)
+    if (response && typeof response === 'object') {
+      if ('isSuccess' in response) {
+        // CamelCase
+        const result = response as RequestResult<T>;
+        if (!result.isSuccess) {
+          throw new Error(result.message || 'API Error');
+        }
+        data = result.data;
+      } else if ('IsSuccess' in response) {
+        // PascalCase
+        if (!response.IsSuccess) {
+          throw new Error(response.Message || 'API Error');
+        }
+        data = response.Data;
+      } else {
+        // Not a RequestResult, assume direct data
+        data = response as T;
+      }
+    } else {
+      data = response as T;
+    }
+
     if (transformer) {
       return transformer(data);
     }
-    return data as T;
+    return data;
   }
 
   /**

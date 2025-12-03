@@ -22,7 +22,7 @@ export class MainLayoutComponent {
 
   constructor(private authService: AuthService) {
     // Get current user from auth service
-    this.currentUser.set(this.authService.currentUser());
+    // this.currentUser.set(this.authService.currentUser());
   }
 
   handleLogout(): void {

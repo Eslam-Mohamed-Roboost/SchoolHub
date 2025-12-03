@@ -27,16 +27,26 @@
 
     <!-- User Actions -->
     <div class="d-flex align-items-center gap-3">
-      <button class="btn btn-light rounded-circle p-2">
+      <button class="btn btn-light rounded-circle p-2" title="Search">
         <i class="fas fa-search"></i>
       </button>
-      <button class="btn btn-light rounded-circle p-2">
+      <button class="btn btn-light rounded-circle p-2" title="Notifications">
         <i class="fas fa-bell"></i>
       </button>
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-dark fw-medium">{{ userName() }}</span>
+        <button
+          class="btn btn-outline-danger btn-sm"
+          (click)="logout()"
+          title="Logout">
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </div>
       <img
         [src]="userAvatar()"
         class="avatar-circle"
-        alt="Profile"
+        [alt]="userName()"
         [routerLink]="'/profile'"
         [style.transform]="isAvatarHovered() ? 'scale(1.1)' : 'scale(1)'"
         style="cursor: pointer; transition: transform 0.2s"

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { ApplicationRole } from '../../../../core/enums/application-role.enum';
 
 @Component({
   selector: 'app-login-page',
@@ -26,31 +27,52 @@ export class LoginPageComponent {
 
     const role = this.selectedRole();
     const credentials = {
-      email: this.email(),
+      UserName: this.email(),
       password: this.password(),
     };
 
     this.authService.login(credentials).subscribe({
       next: (response) => {
         this.isLoading.set(false);
+        console.log('Login successful, response:', response);
 
-        // Navigate based on selected role
+        // Navigate based on user role from response
+        const role = response.Role;
+        console.log('User role:', role);
+
+        let redirectPath = '/';
         switch (role) {
-          case 'teacher':
-            this.router.navigate(['/teacher/dashboard']);
+          case ApplicationRole.Teacher:
+            redirectPath = '/teacher/home';
             break;
-          case 'student':
-            this.router.navigate(['/student/dashboard']);
+          case ApplicationRole.Student:
+            redirectPath = '/student/hub';
             break;
-          case 'admin':
-            this.router.navigate(['/admin/dashboard']);
+          case ApplicationRole.Admin:
+            redirectPath = '/admin/dashboard';
             break;
           default:
-            this.router.navigate(['/auth/login']);
+            redirectPath = '/';
+            console.warn('Unknown role, redirecting to home');
         }
+
+        console.log('Redirecting to:', redirectPath);
+        this.router.navigate([redirectPath]).then(
+          (success) => {
+            if (success) {
+              console.log('Navigation successful');
+            } else {
+              console.error('Navigation failed');
+            }
+          },
+          (error) => {
+            console.error('Navigation error:', error);
+          }
+        );
       },
       error: (error) => {
         this.isLoading.set(false);
+        console.error('Login error:', error);
         this.errorMessage.set(error.message || 'Invalid credentials');
       },
     });

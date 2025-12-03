@@ -8,7 +8,8 @@ import {
   Validators,
 } from '@angular/forms';
 import { UserService } from '../../services/user.service';
-import { User, UserRole, UserStatus } from '../../models/admin.models';
+import { User, UserStatus, CreateUserRequest } from '../../models/admin.models';
+import { ApplicationRole } from '../../../../core/enums/application-role.enum';
 
 @Component({
   selector: 'app-admin-users',
@@ -23,7 +24,7 @@ export class AdminUsersComponent {
   // State
   users = this.userService.getUsers();
   searchQuery = signal('');
-  roleFilter = signal<UserRole | ''>('');
+  roleFilter = signal<ApplicationRole | ''>('');
   statusFilter = signal<UserStatus | ''>('');
   currentPage = signal(1);
   itemsPerPage = signal(50);
@@ -58,7 +59,11 @@ export class AdminUsersComponent {
   totalPages = computed(() => Math.ceil(this.filteredUsers().length / this.itemsPerPage()));
 
   // Available options
-  roles: UserRole[] = ['Admin', 'Teacher', 'Student', 'Badge Manager'];
+  roles: ApplicationRole[] = [
+    ApplicationRole.Admin,
+    ApplicationRole.Teacher,
+    ApplicationRole.Student,
+  ];
   statuses: UserStatus[] = ['Active', 'Inactive'];
   classes = ['6A', '6B', '6C', '6D', '6E', '7A', '7B', '7C', '7D', '7E'];
   itemsPerPageOptions = [25, 50, 100];
@@ -82,7 +87,7 @@ export class AdminUsersComponent {
   }
 
   onRoleFilter(role: string) {
-    this.roleFilter.set(role as UserRole | '');
+    this.roleFilter.set(role as ApplicationRole | '');
     this.currentPage.set(1);
   }
 
@@ -149,16 +154,36 @@ export class AdminUsersComponent {
 
     if (this.selectedUser()) {
       // Update existing user
-      this.userService.updateUser(this.selectedUser()!.id, formValue);
+      this.userService.updateUser(this.selectedUser()!.id, formValue).subscribe({
+        next: () => {
+          this.closeUserModal();
+        },
+        error: (err) => {
+          console.error('Failed to update user', err);
+          // TODO: Show error notification to user
+        },
+      });
     } else {
-      // Add new user
-      this.userService.addUser({
-        ...formValue,
-        lastLogin: new Date(),
+      // Add new user - map form values to API request structure
+      const createUserRequest: CreateUserRequest = {
+        Name: formValue.name,
+        UserName: formValue.email, // Using email as username
+        Email: formValue.email,
+        Password: 'TempPassword123!', // TODO: Generate or require password input
+        PhoneNumber: formValue.phoneNumber || '1234567789', // Add phoneNumber field to form if needed
+        RoleID: formValue.role,
+      };
+
+      this.userService.addUser(createUserRequest).subscribe({
+        next: () => {
+          this.closeUserModal();
+        },
+        error: (err) => {
+          console.error('Failed to add user', err);
+          // TODO: Show error notification to user
+        },
       });
     }
-
-    this.closeUserModal();
   }
 
   openDeleteConfirm(user: User) {
@@ -168,9 +193,16 @@ export class AdminUsersComponent {
 
   confirmDelete() {
     if (this.selectedUser()) {
-      this.userService.deleteUser(this.selectedUser()!.id);
-      this.showDeleteConfirm.set(false);
-      this.selectedUser.set(null);
+      this.userService.deleteUser(this.selectedUser()!.id).subscribe({
+        next: () => {
+          this.showDeleteConfirm.set(false);
+          this.selectedUser.set(null);
+        },
+        error: (err) => {
+          console.error('Failed to delete user', err);
+          // TODO: Show error notification to user
+        },
+      });
     }
   }
 
@@ -225,13 +257,20 @@ export class AdminUsersComponent {
     return new Date(date).toLocaleDateString();
   }
 
-  getRoleBadgeClass(role: string): string {
-    const classes: Record<string, string> = {
+  getRoleBadgeClass(role: ApplicationRole | string): string {
+    const classes: Record<string | number, string> = {
+      [ApplicationRole.Admin]: 'badge-admin',
+      [ApplicationRole.Teacher]: 'badge-teacher',
+      [ApplicationRole.Student]: 'badge-student',
       Admin: 'badge-admin',
       Teacher: 'badge-teacher',
       Student: 'badge-student',
-      'Badge Manager': 'badge-manager',
+      BadgeManager: 'badge-manager',
     };
     return classes[role] || '';
+  }
+
+  getRoleName(role: ApplicationRole): string {
+    return ApplicationRole[role];
   }
 }

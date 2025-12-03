@@ -1,6 +1,8 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { roleGuard } from './core/guards/role.guard';
 import { MainLayoutComponent } from './core/layouts/main-layout.component';
+import { ApplicationRole } from './core/enums/application-role.enum';
 
 export const routes: Routes = [
   {
@@ -21,15 +23,21 @@ export const routes: Routes = [
         path: 'student',
         loadChildren: () =>
           import('./features/student/student.routes').then((m) => m.STUDENT_ROUTES),
+        canActivate: [roleGuard],
+        data: { roles: ApplicationRole.Student },
       },
       {
         path: 'teacher',
         loadChildren: () =>
           import('./features/teacher/teacher.routes').then((m) => m.TEACHER_ROUTES),
+        canActivate: [roleGuard],
+        data: { roles: ApplicationRole.Teacher },
       },
       {
         path: 'admin',
         loadChildren: () => import('./features/admin/admin.routes').then((m) => m.ADMIN_ROUTES),
+        canActivate: [roleGuard],
+        data: { roles: ApplicationRole.Admin },
       },
     ],
   },

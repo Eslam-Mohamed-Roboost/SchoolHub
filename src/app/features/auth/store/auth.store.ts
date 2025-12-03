@@ -1,8 +1,8 @@
 import { Injectable, signal, computed } from '@angular/core';
-import { User } from '../services/auth.service';
+import { LogInResposne } from '../services/auth.service';
 
 export interface AuthState {
-  user: User | null;
+  user: LogInResposne | null;
   loading: boolean;
   error: string | null;
 }
@@ -12,7 +12,7 @@ export interface AuthState {
 })
 export class AuthStore {
   // State signals
-  private userSignal = signal<User | null>(null);
+  private userSignal = signal<LogInResposne | null>(null);
   private loadingSignal = signal<boolean>(false);
   private errorSignal = signal<string | null>(null);
 
@@ -23,7 +23,7 @@ export class AuthStore {
   isAuthenticated = computed(() => !!this.userSignal());
 
   // State mutations
-  setUser(user: User | null): void {
+  setUser(user: LogInResposne | null): void {
     this.userSignal.set(user);
   }
 

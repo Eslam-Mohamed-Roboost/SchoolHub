@@ -2,6 +2,7 @@ import { Component, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UserService } from '../../services/user.service';
 import { BadgeService } from '../../services/badge.service';
+import { ApplicationRole } from '../../../../core/enums/application-role.enum';
 
 interface TeacherCPD {
   id: string;
@@ -36,7 +37,7 @@ export class AdminCpdComponent {
   teachers = computed(() =>
     this.userService
       .getUsers()()
-      .filter((u) => u.role === 'Teacher')
+      .filter((u) => u.role === ApplicationRole.Teacher)
   );
   badgeSubmissions = this.badgeService.getSubmissions();
 
@@ -129,7 +130,7 @@ export class AdminCpdComponent {
 
   private calculateCPDByMonth(): { month: string; hours: number }[] {
     const submissions = this.badgeSubmissions().filter(
-      (s) => s.status === 'Approved' && s.userRole === 'Teacher'
+      (s) => s.status === 'Approved' && s.userRole === ApplicationRole.Teacher
     );
 
     const monthlyData = new Map<string, number>();

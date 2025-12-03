@@ -1,8 +1,10 @@
+import { ApplicationRole } from '../../../core/enums/application-role.enum';
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: ApplicationRole;
   status: UserStatus;
   class?: string;
   badgeCount: number;
@@ -12,7 +14,15 @@ export interface User {
   avatar?: string;
 }
 
-export type UserRole = 'Admin' | 'Teacher' | 'Student' | 'Badge Manager';
+export interface CreateUserRequest {
+  Name: string;
+  UserName: string;
+  Email: string;
+  Password: string;
+  PhoneNumber: string;
+  RoleID: ApplicationRole;
+}
+
 export type UserStatus = 'Active' | 'Inactive';
 
 export interface Badge {
@@ -28,7 +38,7 @@ export interface BadgeSubmission {
   id: string;
   userId: string;
   userName: string;
-  userRole: UserRole;
+  userRole: ApplicationRole;
   userAvatar?: string;
   badgeId: string;
   badgeName: string;

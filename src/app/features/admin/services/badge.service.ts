@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { BadgeSubmission, Badge, BadgeStatus } from '../models/admin.models';
+import { ApplicationRole } from '../../../core/enums/application-role.enum';
 
 @Injectable({
   providedIn: 'root',
@@ -17,11 +18,15 @@ export class BadgeService {
   }
 
   getPendingTeacherSubmissions(): BadgeSubmission[] {
-    return this.submissions().filter((s) => s.status === 'Pending' && s.userRole === 'Teacher');
+    return this.submissions().filter(
+      (s) => s.status === 'Pending' && s.userRole === ApplicationRole.Teacher
+    );
   }
 
   getPendingStudentSubmissions(): BadgeSubmission[] {
-    return this.submissions().filter((s) => s.status === 'Pending' && s.userRole === 'Student');
+    return this.submissions().filter(
+      (s) => s.status === 'Pending' && s.userRole === ApplicationRole.Student
+    );
   }
 
   approveSubmission(id: string, reviewedBy: string, notes?: string): BadgeSubmission | null {
@@ -65,7 +70,7 @@ export class BadgeService {
     dateTo?: Date,
     status?: BadgeStatus,
     category?: string,
-    userType?: string
+    userType?: ApplicationRole
   ): BadgeSubmission[] {
     return this.submissions().filter((submission) => {
       const matchesDate =
@@ -191,7 +196,7 @@ export class BadgeService {
         id: `submission-${i}`,
         userId: isTeacher ? `teacher-${Math.floor(i / 2) + 1}` : `student-${i - 85}`,
         userName: isTeacher ? `Teacher ${Math.floor(i / 2) + 1}` : `Student ${i - 85}`,
-        userRole: isTeacher ? 'Teacher' : 'Student',
+        userRole: isTeacher ? ApplicationRole.Teacher : ApplicationRole.Student,
         userAvatar: `https://ui-avatars.com/api/?name=${isTeacher ? 'Teacher' : 'Student'}+${
           isTeacher ? Math.floor(i / 2) + 1 : i - 85
         }&background=random`,
