@@ -13,8 +13,8 @@ import { ApplicationRole } from '../../../../core/enums/application-role.enum';
   styleUrls: ['./login-page.component.css'],
 })
 export class LoginPageComponent {
-  email = signal('admin@school.edu');
-  password = signal('password');
+  email = signal('');
+  password = signal('');
   selectedRole = signal<'admin' | 'teacher' | 'student'>('admin');
   errorMessage = signal('');
   isLoading = signal(false);
@@ -43,7 +43,7 @@ export class LoginPageComponent {
         let redirectPath = '/';
         switch (role) {
           case ApplicationRole.Teacher:
-            redirectPath = '/teacher/home';
+            redirectPath = '/teacher/dashboard';
             break;
           case ApplicationRole.Student:
             redirectPath = '/student/hub';

@@ -216,6 +216,25 @@
             }
           </div>
 
+          @if (!showEditUserModal()) {
+            <div class="form-group">
+              <label for="password">Password *</label>
+              <input 
+                type="password"
+                id="password"
+                formControlName="password"
+                class="form-input"
+                placeholder="Enter password (min. 6 characters)" />
+              @if (userForm.get('password')?.invalid && userForm.get('password')?.touched) {
+                @if (userForm.get('password')?.errors?.['required']) {
+                  <span class="error-text">Password is required</span>
+                } @else if (userForm.get('password')?.errors?.['minlength']) {
+                  <span class="error-text">Password must be at least 6 characters</span>
+                }
+              }
+            </div>
+          }
+
           <div class="form-row">
             <div class="form-group">
               <label for="role">Role *</label>

@@ -160,6 +160,12 @@ export interface StatsCard {
   trend?: 'up' | 'down' | 'neutral';
 }
 
+export interface AdminKpiResponse {
+  TotalUsers: number;
+  BadgesEarned: number;
+  ThisWeekActivity: number;
+}
+
 export interface ReportData {
   id: string;
   name: string;

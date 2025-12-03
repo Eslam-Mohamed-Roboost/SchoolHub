@@ -1,55 +1,24 @@
 import { Routes } from '@angular/router';
 import { TeacherLayoutComponent } from './layouts/teacher-layout.component';
-import { TeacherHomeComponent } from './pages/teacher-home/teacher-home.component';
+import { TeacherDashboardComponent } from './pages/teacher-dashboard/teacher-dashboard.component';
+import { TeacherHubComponent } from './pages/teacher-hub/teacher-hub.component';
+import { LearningVaultComponent } from './pages/learning-vault/learning-vault.component';
+import { TeacherCpdComponent } from './pages/teacher-cpd/teacher-cpd.component';
+import { SubjectPortalComponent } from './pages/subject-portal/subject-portal.component';
 
 export const TEACHER_ROUTES: Routes = [
   {
     path: '',
     component: TeacherLayoutComponent,
     children: [
-      { path: '', redirectTo: 'home', pathMatch: 'full' },
-      { path: 'home', component: TeacherHomeComponent },
-      // Placeholders for future phases
-      {
-        path: 'vault',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
-      {
-        path: 'impact',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
-      {
-        path: 'lounge',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
-      {
-        path: 'playground',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
-      {
-        path: 'digital-citizenship',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
-      {
-        path: 'settings',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
-      {
-        path: 'support',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
-      {
-        path: 'help',
-        loadComponent: () =>
-          import('./pages/teacher-home/teacher-home.component').then((m) => m.TeacherHomeComponent),
-      }, // Temporary
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'dashboard', component: TeacherDashboardComponent },
+      { path: 'hub', component: TeacherHubComponent },
+      { path: 'learning-vault', component: LearningVaultComponent },
+      { path: 'cpd', component: TeacherCpdComponent },
+      { path: 'subject-portals', component: SubjectPortalComponent },
+      // Keep home route for backward compatibility
+      { path: 'home', component: TeacherDashboardComponent },
     ],
   },
 ];

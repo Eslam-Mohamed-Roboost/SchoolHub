@@ -73,6 +73,7 @@ export class AdminUsersComponent {
     this.userForm = this.fb.group({
       name: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
       role: ['', Validators.required],
       status: ['Active', Validators.required],
       class: [''],
@@ -130,6 +131,9 @@ export class AdminUsersComponent {
   // User actions
   openAddUserModal() {
     this.userForm.reset({ status: 'Active' });
+    // Enable password field for new users
+    this.userForm.get('password')?.setValidators([Validators.required, Validators.minLength(6)]);
+    this.userForm.get('password')?.updateValueAndValidity();
     this.selectedUser.set(null);
     this.showAddUserModal.set(true);
   }
@@ -137,13 +141,16 @@ export class AdminUsersComponent {
   openEditUserModal(user: User) {
     this.selectedUser.set(user);
     this.userForm.patchValue(user);
+    // Disable password requirement for editing (optional field)
+    this.userForm.get('password')?.clearValidators();
+    this.userForm.get('password')?.updateValueAndValidity();
     this.showEditUserModal.set(true);
   }
 
   closeUserModal() {
     this.showAddUserModal.set(false);
     this.showEditUserModal.set(false);
-    this.userForm.reset();
+    this.userForm.reset({ status: 'Active' });
     this.selectedUser.set(null);
   }
 
@@ -169,7 +176,7 @@ export class AdminUsersComponent {
         Name: formValue.name,
         UserName: formValue.email, // Using email as username
         Email: formValue.email,
-        Password: 'TempPassword123!', // TODO: Generate or require password input
+        Password: formValue.password,
         PhoneNumber: formValue.phoneNumber || '1234567789', // Add phoneNumber field to form if needed
         RoleID: formValue.role,
       };
