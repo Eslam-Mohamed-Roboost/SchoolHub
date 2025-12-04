@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.component';
+import { CpdService } from '../../services/cpd.service';
 
 interface Subject {
   id: string;
@@ -14,7 +16,7 @@ interface Subject {
 @Component({
   selector: 'app-teacher-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, StatCardComponent],
   template: `
     <div class="teacher-dashboard">
       <section class="hero-section text-center">
@@ -34,13 +36,56 @@ interface Subject {
         </div>
       </section>
 
+      <!-- Quick Stats Dashboard -->
+      <div class="container mb-5">
+        <div class="row g-4">
+          <div class="col-md-3 col-sm-6">
+            <app-stat-card
+              icon="fas fa-graduation-cap"
+              label="CPD Hours Completed"
+              [value]="stats.cpdHours"
+              iconColor="#6366f1"
+              iconBgColor="#e0e7ff"
+            />
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <app-stat-card
+              icon="fas fa-award"
+              label="Badges Earned"
+              [value]="stats.badgesEarned"
+              iconColor="#f59e0b"
+              iconBgColor="#fef3c7"
+            />
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <app-stat-card
+              icon="fas fa-users"
+              label="Active Students"
+              [value]="stats.activeStudents"
+              iconColor="#10b981"
+              iconBgColor="#d1fae5"
+            />
+          </div>
+          <div class="col-md-3 col-sm-6">
+            <app-stat-card
+              icon="fas fa-fire"
+              label="Current Streak"
+              [value]="stats.currentStreak + ' days'"
+              subtitle="Keep it going!"
+              iconColor="#ef4444"
+              iconBgColor="#fee2e2"
+            />
+          </div>
+        </div>
+      </div>
+
       <div class="container mb-5">
         <div class="d-flex justify-content-between align-items-end mb-4">
           <div>
             <h2 class="fw-bold mb-1">Student Portfolio Hub</h2>
             <p class="text-muted mb-0">
-              Access and review your students' digital portfolios, provide feedback, and track
-              their learning journey
+              Access and review your students' digital portfolios, provide feedback, and track their
+              learning journey
             </p>
           </div>
         </div>
@@ -72,6 +117,9 @@ interface Subject {
   styleUrls: ['../../teacher.css'],
 })
 export class TeacherDashboardComponent {
+  private cpdService = inject(CpdService);
+  stats = this.cpdService.getStats();
+
   subjects: Subject[] = [
     {
       id: 'math',

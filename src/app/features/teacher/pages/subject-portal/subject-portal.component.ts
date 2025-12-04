@@ -1,11 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { PortfolioService } from '../../services/portfolio.service';
 
 @Component({
   selector: 'app-subject-portal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="subject-portal">
       <div class="bg-white border-bottom py-3 mb-4 border-b border-gray-200">
@@ -91,10 +92,75 @@ import { ActivatedRoute } from '@angular/router';
           <p>Recommended AI tools for this subject</p>
         </div>
         } @if (activeTab() === 'student-work') {
-        <div class="text-center p-8 text-gray-400">
-          <i class="fas fa-user-graduate text-6xl mb-4"></i>
-          <h3 class="text-xl font-bold">Student Work</h3>
-          <p>Student portfolios and exemplars</p>
+        <div class="card border-0 shadow-sm rounded-4">
+          <div
+            class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center"
+          >
+            <div>
+              <h5 class="fw-bold mb-0">
+                <i class="fas fa-folder-open text-primary me-2"></i>Student Portfolios
+              </h5>
+              <p class="text-muted small mb-0">{{ students.length }} students in this class</p>
+            </div>
+            <div class="d-flex gap-2">
+              <span class="badge bg-success">{{ getStatusCount('reviewed') }} Reviewed</span>
+              <span class="badge bg-warning text-dark"
+                >{{ getStatusCount('pending') }} Pending</span
+              >
+              <span class="badge bg-danger"
+                >{{ getStatusCount('needs-revision') }} Needs Revision</span
+              >
+            </div>
+          </div>
+          <div class="list-group list-group-flush">
+            @for (student of students; track student.id) {
+            <a
+              [routerLink]="['/teacher/portfolio', student.id, subjectId]"
+              class="list-group-item list-group-item-action py-3"
+            >
+              <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                  <div
+                    class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                    style="width: 45px; height: 45px; font-weight: bold;"
+                  >
+                    {{ getInitials(student.name) }}
+                  </div>
+                  <div>
+                    <h6 class="mb-1 fw-bold">{{ student.name }}</h6>
+                    @if (student.latestSubmission) {
+                    <small class="text-muted">
+                      <i class="fas fa-file-alt me-1"></i>
+                      {{ student.latestSubmission.title }} •
+                      {{ formatDate(student.latestSubmission.submittedAt) }}
+                    </small>
+                    } @else {
+                    <small class="text-muted">
+                      <i class="fas fa-inbox me-1"></i>No submissions yet
+                    </small>
+                    }
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                  @if (student.portfolioStatus === 'reviewed') {
+                  <span class="badge bg-success">
+                    <i class="fas fa-check-circle me-1"></i>Reviewed
+                  </span>
+                  } @else if (student.portfolioStatus === 'pending') {
+                  <span class="badge bg-warning text-dark">
+                    <i class="fas fa-clock me-1"></i>Pending
+                  </span>
+                  } @else if (student.portfolioStatus === 'needs-revision') {
+                  <span class="badge bg-danger">
+                    <i class="fas fa-exclamation-circle me-1"></i>Needs Revision
+                  </span>
+                  }
+                  <i class="fas fa-chevron-right text-muted"></i>
+                </div>
+              </div>
+            </a>
+            }
+          </div>
         </div>
         }
       </div>
@@ -102,9 +168,14 @@ import { ActivatedRoute } from '@angular/router';
   `,
   styleUrls: ['../../teacher.css'],
 })
-export class SubjectPortalComponent {
+export class SubjectPortalComponent implements OnInit {
+  private portfolioService = inject(PortfolioService);
+  private route = inject(ActivatedRoute);
+
   activeTab = signal('lesson-plans');
   subjectName = signal('Mathematics');
+  subjectId = '';
+  students: any[] = [];
 
   tabs = [
     { id: 'lesson-plans', label: 'Lesson Plans' },
@@ -113,9 +184,10 @@ export class SubjectPortalComponent {
     { id: 'student-work', label: 'Student Work' },
   ];
 
-  constructor(private route: ActivatedRoute) {
-    const subjectId = this.route.snapshot.params['id'];
-    this.subjectName.set(this.getSubjectName(subjectId));
+  ngOnInit(): void {
+    this.subjectId = this.route.snapshot.params['id'] || 'math';
+    this.subjectName.set(this.getSubjectName(this.subjectId));
+    this.students = this.portfolioService.getStudents(this.subjectId);
   }
 
   private getSubjectName(id: string): string {
@@ -130,5 +202,31 @@ export class SubjectPortalComponent {
       arts: 'Arts',
     };
     return names[id] || 'Subject';
+  }
+
+  getInitials(name: string): string {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  }
+
+  formatDate(date: Date): string {
+    const d = new Date(date);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - d.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  getStatusCount(status: string): number {
+    return this.students.filter((s) => s.portfolioStatus === status).length;
   }
 }

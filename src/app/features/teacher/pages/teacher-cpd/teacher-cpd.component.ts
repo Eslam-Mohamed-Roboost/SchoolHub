@@ -1,12 +1,61 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { ProgressCardComponent } from '../../../../shared/ui/progress-card/progress-card.component';
+import { CpdService } from '../../services/cpd.service';
 
 @Component({
   selector: 'app-teacher-cpd',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, ProgressCardComponent],
   template: `
     <div class="teacher-cpd container mx-auto px-4 py-8">
+      <!-- My Progress Section -->
+      <div class="mb-5">
+        <h2 class="fw-bold mb-4"><i class="fas fa-chart-line text-primary me-2"></i>My Progress</h2>
+        <div class="row g-4 mb-5">
+          <div class="col-md-6">
+            <app-progress-card
+              title="CPD Hours"
+              [current]="progress.hoursCompleted"
+              [target]="progress.targetHours"
+              unit="hours"
+              color="#6366f1"
+              [subtitle]="'Last activity: ' + formatDate(progress.lastActivityDate)"
+            />
+          </div>
+          <div class="col-md-6">
+            <app-progress-card
+              title="Badges Earned"
+              [current]="stats.badgesEarned"
+              [target]="10"
+              unit="badges"
+              color="#f59e0b"
+              subtitle="Keep collecting!"
+            />
+          </div>
+          <div class="col-md-6">
+            <app-progress-card
+              title="Active Students"
+              [current]="stats.activeStudents"
+              [target]="30"
+              unit="students"
+              color="#10b981"
+              subtitle="Engaging with portfolios"
+            />
+          </div>
+          <div class="col-md-6">
+            <app-progress-card
+              title="Current Streak"
+              [current]="progress.streak"
+              [target]="30"
+              unit="days"
+              color="#ef4444"
+              subtitle="🔥 Keep the momentum!"
+            />
+          </div>
+        </div>
+      </div>
+
       <div class="row g-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Badge Progress -->
         <div class="col-md-4">
@@ -171,4 +220,16 @@ import { CommonModule } from '@angular/common';
   `,
   styleUrls: ['../../teacher.css'],
 })
-export class TeacherCpdComponent {}
+export class TeacherCpdComponent {
+  private cpdService = inject(CpdService);
+  progress = this.cpdService.getProgress();
+  stats = this.cpdService.getStats();
+
+  formatDate(date: Date): string {
+    return new Date(date).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    });
+  }
+}

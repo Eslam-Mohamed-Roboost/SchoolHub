@@ -25,5 +25,6 @@ export class TeacherLayoutComponent {
     { path: '/teacher/student-portfolio-hub', label: 'Student Portfolio Hub' },
     { path: '/teacher/learning-vault', label: 'Learning Vault' },
     { path: '/teacher/cpd', label: 'My CPD & Badges' },
+    { path: '/teacher/teachers-lounge', label: 'Teacher Lounge' },
   ];
 }

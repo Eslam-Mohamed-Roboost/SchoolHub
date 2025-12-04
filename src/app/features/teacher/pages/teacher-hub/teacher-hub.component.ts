@@ -7,53 +7,67 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule],
   template: `
     <div class="teacher-hub container mx-auto px-4 py-8">
-      <div class="row g-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Department News -->
-        <div class="col-md-8 lg:col-span-2">
-          <div class="card border-0 shadow-sm rounded-4 h-100 bg-white rounded-2xl shadow-sm">
-            <div
-              class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center flex justify-between items-center p-4 border-b border-gray-200"
-            >
-              <h5 class="fw-bold mb-0 font-bold text-lg text-gray-800">
-                <i class="fas fa-bullhorn text-primary text-cyan-500 me-2"></i>
-                Department News
+      <div class="row g-4">
+        <!-- School News (Main Content) -->
+        <div class="col-lg-8">
+          <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+              <h5 class="fw-bold mb-0">
+                <i class="fas fa-newspaper text-primary me-2"></i>
+                School News
               </h5>
-              <span
-                class="badge bg-light text-dark bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-xs font-bold"
-                >Science & Math</span
-              >
+              <p class="text-muted small mb-0">Latest updates and announcements from the school</p>
             </div>
-            <div class="list-group list-group-flush divide-y divide-gray-100">
-              <div class="list-group-item py-3 p-4">
-                <div class="d-flex w-100 justify-content-between mb-1 flex justify-between">
-                  <h6 class="mb-1 fw-bold font-bold text-gray-800">
-                    Science Fair Registration Open
-                  </h6>
-                  <small class="text-muted text-gray-500">Today</small>
+            <div class="list-group list-group-flush">
+              @for (news of schoolNews; track news.id) {
+              <div class="list-group-item py-3">
+                <div class="d-flex w-100 justify-content-between align-items-start mb-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <h6 class="mb-0 fw-bold">{{ news.title }}</h6>
+                    <span
+                      class="badge"
+                      [class.bg-primary]="news.priority === 'high'"
+                      [class.bg-info]="news.priority === 'medium'"
+                      [class.bg-secondary]="news.priority === 'low'"
+                    >
+                      {{ news.category }}
+                    </span>
+                  </div>
+                  <small class="text-muted">{{ news.date }}</small>
                 </div>
-                <p class="mb-1 small text-muted text-gray-600 text-sm">
-                  Please remind your students to submit their project proposals by next Thursday.
-                </p>
+                <p class="mb-2 small text-muted">{{ news.description }}</p>
+                @if (news.author) {
+                <small class="text-muted">
+                  <i class="fas fa-user me-1"></i>{{ news.author }}
+                </small>
+                }
               </div>
-              <div class="list-group-item py-3 p-4">
-                <div class="d-flex w-100 justify-content-between mb-1">
-                  <h6 class="mb-1 fw-bold font-bold text-gray-800">New Grading Policy Update</h6>
-                  <small class="text-muted text-gray-500">Yesterday</small>
+              }
+            </div>
+          </div>
+
+          <!-- Department Announcements -->
+          <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-header bg-white border-bottom py-3 px-4">
+              <h5 class="fw-bold mb-0">
+                <i class="fas fa-bullhorn text-warning me-2"></i>
+                Department Announcements
+              </h5>
+              <p class="text-muted small mb-0">Updates from your departments</p>
+            </div>
+            <div class="list-group list-group-flush">
+              @for (announcement of departmentAnnouncements; track announcement.id) {
+              <div class="list-group-item py-3">
+                <div class="d-flex w-100 justify-content-between align-items-start mb-2">
+                  <div>
+                    <span class="badge bg-light text-dark me-2">{{ announcement.department }}</span>
+                    <h6 class="mb-0 fw-bold d-inline">{{ announcement.title }}</h6>
+                  </div>
+                  <small class="text-muted">{{ announcement.date }}</small>
                 </div>
-                <p class="mb-1 small text-muted text-gray-600 text-sm">
-                  The ministry has updated the rubric for Grade 10 assessments. Click to view the
-                  PDF.
-                </p>
+                <p class="mb-0 small text-muted">{{ announcement.description }}</p>
               </div>
-              <div class="list-group-item py-3 p-4">
-                <div class="d-flex w-100 justify-content-between mb-1">
-                  <h6 class="mb-1 fw-bold font-bold text-gray-800">Staff Meeting Rescheduled</h6>
-                  <small class="text-muted text-gray-500">2 days ago</small>
-                </div>
-                <p class="mb-1 small text-muted text-gray-600 text-sm">
-                  The weekly department meeting is moved to Tuesday at 2:00 PM.
-                </p>
-              </div>
+              }
             </div>
           </div>
         </div>
@@ -141,4 +155,90 @@ import { CommonModule } from '@angular/common';
   `,
   styleUrls: ['../../teacher.css'],
 })
-export class TeacherHubComponent {}
+export class TeacherHubComponent {
+  schoolNews = [
+    {
+      id: '1',
+      title: 'Parent-Teacher Conference Week',
+      category: 'Academic',
+      priority: 'high',
+      description:
+        'Parent-teacher conferences are scheduled for December 12-16. Please check your email for your assigned time slots.',
+      date: 'Today',
+      author: 'Principal Office',
+    },
+    {
+      id: '2',
+      title: 'Winter Break Holiday Schedule',
+      category: 'General',
+      priority: 'medium',
+      description:
+        'School will be closed from December 20 to January 3. Classes resume on January 4, 2025.',
+      date: 'Yesterday',
+      author: 'Administration',
+    },
+    {
+      id: '3',
+      title: 'New Digital Learning Platform Launch',
+      category: 'Technology',
+      priority: 'high',
+      description:
+        'We are launching a new interactive learning platform for all grades. Training sessions will be held next week.',
+      date: '2 days ago',
+      author: 'IT Department',
+    },
+    {
+      id: '4',
+      title: 'Student Achievement Awards Ceremony',
+      category: 'Events',
+      priority: 'low',
+      description:
+        'Join us in celebrating our outstanding students this Friday at 2:00 PM in the main auditorium.',
+      date: '3 days ago',
+      author: 'Student Affairs',
+    },
+  ];
+
+  departmentAnnouncements = [
+    {
+      id: '1',
+      department: 'Science',
+      title: 'Science Fair Project Submissions Due',
+      description:
+        'Reminder: All science fair project proposals must be submitted by next Thursday. Please review the guidelines with your students.',
+      date: 'Today',
+    },
+    {
+      id: '2',
+      department: 'Math',
+      title: 'New Grading Rubric for Assessments',
+      description:
+        'The ministry has updated the grading rubric for Grade 10 mathematics assessments. Updated materials are available in the Learning Vault.',
+      date: 'Yesterday',
+    },
+    {
+      id: '3',
+      department: 'Science & Math',
+      title: 'Department Meeting Rescheduled',
+      description:
+        'The weekly department meeting has been moved to Tuesday at 2:00 PM in Room 301. Agenda items include curriculum review and lab equipment updates.',
+      date: '2 days ago',
+    },
+    {
+      id: '4',
+      department: 'English',
+      title: 'Shakespeare Week Activities',
+      description:
+        'English department is organizing Shakespeare Week from December 15-19. Please encourage student participation in the drama performances.',
+      date: '3 days ago',
+    },
+    {
+      id: '5',
+      department: 'Arabic',
+      title: 'Arabic Language Competition',
+      description:
+        'Registration is now open for the annual Arabic poetry and essay competition. Deadline for submissions is December 20.',
+      date: '4 days ago',
+    },
+  ];
+}
