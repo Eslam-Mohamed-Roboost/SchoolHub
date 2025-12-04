@@ -18,9 +18,14 @@ import { ActivatedRoute } from '@angular/router';
           </button>
           <div class="d-flex align-items-center gap-3 flex items-center gap-3">
             <div class="rounded-3 p-2 rounded-lg bg-indigo-100 text-indigo-600">
-              <i class="fas fa-calculator fs-4 text-2xl"></i>
+              <i class="fas fa-folder-open fs-4 text-2xl"></i>
             </div>
-            <h4 class="fw-bold mb-0 text-xl font-bold">{{ subjectName() }} Portal</h4>
+            <div>
+              <h4 class="fw-bold mb-1 text-xl font-bold">Student Portfolio Hub</h4>
+              <p class="mb-0 text-muted small">
+                Reviewing portfolios for <strong>{{ subjectName() }}</strong>
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -1,57 +1,206 @@
 .main-header {
-    background: rgba(255, 255, 255, 0.98);
-    border-bottom: 2px solid #e2e8f0;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    padding: 1rem 0;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 20px -10px rgba(0,0,0,0.05);
+  background: rgba(255, 255, 255, 0.98);
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0.75rem 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px -10px rgba(0, 0, 0, 0.05);
+  overflow-x: hidden;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.logo span {
+  white-space: nowrap;
 }
 
 .nav-link {
-    font-weight: 600;
-    color: #64748b;
-    padding: 0.6rem 1.2rem !important;
-    border-radius: 12px;
-    transition: all 0.2s;
-    text-decoration: none;
+  font-weight: 600;
+  color: #64748b;
+  padding: 0.6rem 1.2rem !important;
+  border-radius: 12px;
+  transition: all 0.2s;
+  text-decoration: none;
 }
 
-.nav-link:hover, 
+.nav-link:hover,
 .nav-link.active {
-    background: #f1f5f9;
-    color: var(--teacher-primary);
+  background: #f1f5f9;
+  color: var(--teacher-primary);
 }
 
 .avatar-circle {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    border: 2px solid white;
-    box-shadow: var(--shadow-sm);
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-light {
-    background-color: #f8f9fa;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s;
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
 }
 
 .btn-light:hover {
-    background-color: #e9ecef;
+  background-color: #e9ecef;
 }
 
 .btn-light i {
-    color: #64748b;
-    font-size: 1rem;
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Header logout button */
+.user-actions .btn-logout {
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  border-width: 1px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.user-actions .btn-logout i {
+  font-size: 0.85rem;
+}
+
+.user-actions .btn-logout:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -6px rgba(239, 68, 68, 0.6);
 }
 
 .bg-primary {
-    background-color: var(--primary) !important;
+  background-color: var(--primary) !important;
 }
 
 .bg-primary i {
-    color: white;
-    font-size: 1.25rem;
+  color: white;
+  font-size: 1.25rem;
+}
+
+/* Mobile menu toggle */
+.menu-toggle {
+  border: none;
+  background: transparent;
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  padding: 0.25rem;
+}
+
+.menu-bar {
+  width: 20px;
+  height: 2px;
+  background-color: #0f172a;
+  border-radius: 999px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* Animate hamburger into X when open */
+.menu-toggle.is-open .menu-bar:nth-child(1) {
+  transform: translateY(6px) rotate(45deg);
+}
+
+.menu-toggle.is-open .menu-bar:nth-child(2) {
+  opacity: 0;
+}
+
+.menu-toggle.is-open .menu-bar:nth-child(3) {
+  transform: translateY(-6px) rotate(-45deg);
+}
+
+/* Mobile layout */
+@media (max-width: 768px) {
+  .header-inner {
+    gap: 0.5rem;
+    padding-inline: 0.75rem;
+  }
+
+  .logo span {
+    font-size: 0.95rem;
+  }
+
+  .nav-links {
+    display: none !important;
+  }
+
+  .user-actions {
+    display: none !important;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+  }
+
+  .mobile-menu {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.5rem 1rem 0.75rem;
+    border-top: 1px solid #e2e8f0;
+    background-color: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 8px 20px -12px rgba(15, 23, 42, 0.25);
+  }
+
+  .mobile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .mobile-links .nav-link {
+    display: block;
+    padding: 0.5rem 0.75rem !important;
+    border-radius: 8px;
+    text-align: left;
+  }
+
+  .mobile-user {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .mobile-user-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .mobile-user .avatar-circle {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Extra-small devices (e.g. iPhone SE) */
+@media (max-width: 375px) {
+  .main-header {
+    padding: 0.5rem 0;
+  }
+
+  .logo span {
+    font-size: 0.8rem;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mobile-menu {
+    padding-inline: 0.75rem;
+  }
 }

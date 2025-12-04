@@ -21,6 +21,9 @@ export class AppHeaderComponent {
 
   private authService = inject(AuthService);
 
+  // Mobile navigation state
+  isMobileMenuOpen = signal(false);
+
   userAvatar = computed(() => {
     const user = this.authService.currentUser();
     if (user?.Name) {
@@ -38,5 +41,9 @@ export class AppHeaderComponent {
 
   logout() {
     this.authService.logout();
+  }
+
+  toggleMobileMenu(): void {
+    this.isMobileMenuOpen.set(!this.isMobileMenuOpen());
   }
 }

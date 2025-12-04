@@ -22,7 +22,7 @@ export class TeacherLayoutComponent {
   teacherNavLinks: NavLink[] = [
     { path: '/teacher/dashboard', label: 'Home', exact: true },
     { path: '/teacher/hub', label: 'Teacher Hub' },
-    { path: '/teacher/subject-portals', label: 'Subject Portals' },
+    { path: '/teacher/student-portfolio-hub', label: 'Student Portfolio Hub' },
     { path: '/teacher/learning-vault', label: 'Learning Vault' },
     { path: '/teacher/cpd', label: 'My CPD & Badges' },
   ];

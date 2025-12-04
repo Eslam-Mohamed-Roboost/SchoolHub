@@ -1,7 +1,7 @@
 <nav class="main-header">
-  <div class="container d-flex justify-content-between align-items-center">
+  <div class="header-inner container">
     <!-- Logo -->
-    <div class="d-flex align-items-center gap-3">
+    <div class="logo d-flex align-items-center gap-3">
       <div
         class="bg-primary text-white p-2 rounded-3 d-flex align-items-center justify-content-center"
         style="width: 40px; height: 40px"
@@ -11,8 +11,23 @@
       <span class="fw-bold fs-5 text-dark">Digital Hub</span>
     </div>
 
+    <!-- Mobile menu toggle -->
+    <button
+      class="menu-toggle d-md-none"
+      type="button"
+      (click)="toggleMobileMenu()"
+      [attr.aria-expanded]="isMobileMenuOpen()"
+      aria-controls="main-nav"
+      aria-label="Toggle navigation"
+      [class.is-open]="isMobileMenuOpen()"
+    >
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+      <span class="menu-bar"></span>
+    </button>
+
     <!-- Navigation Links -->
-    <div class="d-flex gap-1">
+    <div id="main-nav" class="nav-links d-flex gap-1">
       @for (link of navLinks; track link.path) {
       <a
         [routerLink]="link.path"
@@ -26,7 +41,7 @@
     </div>
 
     <!-- User Actions -->
-    <div class="d-flex align-items-center gap-3">
+    <div class="user-actions d-flex align-items-center gap-3">
       <button class="btn btn-light rounded-circle p-2" title="Search">
         <i class="fas fa-search"></i>
       </button>
@@ -36,7 +51,7 @@
       <div class="d-flex align-items-center gap-2">
         <span class="text-dark fw-medium">{{ userName() }}</span>
         <button
-          class="btn btn-outline-danger btn-sm"
+          class="btn btn-outline-danger btn-sm btn-logout"
           (click)="logout()"
           title="Logout">
           <i class="fas fa-sign-out-alt"></i>
@@ -55,4 +70,42 @@
       />
     </div>
   </div>
+
+  <!-- Mobile menu content -->
+  @if (isMobileMenuOpen()) {
+    <div class="mobile-menu d-md-none">
+      <div class="mobile-links">
+        @for (link of navLinks; track link.path) {
+          <a
+            [routerLink]="link.path"
+            routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: link.exact || false }"
+            class="nav-link"
+            (click)="toggleMobileMenu()"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </div>
+
+      <div class="mobile-user">
+        <div class="mobile-user-info">
+          <img
+            [src]="userAvatar()"
+            class="avatar-circle"
+            [alt]="userName()"
+          />
+          <span class="text-dark fw-medium">{{ userName() }}</span>
+        </div>
+        <button
+          class="btn btn-outline-danger btn-sm btn-logout"
+          (click)="logout()"
+          title="Logout"
+        >
+          <i class="fas fa-sign-out-alt"></i>
+          Logout
+        </button>
+      </div>
+    </div>
+  }
 </nav>

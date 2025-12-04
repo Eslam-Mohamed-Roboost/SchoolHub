@@ -37,8 +37,11 @@ interface Subject {
       <div class="container mb-5">
         <div class="d-flex justify-content-between align-items-end mb-4">
           <div>
-            <h2 class="fw-bold mb-1">Subject Portals</h2>
-            <p class="text-muted mb-0">Select a subject to access specialized resources</p>
+            <h2 class="fw-bold mb-1">Student Portfolio Hub</h2>
+            <p class="text-muted mb-0">
+              Access and review your students' digital portfolios, provide feedback, and track
+              their learning journey
+            </p>
           </div>
         </div>
 
@@ -46,7 +49,7 @@ interface Subject {
           @for (subject of subjects; track subject.id) {
           <div class="col-md-3 col-sm-6">
             <a
-              [routerLink]="['/teacher/subjects', subject.id]"
+              [routerLink]="['/teacher/student-portfolio-hub', subject.id]"
               class="hover-card subject-tile animate__animated animate__fadeInUp"
               style="text-decoration: none; display: block"
             >
@@ -72,7 +75,7 @@ export class TeacherDashboardComponent {
   subjects: Subject[] = [
     {
       id: 'math',
-      name: 'Mathematics',
+      name: 'Math Hub',
       icon: 'fas fa-calculator',
       color: '#6366f1',
       bgColor: '#e0e7ff',
@@ -80,7 +83,7 @@ export class TeacherDashboardComponent {
     },
     {
       id: 'science',
-      name: 'Science',
+      name: 'Science Hub',
       icon: 'fas fa-flask',
       color: '#10b981',
       bgColor: '#d1fae5',
@@ -88,7 +91,7 @@ export class TeacherDashboardComponent {
     },
     {
       id: 'english',
-      name: 'English Language Arts',
+      name: 'ELA Hub',
       icon: 'fas fa-book-open',
       color: '#f59e0b',
       bgColor: '#fef3c7',
@@ -96,7 +99,7 @@ export class TeacherDashboardComponent {
     },
     {
       id: 'arabic',
-      name: 'Arabic Language',
+      name: 'Arabic Hub',
       icon: 'fas fa-pen-nib',
       color: '#ec4899',
       bgColor: '#fce7f3',
@@ -104,7 +107,7 @@ export class TeacherDashboardComponent {
     },
     {
       id: 'islamic',
-      name: 'Islamic Studies',
+      name: 'Islamic Studies Hub',
       icon: 'fas fa-mosque',
       color: '#059669',
       bgColor: '#d1fae5',
@@ -112,7 +115,7 @@ export class TeacherDashboardComponent {
     },
     {
       id: 'social',
-      name: 'Social Studies',
+      name: 'Social Studies Hub',
       icon: 'fas fa-globe-americas',
       color: '#d97706',
       bgColor: '#fef3c7',
@@ -120,7 +123,7 @@ export class TeacherDashboardComponent {
     },
     {
       id: 'pe',
-      name: 'Physical Education',
+      name: 'PE Hub',
       icon: 'fas fa-running',
       color: '#ef4444',
       bgColor: '#fee2e2',
@@ -128,7 +131,7 @@ export class TeacherDashboardComponent {
     },
     {
       id: 'arts',
-      name: 'Arts',
+      name: 'Arts Hub',
       icon: 'fas fa-palette',
       color: '#8b5cf6',
       bgColor: '#ede9fe',

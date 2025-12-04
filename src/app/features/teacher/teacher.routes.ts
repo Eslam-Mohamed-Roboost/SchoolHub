@@ -16,7 +16,7 @@ export const TEACHER_ROUTES: Routes = [
       { path: 'hub', component: TeacherHubComponent },
       { path: 'learning-vault', component: LearningVaultComponent },
       { path: 'cpd', component: TeacherCpdComponent },
-      { path: 'subject-portals', component: SubjectPortalComponent },
+      { path: 'student-portfolio-hub', component: SubjectPortalComponent },
       // Keep home route for backward compatibility
       { path: 'home', component: TeacherDashboardComponent },
     ],
