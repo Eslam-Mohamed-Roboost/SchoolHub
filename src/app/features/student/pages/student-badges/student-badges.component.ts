@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { StudentPortfolioService } from '../../services/student-portfolio.service';
 
 @Component({
   selector: 'app-student-badges',
@@ -68,6 +69,37 @@ import { CommonModule } from '@angular/common';
                 } @else {
                 <span class="locked-tag">NOT EARNED</span>
                 <span class="requirement">{{ badge.requirement }}</span>
+                }
+              </div>
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <!-- Portfolio Badges Section -->
+      <div class="gallery-section mt-4">
+        <h3 class="mb-3"><i class="fas fa-folder-open text-info me-2"></i>Portfolio Badges</h3>
+        <div class="badges-grid">
+          @for (badge of portfolioBadges; track badge.id) {
+          <div class="badge-card" [class.locked]="!badge.earnedDate">
+            <div class="badge-visual">
+              <span class="badge-emoji"
+                ><i [class]="badge.icon" [style.color]="badge.color"></i
+              ></span>
+              @if (!badge.earnedDate) {
+              <div class="lock-overlay">🔒</div>
+              }
+            </div>
+            <div class="badge-info">
+              <h3>{{ badge.name }}</h3>
+              <div class="badge-status">
+                @if (badge.earnedDate) {
+                <span class="earned-tag">✅ EARNED</span>
+                <span class="earn-date">{{ formatDate(badge.earnedDate) }}</span>
+                } @else {
+                <span class="locked-tag">NOT EARNED</span>
+                <span class="requirement">{{ badge.description }}</span>
                 }
               </div>
             </div>
@@ -391,7 +423,10 @@ import { CommonModule } from '@angular/common';
     `,
   ],
 })
-export class StudentBadgesComponent {
+export class StudentBadgesComponent implements OnInit {
+  private portfolioService = inject(StudentPortfolioService);
+
+  portfolioBadges: any[] = [];
   badges = [
     {
       id: 1,
@@ -458,4 +493,13 @@ export class StudentBadgesComponent {
       requirement: 'Complete Mission 8',
     },
   ];
+
+  ngOnInit(): void {
+    this.portfolioBadges = this.portfolioService.getAvailableBadges();
+  }
+
+  formatDate(date: Date): string {
+    const d = new Date(date);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
 }
