@@ -1,16 +1,160 @@
 import { Injectable, signal } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { BadgeSubmission, Badge, BadgeStatus } from '../models/admin.models';
 import { ApplicationRole } from '../../../core/enums/application-role.enum';
+import { BaseHttpService } from '../../../core/services/base-http.service';
+import { Admin_API_ENDPOINTS } from '../../../config/AdminConfig/AdminEndpoint';
+
+// API Response wrapper
+interface ApiResponse<T> {
+  Data: T;
+  IsSuccess: boolean;
+  Message: string;
+  ErrorCode: string;
+  IsAuthorized: boolean;
+}
+
+// API DTOs (matches backend)
+interface BadgeDto {
+  Id: number;
+  Name: string;
+  Description: string | null;
+  Icon: string | null;
+  Color: string | null;
+  Category: number;
+  CategoryName: string;
+  TargetRole: number;
+  TargetRoleName: string;
+  CpdHours: number | null;
+  IsActive: boolean;
+  EarnedCount: number;
+}
+
+interface BadgeSubmissionDto {
+  Id: number;
+  UserId: number;
+  UserName: string;
+  UserRole: number;
+  UserAvatar: string | null;
+  BadgeId: number;
+  BadgeName: string;
+  BadgeIcon: string;
+  BadgeCategory: string;
+  CpdHours: number | null;
+  EvidenceLink: string | null;
+  SubmitterNotes: string | null;
+  SubmissionDate: string;
+  Status: string;
+  ReviewedBy: number | null;
+  ReviewDate: string | null;
+  ReviewNotes: string | null;
+}
+
+interface BadgeStatisticsDto {
+  Total: number;
+  Approved: number;
+  Rejected: number;
+  Pending: number;
+  ApprovalRate: number;
+  RejectionRate: number;
+  ByCategory: { Category: string; Count: number }[];
+}
+
+interface PaginatedResponse<T> {
+  PageSize: number;
+  PageIndex: number;
+  Records: number;
+  Pages: number;
+  Items: T[];
+}
 
 @Injectable({
   providedIn: 'root',
 })
-export class BadgeService {
-  private submissions = signal<BadgeSubmission[]>(this.generateMockSubmissions());
-  private badges = signal<Badge[]>(this.generateMockBadges());
+export class BadgeService extends BaseHttpService {
+  private submissions = signal<BadgeSubmission[]>([]);
+  private badges = signal<Badge[]>([]);
+  private statistics = signal<BadgeStatisticsDto | null>(null);
+  private isLoaded = signal(false);
+
+  constructor() {
+    super();
+  }
+
+  // ============================================
+  // INITIALIZATION
+  // ============================================
+
+  init(): void {
+    this.loadBadges();
+    this.loadSubmissions();
+    this.loadStatistics();
+  }
+
+  // ============================================
+  // LOAD DATA FROM API
+  // ============================================
+
+  loadBadges(): void {
+    this.get<ApiResponse<PaginatedResponse<BadgeDto>>>(
+      `${Admin_API_ENDPOINTS.Badges.GET_ALL}?page=1&pageSize=100`
+    ).subscribe({
+      next: (response) => {
+        if (response.IsSuccess && response.Data?.Items) {
+          this.badges.set(response.Data.Items.map((b) => this.mapBadgeDto(b)));
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load badges, using mock data', err);
+        this.badges.set(this.generateMockBadges());
+      },
+    });
+  }
+
+  loadSubmissions(): void {
+    this.get<ApiResponse<PaginatedResponse<BadgeSubmissionDto>>>(
+      `${Admin_API_ENDPOINTS.BadgeSubmissions.GET_ALL}?pageIndex=1&pageSize=100`
+    ).subscribe({
+      next: (response) => {
+        if (response.IsSuccess && response.Data?.Items) {
+          const mappedSubmissions = response.Data.Items.map((s) => this.mapSubmissionDto(s));
+          this.submissions.set(mappedSubmissions);
+        }
+        this.isLoaded.set(true);
+      },
+      error: (err) => {
+        console.error('Failed to load submissions, using mock data', err);
+        this.submissions.set(this.generateMockSubmissions());
+        this.isLoaded.set(true);
+      },
+    });
+  }
+
+  loadStatistics(): void {
+    this.get<ApiResponse<BadgeStatisticsDto>>(Admin_API_ENDPOINTS.BadgeStatistics).subscribe({
+      next: (response) => {
+        if (response.IsSuccess && response.Data) {
+          this.statistics.set(response.Data);
+        }
+      },
+      error: (err) => console.error('Failed to load badge statistics', err),
+    });
+  }
+
+  // ============================================
+  // GETTERS
+  // ============================================
 
   getSubmissions() {
     return this.submissions.asReadonly();
+  }
+
+  getBadges() {
+    return this.badges.asReadonly();
+  }
+
+  getStatistics() {
+    return this.statistics.asReadonly();
   }
 
   getPendingSubmissions(): BadgeSubmission[] {
@@ -29,62 +173,91 @@ export class BadgeService {
     );
   }
 
-  approveSubmission(id: string, reviewedBy: string, notes?: string): BadgeSubmission | null {
-    const index = this.submissions().findIndex((s) => s.id === id);
-    if (index === -1) return null;
-
-    const updated = [...this.submissions()];
-    updated[index] = {
-      ...updated[index],
-      status: 'Approved' as BadgeStatus,
-      reviewedBy,
-      reviewDate: new Date(),
-      reviewNotes: notes,
-    };
-    this.submissions.set(updated);
-    return updated[index];
-  }
-
-  rejectSubmission(id: string, reviewedBy: string, notes: string): BadgeSubmission | null {
-    const index = this.submissions().findIndex((s) => s.id === id);
-    if (index === -1) return null;
-
-    const updated = [...this.submissions()];
-    updated[index] = {
-      ...updated[index],
-      status: 'Rejected' as BadgeStatus,
-      reviewedBy,
-      reviewDate: new Date(),
-      reviewNotes: notes,
-    };
-    this.submissions.set(updated);
-    return updated[index];
-  }
-
   getSubmissionById(id: string): BadgeSubmission | undefined {
     return this.submissions().find((s) => s.id === id);
   }
 
-  filterSubmissions(
-    dateFrom?: Date,
-    dateTo?: Date,
-    status?: BadgeStatus,
-    category?: string,
-    userType?: ApplicationRole
-  ): BadgeSubmission[] {
-    return this.submissions().filter((submission) => {
-      const matchesDate =
-        (!dateFrom || submission.submissionDate >= dateFrom) &&
-        (!dateTo || submission.submissionDate <= dateTo);
-      const matchesStatus = !status || submission.status === status;
-      const matchesCategory = !category || submission.badgeCategory === category;
-      const matchesUserType = !userType || submission.userRole === userType;
+  // ============================================
+  // ACTIONS - API CALLS
+  // ============================================
 
-      return matchesDate && matchesStatus && matchesCategory && matchesUserType;
-    });
+  approveSubmission(id: string, reviewedBy: number, notes?: string): Observable<boolean> {
+    return this.post<{ ReviewedBy: number; ReviewNotes?: string }, ApiResponse<boolean>>(
+      Admin_API_ENDPOINTS.BadgeSubmissions.APPROVE(id),
+      { ReviewedBy: reviewedBy, ReviewNotes: notes }
+    ).pipe(
+      map((response) => {
+        if (response.IsSuccess) {
+          // Update local state
+          this.submissions.update((subs) =>
+            subs.map((s) =>
+              s.id === id
+                ? {
+                    ...s,
+                    status: 'Approved' as BadgeStatus,
+                    reviewedBy: String(reviewedBy),
+                    reviewNotes: notes,
+                  }
+                : s
+            )
+          );
+        }
+        return response.IsSuccess;
+      })
+    );
   }
 
-  getBadgeStatistics() {
+  rejectSubmission(id: string, reviewedBy: number, notes: string): Observable<boolean> {
+    return this.post<{ ReviewedBy: number; ReviewNotes: string }, ApiResponse<boolean>>(
+      Admin_API_ENDPOINTS.BadgeSubmissions.REJECT(id),
+      { ReviewedBy: reviewedBy, ReviewNotes: notes }
+    ).pipe(
+      map((response) => {
+        if (response.IsSuccess) {
+          // Update local state
+          this.submissions.update((subs) =>
+            subs.map((s) =>
+              s.id === id
+                ? {
+                    ...s,
+                    status: 'Rejected' as BadgeStatus,
+                    reviewedBy: String(reviewedBy),
+                    reviewNotes: notes,
+                  }
+                : s
+            )
+          );
+        }
+        return response.IsSuccess;
+      })
+    );
+  }
+
+  // ============================================
+  // STATISTICS
+  // ============================================
+
+  getBadgeStatistics(): {
+    total: number;
+    approved: number;
+    rejected: number;
+    pending: number;
+    approvalRate: number;
+    rejectionRate: number;
+  } {
+    const stats = this.statistics();
+    if (stats) {
+      return {
+        total: stats.Total,
+        approved: stats.Approved,
+        rejected: stats.Rejected,
+        pending: stats.Pending,
+        approvalRate: stats.ApprovalRate,
+        rejectionRate: stats.RejectionRate,
+      };
+    }
+
+    // Fallback to local calculation
     const submissions = this.submissions();
     const total = submissions.length;
     const approved = submissions.filter((s) => s.status === 'Approved').length;
@@ -102,6 +275,12 @@ export class BadgeService {
   }
 
   getBadgesByCategory(): { category: string; count: number }[] {
+    const stats = this.statistics();
+    if (stats?.ByCategory) {
+      return stats.ByCategory.map((c) => ({ category: c.Category, count: c.Count }));
+    }
+
+    // Fallback to local calculation from submissions
     const submissions = this.submissions();
     const categoryMap = new Map<string, number>();
 
@@ -113,6 +292,47 @@ export class BadgeService {
       .map(([category, count]) => ({ category, count }))
       .sort((a, b) => b.count - a.count);
   }
+
+  // ============================================
+  // MAPPERS
+  // ============================================
+
+  private mapBadgeDto(dto: BadgeDto): Badge {
+    return {
+      id: String(dto.Id),
+      name: dto.Name,
+      category: dto.CategoryName,
+      icon: dto.Icon ?? '🏆',
+      cpdHours: dto.CpdHours ?? undefined,
+      description: dto.Description ?? '',
+    };
+  }
+
+  private mapSubmissionDto(dto: BadgeSubmissionDto): BadgeSubmission {
+    return {
+      id: String(dto.Id),
+      userId: String(dto.UserId),
+      userName: dto.UserName,
+      userRole: dto.UserRole as ApplicationRole,
+      userAvatar: dto.UserAvatar ?? undefined,
+      badgeId: String(dto.BadgeId),
+      badgeName: dto.BadgeName,
+      badgeIcon: dto.BadgeIcon,
+      badgeCategory: dto.BadgeCategory,
+      cpdHours: dto.CpdHours ?? undefined,
+      evidenceLink: dto.EvidenceLink ?? '',
+      submitterNotes: dto.SubmitterNotes ?? undefined,
+      submissionDate: new Date(dto.SubmissionDate),
+      status: dto.Status as BadgeStatus,
+      reviewedBy: dto.ReviewedBy ? String(dto.ReviewedBy) : undefined,
+      reviewDate: dto.ReviewDate ? new Date(dto.ReviewDate) : undefined,
+      reviewNotes: dto.ReviewNotes ?? undefined,
+    };
+  }
+
+  // ============================================
+  // MOCK DATA (Fallback)
+  // ============================================
 
   private generateMockBadges(): Badge[] {
     return [
@@ -156,28 +376,6 @@ export class BadgeService {
         cpdHours: 3,
         description: 'Advanced Microsoft Teams skills',
       },
-      {
-        id: 'badge-6',
-        name: 'OneNote Master',
-        category: 'Microsoft 365',
-        icon: '📓',
-        cpdHours: 2,
-        description: 'Digital notebook mastery',
-      },
-      {
-        id: 'badge-7',
-        name: 'Digital Citizen',
-        category: 'Digital Citizenship',
-        icon: '🌐',
-        description: 'Complete digital citizenship course',
-      },
-      {
-        id: 'badge-8',
-        name: 'Online Safety',
-        category: 'Digital Citizenship',
-        icon: '🛡️',
-        description: 'Understand online safety',
-      },
     ];
   }
 
@@ -186,35 +384,26 @@ export class BadgeService {
     const badges = this.generateMockBadges();
     const statuses: BadgeStatus[] = ['Pending', 'Approved', 'Rejected'];
 
-    // Generate 127 mock submissions
-    for (let i = 1; i <= 127; i++) {
+    for (let i = 1; i <= 10; i++) {
       const badge = badges[Math.floor(Math.random() * badges.length)];
-      const isTeacher = i <= 85;
-      const status = i <= 5 ? 'Pending' : statuses[Math.floor(Math.random() * statuses.length)];
+      const isTeacher = i <= 7;
+      const status = i <= 3 ? 'Pending' : statuses[Math.floor(Math.random() * statuses.length)];
 
       submissions.push({
         id: `submission-${i}`,
-        userId: isTeacher ? `teacher-${Math.floor(i / 2) + 1}` : `student-${i - 85}`,
-        userName: isTeacher ? `Teacher ${Math.floor(i / 2) + 1}` : `Student ${i - 85}`,
+        userId: isTeacher ? `teacher-${i}` : `student-${i}`,
+        userName: isTeacher ? `Teacher ${i}` : `Student ${i}`,
         userRole: isTeacher ? ApplicationRole.Teacher : ApplicationRole.Student,
-        userAvatar: `https://ui-avatars.com/api/?name=${isTeacher ? 'Teacher' : 'Student'}+${
-          isTeacher ? Math.floor(i / 2) + 1 : i - 85
-        }&background=random`,
         badgeId: badge.id,
         badgeName: badge.name,
         badgeIcon: badge.icon,
         badgeCategory: badge.category,
         cpdHours: isTeacher ? badge.cpdHours : undefined,
         evidenceLink: `https://example.com/evidence/${i}`,
-        submitterNotes: i % 3 === 0 ? 'Completed with excellent results' : undefined,
-        submissionDate: new Date(Date.now() - Math.random() * 60 * 24 * 60 * 60 * 1000),
+        submissionDate: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
         status,
-        reviewedBy: status !== 'Pending' ? 'Rahmah' : undefined,
-        reviewDate:
-          status !== 'Pending'
-            ? new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000)
-            : undefined,
-        reviewNotes: status === 'Rejected' ? 'Please provide more detailed evidence' : undefined,
+        reviewedBy: status !== 'Pending' ? '1' : undefined,
+        reviewDate: status !== 'Pending' ? new Date() : undefined,
       });
     }
 

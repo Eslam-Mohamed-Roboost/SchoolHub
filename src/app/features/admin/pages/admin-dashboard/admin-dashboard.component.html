@@ -1,3 +1,9 @@
+@if (isLoading()) {
+<div class="loading-container">
+  <div class="loading-spinner"></div>
+  <p class="loading-text">Loading dashboard data...</p>
+</div>
+} @else {
 <div class="admin-dashboard">
   <div class="dashboard-header">
     <div class="welcome-section">
@@ -53,17 +59,17 @@
 
     <!-- Portfolio Completion by Class -->
     <div class="portfolio-completion-grid">
-      @for (classStats of portfolioStats().byClass; track classStats.className) {
+      @for (classStats of portfolioStats()?.ByClass ?? []; track classStats.ClassName) {
       <div class="completion-card">
         <div class="completion-header">
-          <h4>{{ classStats.className }}</h4>
-          <span class="completion-rate">{{ classStats.completionRate }}%</span>
+          <h4>{{ classStats.ClassName }}</h4>
+          <span class="completion-rate">{{ classStats.CompletionRate }}%</span>
         </div>
         <div class="progress-bar-container">
-          <div class="progress-bar" [style.width.%]="classStats.completionRate"></div>
+          <div class="progress-bar" [style.width.%]="classStats.CompletionRate"></div>
         </div>
         <div class="completion-meta">
-          {{ classStats.activePortfolios }}/{{ classStats.totalStudents }} students
+          {{ classStats.ActivePortfolios }}/{{ classStats.TotalStudents }} students
         </div>
       </div>
       }
@@ -73,19 +79,19 @@
     <div class="recent-updates">
       <h3>Recent Portfolio Activity</h3>
       <div class="updates-list">
-        @for (update of portfolioStats().recentUpdates; track update.studentId) {
+        @for (update of portfolioStats()?.RecentUpdates ?? []; track update.StudentId) {
         <div class="update-item">
           <span class="update-icon">
-            @if (update.updateType === 'upload') { 📤 } @if (update.updateType === 'reflection') {
-            ✍️ } @if (update.updateType === 'feedback') { 💬 }
+            @if (update.UpdateType === 'upload') { 📤 } @if (update.UpdateType === 'reflection') {
+            ✍️ } @if (update.UpdateType === 'feedback') { 💬 }
           </span>
           <div class="update-info">
             <div class="update-text">
-              <strong>{{ update.studentName }}</strong>
-              ({{ update.className }}) {{ update.updateType }} {{ update.itemCount }} item(s) in
-              {{ update.subject }}
+              <strong>{{ update.StudentName }}</strong>
+              ({{ update.ClassName }}) {{ update.UpdateType }} {{ update.ItemCount }} item(s) in
+              {{ update.Subject }}
             </div>
-            <div class="update-time">{{ formatTimeAgo(update.timestamp) }}</div>
+            <div class="update-time">{{ formatTimeAgo(update.Timestamp) }}</div>
           </div>
         </div>
         }
@@ -105,7 +111,7 @@
           (change)="selectSubject($any($event.target).value)"
           class="subject-select"
         >
-          @for (subject of availableSubjects; track subject) {
+          @for (subject of availableSubjects(); track subject) {
           <option [value]="subject">{{ subject }}</option>
           }
         </select>
@@ -117,28 +123,28 @@
       <div class="analytics-card">
         <div class="card-icon">👥</div>
         <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics().teacherCount }}</div>
+          <div class="card-value">{{ subjectAnalytics()?.teacherCount ?? 0 }}</div>
           <div class="card-label">Teachers</div>
         </div>
       </div>
       <div class="analytics-card">
         <div class="card-icon">🎓</div>
         <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics().studentCount }}</div>
+          <div class="card-value">{{ subjectAnalytics()?.studentCount ?? 0 }}</div>
           <div class="card-label">Students</div>
         </div>
       </div>
       <div class="analytics-card">
         <div class="card-icon">📁</div>
         <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics().portfolioCompletionRate }}%</div>
+          <div class="card-value">{{ subjectAnalytics()?.portfolioCompletionRate ?? 0 }}%</div>
           <div class="card-label">Portfolio Completion</div>
         </div>
       </div>
       <div class="analytics-card">
         <div class="card-icon">🏆</div>
         <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics().cpdBadgeCompletionRate }}%</div>
+          <div class="card-value">{{ subjectAnalytics()?.cpdBadgeCompletionRate ?? 0 }}%</div>
           <div class="card-label">CPD Completion</div>
         </div>
       </div>
@@ -158,7 +164,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (teacher of subjectAnalytics().topTeachers; track teacher.teacherName) {
+          @for (teacher of subjectAnalytics()?.topTeachers ?? []; track teacher.teacherName) {
           <tr>
             <td>{{ teacher.teacherName }}</td>
             <td>{{ teacher.subject }}</td>
@@ -188,21 +194,21 @@
       <div class="evidence-stat-card">
         <div class="stat-icon">📦</div>
         <div class="stat-details">
-          <div class="stat-value">{{ evidenceStats().totalEvidenceItems }}</div>
+          <div class="stat-value">{{ evidenceStats()?.totalEvidenceItems ?? 0 }}</div>
           <div class="stat-label">Total Evidence Items</div>
         </div>
       </div>
       <div class="evidence-stat-card">
         <div class="stat-icon">📅</div>
         <div class="stat-details">
-          <div class="stat-value">{{ evidenceStats().thisMonth }}</div>
+          <div class="stat-value">{{ evidenceStats()?.thisMonth ?? 0 }}</div>
           <div class="stat-label">Collected This Month</div>
         </div>
       </div>
       <div class="evidence-stat-card">
         <div class="stat-icon">⏳</div>
         <div class="stat-details">
-          <div class="stat-value">{{ evidenceStats().pendingReview }}</div>
+          <div class="stat-value">{{ evidenceStats()?.pendingReview ?? 0 }}</div>
           <div class="stat-label">Pending Review</div>
         </div>
       </div>
@@ -215,15 +221,15 @@
         <div class="export-breakdown">
           <div class="breakdown-item">
             <span class="breakdown-label">Student Portfolios:</span>
-            <span class="breakdown-value">{{ evidenceStats().byType.portfolios }}</span>
+            <span class="breakdown-value">{{ evidenceStats()?.byType?.portfolios ?? 0 }}</span>
           </div>
           <div class="breakdown-item">
             <span class="breakdown-label">Teacher CPD:</span>
-            <span class="breakdown-value">{{ evidenceStats().byType.cpd }}</span>
+            <span class="breakdown-value">{{ evidenceStats()?.byType?.cpd ?? 0 }}</span>
           </div>
           <div class="breakdown-item">
             <span class="breakdown-label">Badge Submissions:</span>
-            <span class="breakdown-value">{{ evidenceStats().byType.badges }}</span>
+            <span class="breakdown-value">{{ evidenceStats()?.byType?.badges ?? 0 }}</span>
           </div>
         </div>
         <button class="export-btn" (click)="downloadEvidence()">
@@ -314,3 +320,4 @@
     </div>
   </div>
 </div>
+}

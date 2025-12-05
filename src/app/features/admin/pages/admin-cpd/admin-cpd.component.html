@@ -19,12 +19,13 @@
   </div>
 
   <!-- Summary Stats -->
+  @if (cpdStats(); as stats) {
   <div class="stats-section">
     <div class="stat-card">
       <div class="stat-icon">👥</div>
       <div class="stat-content">
         <div class="stat-label">Total Teachers</div>
-        <div class="stat-value">{{ cpdStats().totalTeachers }}</div>
+        <div class="stat-value">{{ stats.totalTeachers }}</div>
       </div>
     </div>
 
@@ -32,8 +33,8 @@
       <div class="stat-icon">✅</div>
       <div class="stat-content">
         <div class="stat-label">Active Teachers</div>
-        <div class="stat-value">{{ cpdStats().activeTeachers }}</div>
-        <div class="stat-sublabel">{{ ((cpdStats().activeTeachers / cpdStats().totalTeachers) * 100).toFixed(0) }}% participation</div>
+        <div class="stat-value">{{ stats.activeTeachers }}</div>
+        <div class="stat-sublabel">{{ stats.totalTeachers > 0 ? ((stats.activeTeachers / stats.totalTeachers) * 100).toFixed(0) : 0 }}% participation</div>
       </div>
     </div>
 
@@ -41,7 +42,7 @@
       <div class="stat-icon">📚</div>
       <div class="stat-content">
         <div class="stat-label">Total CPD Hours</div>
-        <div class="stat-value">{{ cpdStats().totalCPDHours }}</div>
+        <div class="stat-value">{{ stats.totalCPDHours }}</div>
       </div>
     </div>
 
@@ -49,7 +50,7 @@
       <div class="stat-icon">📊</div>
       <div class="stat-content">
         <div class="stat-label">Average Hours</div>
-        <div class="stat-value">{{ cpdStats().averageHoursPerTeacher }}</div>
+        <div class="stat-value">{{ stats.averageHoursPerTeacher }}</div>
         <div class="stat-sublabel">per teacher</div>
       </div>
     </div>
@@ -58,11 +59,16 @@
       <div class="stat-icon">🏆</div>
       <div class="stat-content">
         <div class="stat-label">Top Performer</div>
-        <div class="stat-value-sm">{{ cpdStats().topPerformer }}</div>
-        <div class="stat-sublabel">{{ cpdStats().topPerformerHours }} CPD hours</div>
+        <div class="stat-value-sm">{{ stats.topPerformer }}</div>
+        <div class="stat-sublabel">{{ stats.topPerformerHours }} CPD hours</div>
       </div>
     </div>
   </div>
+  } @else {
+  <div class="stats-section loading">
+    <p>Loading CPD statistics...</p>
+  </div>
+  }
 
   <!-- Charts Section -->
   <div class="charts-section">

@@ -1,4 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { Observable, map, catchError, of } from 'rxjs';
+import { BaseHttpService } from '../../../core/services/base-http.service';
+import { Admin_API_ENDPOINTS } from '../../../config/AdminConfig/AdminEndpoint';
 import {
   PortfolioCompletionStats,
   ClassPortfolioStats,
@@ -7,207 +10,286 @@ import {
   EvidenceCollectionStats,
 } from '../models/admin-analytics.model';
 
+// API Response interfaces
+interface PortfolioCompletionApiResponse {
+  TotalStudents: number;
+  ActivePortfolios: number;
+  CompletionRate: number;
+  ByClass: ClassPortfolioStats[];
+  BySubject: SubjectPortfolioStats[];
+  RecentUpdates: PortfolioUpdateApiResponse[];
+}
+
+interface PortfolioUpdateApiResponse {
+  studentId: string;
+  studentName: string;
+  className: string;
+  subject: string;
+  updateType: 'upload' | 'reflection' | 'feedback';
+  timestamp: string;
+  itemCount: number;
+}
+
 @Injectable({
   providedIn: 'root',
 })
-export class AdminPortfolioAnalyticsService {
-  // Mock data - replace with API calls in production
-  private mockClassStats: ClassPortfolioStats[] = [
-    {
-      className: 'Grade 6A',
-      grade: 6,
-      totalStudents: 25,
-      activePortfolios: 20,
-      completionRate: 80,
-    },
-    {
-      className: 'Grade 6B',
-      grade: 6,
-      totalStudents: 25,
-      activePortfolios: 15,
-      completionRate: 60,
-    },
-    {
-      className: 'Grade 7A',
-      grade: 7,
-      totalStudents: 25,
-      activePortfolios: 25,
-      completionRate: 100,
-    },
-    {
-      className: 'Grade 7B',
-      grade: 7,
-      totalStudents: 24,
-      activePortfolios: 18,
-      completionRate: 75,
-    },
-  ];
+export class AdminPortfolioAnalyticsService extends BaseHttpService {
+  private completionStats = signal<PortfolioCompletionStats | null>(null);
+  private evidenceStats = signal<EvidenceCollectionStats | null>(null);
+  private isLoading = signal(false);
 
-  private mockSubjectStats: SubjectPortfolioStats[] = [
-    {
-      subjectName: 'English Language Arts',
-      totalSubmissions: 156,
-      activeStudents: 78,
-      recentActivity: 23,
-    },
-    { subjectName: 'ICT', totalSubmissions: 142, activeStudents: 71, recentActivity: 19 },
-    { subjectName: 'Mathematics', totalSubmissions: 134, activeStudents: 67, recentActivity: 15 },
-    { subjectName: 'Science', totalSubmissions: 128, activeStudents: 64, recentActivity: 12 },
-    { subjectName: 'Arabic', totalSubmissions: 98, activeStudents: 49, recentActivity: 8 },
-    { subjectName: 'Islamic Studies', totalSubmissions: 87, activeStudents: 44, recentActivity: 6 },
-    { subjectName: 'Social Studies', totalSubmissions: 76, activeStudents: 38, recentActivity: 5 },
-    {
-      subjectName: 'Physical Education',
-      totalSubmissions: 45,
-      activeStudents: 23,
-      recentActivity: 3,
-    },
-  ];
-
-  private mockRecentUpdates: PortfolioUpdate[] = [
-    {
-      studentId: 's001',
-      studentName: 'Ahmed Hassan',
-      className: 'Grade 7A',
-      subject: 'English Language Arts',
-      updateType: 'upload',
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
-      itemCount: 3,
-    },
-    {
-      studentId: 's002',
-      studentName: 'Fatima Ali',
-      className: 'Grade 6B',
-      subject: 'ICT',
-      updateType: 'reflection',
-      timestamp: new Date(Date.now() - 5 * 60 * 60 * 1000), // 5 hours ago
-      itemCount: 1,
-    },
-    {
-      studentId: 's003',
-      studentName: 'Omar Khalid',
-      className: 'Grade 7B',
-      subject: 'Mathematics',
-      updateType: 'feedback',
-      timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000), // 8 hours ago
-      itemCount: 2,
-    },
-    {
-      studentId: 's004',
-      studentName: 'Layla Ahmed',
-      className: 'Grade 6A',
-      subject: 'Science',
-      updateType: 'upload',
-      timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
-      itemCount: 4,
-    },
-    {
-      studentId: 's005',
-      studentName: 'Youssef Ibrahim',
-      className: 'Grade 7A',
-      subject: 'Arabic',
-      updateType: 'upload',
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
-      itemCount: 2,
-    },
-  ];
-
-  // Signals for reactive data
-  private classStatsSignal = signal<ClassPortfolioStats[]>(this.mockClassStats);
-  private subjectStatsSignal = signal<SubjectPortfolioStats[]>(this.mockSubjectStats);
-  private recentUpdatesSignal = signal<PortfolioUpdate[]>(this.mockRecentUpdates);
-
-  // Computed values
-  totalStudents = computed(() => {
-    return this.classStatsSignal().reduce((sum, cls) => sum + cls.totalStudents, 0);
-  });
-
-  activePortfolios = computed(() => {
-    return this.classStatsSignal().reduce((sum, cls) => sum + cls.activePortfolios, 0);
-  });
-
-  overallCompletionRate = computed(() => {
-    const total = this.totalStudents();
-    const active = this.activePortfolios();
-    return total > 0 ? Math.round((active / total) * 100) : 0;
-  });
-
-  /**
-   * Get complete portfolio completion statistics
-   */
-  getPortfolioCompletionStats(): PortfolioCompletionStats {
-    return {
-      totalStudents: this.totalStudents(),
-      activePortfolios: this.activePortfolios(),
-      completionRate: this.overallCompletionRate(),
-      byClass: this.classStatsSignal(),
-      bySubject: this.subjectStatsSignal(),
-      recentUpdates: this.recentUpdatesSignal(),
-    };
+  constructor() {
+    super();
   }
 
-  /**
-   * Get portfolio statistics filtered by class
-   */
-  getPortfolioStatsByClass(className?: string): ClassPortfolioStats[] {
-    if (!className) {
-      return this.classStatsSignal();
-    }
-    return this.classStatsSignal().filter((cls) => cls.className === className);
+  // ============================================
+  // INITIALIZATION
+  // ============================================
+
+  init(): void {
+    // Always load fresh data when component initializes
+    this.loadCompletionStats();
+    this.loadEvidenceStats();
   }
 
-  /**
-   * Get portfolio statistics filtered by subject
-   */
-  getPortfolioStatsBySubject(subjectName?: string): SubjectPortfolioStats[] {
-    if (!subjectName) {
-      return this.subjectStatsSignal();
-    }
-    return this.subjectStatsSignal().filter((subject) => subject.subjectName === subjectName);
-  }
+  // ============================================
+  // LOAD DATA FROM API
+  // ============================================
 
-  /**
-   * Get recent portfolio updates (last N items)
-   */
-  getRecentPortfolioUpdates(limit: number = 5): PortfolioUpdate[] {
-    return this.recentUpdatesSignal().slice(0, limit);
-  }
+  loadCompletionStats(): void {
+    this.isLoading.set(true);
 
-  /**
-   * Get evidence collection statistics
-   */
-  getEvidenceCollectionStats(): EvidenceCollectionStats {
-    const totalPortfolioItems = this.subjectStatsSignal().reduce(
-      (sum, subject) => sum + subject.totalSubmissions,
-      0
-    );
-
-    return {
-      totalEvidenceItems: totalPortfolioItems + 245, // +245 for CPD and badges
-      thisMonth: 150,
-      byType: {
-        portfolios: totalPortfolioItems,
-        cpd: 89,
-        badges: 156,
+    this.get<PortfolioCompletionApiResponse>(
+      `${Admin_API_ENDPOINTS.Portfolio.COMPLETION_STATS}?page=1&pageSize=100`
+    ).subscribe({
+      next: (response) => {
+        this.completionStats.set({
+          TotalStudents: response.TotalStudents,
+          ActivePortfolios: response.ActivePortfolios,
+          CompletionRate: response.CompletionRate,
+          ByClass: response.ByClass || [],
+          BySubject: response.BySubject || [],
+          RecentUpdates: (response.RecentUpdates || []).map(
+            (u) =>
+              ({
+                StudentId: u.studentId,
+                StudentName: u.studentName,
+                ClassName: u.className,
+                Subject: u.subject,
+                UpdateType: u.updateType,
+                Timestamp: new Date(u.timestamp),
+                ItemCount: u.itemCount,
+              } as PortfolioUpdate)
+          ),
+        });
+        this.isLoading.set(false);
       },
-      pendingReview: 12,
-    };
-  }
-
-  /**
-   * Get portfolio activity for a specific date range
-   */
-  getPortfolioActivityByDateRange(startDate: Date, endDate: Date): PortfolioUpdate[] {
-    return this.recentUpdatesSignal().filter((update) => {
-      return update.timestamp >= startDate && update.timestamp <= endDate;
+      error: (err) => {
+        console.error('Failed to load portfolio stats, using mock data', err);
+        this.loadMockData();
+        this.isLoading.set(false);
+      },
     });
   }
 
-  /**
-   * Refresh statistics (in production, this would fetch from API)
-   */
-  refreshStats(): void {
-    // In production, this would trigger an API call
-    console.log('Refreshing portfolio statistics...');
+  loadEvidenceStats(): void {
+    this.get<EvidenceCollectionStats>(
+      `${Admin_API_ENDPOINTS.Evidence.STATS}?page=1&pageSize=100`
+    ).subscribe({
+      next: (response) => {
+        this.evidenceStats.set(response);
+      },
+      error: () => {
+        this.evidenceStats.set(this.getMockEvidenceStats());
+      },
+    });
+  }
+
+  // ============================================
+  // GETTERS
+  // ============================================
+
+  getPortfolioCompletionStats(): PortfolioCompletionStats | null {
+    return this.completionStats();
+  }
+
+  getEvidenceCollectionStats(): EvidenceCollectionStats | null {
+    return this.evidenceStats();
+  }
+
+  getCompletionStats() {
+    return this.completionStats.asReadonly();
+  }
+
+  getClassesList(): ClassPortfolioStats[] {
+    return this.completionStats()?.ByClass ?? [];
+  }
+
+  getSubjectsList(): SubjectPortfolioStats[] {
+    return this.completionStats()?.BySubject ?? [];
+  }
+
+  getRecentUpdates(): PortfolioUpdate[] {
+    return this.completionStats()?.RecentUpdates ?? [];
+  }
+
+  getIsLoading() {
+    return this.isLoading.asReadonly();
+  }
+
+  // Computed
+  readonly totalStudents = computed(() => this.completionStats()?.TotalStudents ?? 0);
+  readonly activePortfolios = computed(() => this.completionStats()?.ActivePortfolios ?? 0);
+  readonly completionRate = computed(() => this.completionStats()?.CompletionRate ?? 0);
+
+  // ============================================
+  // API CALLS
+  // ============================================
+
+  fetchStatsByClass(className?: string): Observable<ClassPortfolioStats[]> {
+    const url = className
+      ? `${Admin_API_ENDPOINTS.Portfolio.STATS_BY_CLASS}?ClassName=${encodeURIComponent(
+          className
+        )}&page=1&pageSize=100`
+      : `${Admin_API_ENDPOINTS.Portfolio.STATS_BY_CLASS}?page=1&pageSize=100`;
+
+    return this.get<{ Items: ClassPortfolioStats[] }>(url).pipe(
+      map((r) => r.Items),
+      catchError(() => of([]))
+    );
+  }
+
+  fetchStatsBySubject(subjectName?: string): Observable<SubjectPortfolioStats[]> {
+    const url = subjectName
+      ? `${Admin_API_ENDPOINTS.Portfolio.STATS_BY_SUBJECT}?SubjectName=${encodeURIComponent(
+          subjectName
+        )}&page=1&pageSize=100`
+      : `${Admin_API_ENDPOINTS.Portfolio.STATS_BY_SUBJECT}?page=1&pageSize=100`;
+
+    return this.get<{ Items: SubjectPortfolioStats[] }>(url).pipe(
+      map((r) => r.Items),
+      catchError(() => of([]))
+    );
+  }
+
+  fetchRecentUpdates(limit = 5): Observable<PortfolioUpdate[]> {
+    return this.get<{ Items: PortfolioUpdateApiResponse[] }>(
+      `${Admin_API_ENDPOINTS.Portfolio.RECENT_UPDATES}?Limit=${limit}&page=1&pageSize=${limit}`
+    ).pipe(
+      map((r) =>
+        r.Items.map((u) => ({
+          StudentId: u.studentId,
+          StudentName: u.studentName,
+          ClassName: u.className,
+          Subject: u.subject,
+          UpdateType: u.updateType,
+          Timestamp: new Date(u.timestamp),
+          ItemCount: u.itemCount,
+        }))
+      ),
+      catchError(() => of([]))
+    );
+  }
+
+  // ============================================
+  // FILTERING (LOCAL)
+  // ============================================
+
+  getClassesByGrade(grade: number): ClassPortfolioStats[] {
+    return this.getClassesList().filter((c) => c.Grade === grade);
+  }
+
+  getTopPerformingClasses(limit = 5): ClassPortfolioStats[] {
+    return [...this.getClassesList()]
+      .sort((a, b) => b.CompletionRate - a.CompletionRate)
+      .slice(0, limit);
+  }
+
+  // ============================================
+  // MOCK DATA (Fallback)
+  // ============================================
+
+  private loadMockData(): void {
+    const mockByClass: ClassPortfolioStats[] = [
+      {
+        ClassName: 'Grade 6A',
+        Grade: 6,
+        TotalStudents: 25,
+        ActivePortfolios: 20,
+        CompletionRate: 80,
+      },
+      {
+        ClassName: 'Grade 6B',
+        Grade: 6,
+        TotalStudents: 25,
+        ActivePortfolios: 15,
+        CompletionRate: 60,
+      },
+      {
+        ClassName: 'Grade 6C',
+        Grade: 6,
+        TotalStudents: 24,
+        ActivePortfolios: 23,
+        CompletionRate: 96,
+      },
+      {
+        ClassName: 'Grade 7A',
+        Grade: 7,
+        TotalStudents: 25,
+        ActivePortfolios: 20,
+        CompletionRate: 80,
+      },
+    ];
+
+    const mockBySubject: SubjectPortfolioStats[] = [
+      {
+        SubjectName: 'English Language Arts',
+        TotalSubmissions: 156,
+        ActiveStudents: 78,
+        RecentActivity: 23,
+      },
+      { SubjectName: 'ICT', TotalSubmissions: 142, ActiveStudents: 71, RecentActivity: 19 },
+      { SubjectName: 'Arabic', TotalSubmissions: 98, ActiveStudents: 56, RecentActivity: 12 },
+      { SubjectName: 'Mathematics', TotalSubmissions: 87, ActiveStudents: 45, RecentActivity: 8 },
+    ];
+
+    const mockRecentUpdates: PortfolioUpdate[] = [
+      {
+        StudentId: 's001',
+        StudentName: 'Ahmed Hassan',
+        ClassName: 'Grade 7A',
+        Subject: 'English Language Arts',
+        UpdateType: 'upload',
+        Timestamp: new Date(),
+        ItemCount: 3,
+      },
+      {
+        StudentId: 's002',
+        StudentName: 'Fatima Al-Zahra',
+        ClassName: 'Grade 6A',
+        Subject: 'ICT',
+        UpdateType: 'reflection',
+        Timestamp: new Date(Date.now() - 3600000),
+        ItemCount: 1,
+      },
+    ];
+
+    this.completionStats.set({
+      TotalStudents: 99,
+      ActivePortfolios: 78,
+      CompletionRate: 79,
+      ByClass: mockByClass,
+      BySubject: mockBySubject,
+      RecentUpdates: mockRecentUpdates,
+    });
+  }
+
+  private getMockEvidenceStats(): EvidenceCollectionStats {
+    return {
+      totalEvidenceItems: 1111,
+      thisMonth: 150,
+      byType: { portfolios: 866, cpd: 89, badges: 156 },
+      pendingReview: 12,
+    };
   }
 }

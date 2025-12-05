@@ -1,80 +1,210 @@
 import { Injectable, signal } from '@angular/core';
+import { Observable, map } from 'rxjs';
 import { ActivityLog, ActivityType } from '../models/admin.models';
+import { BaseHttpService } from '../../../core/services/base-http.service';
+import { Admin_API_ENDPOINTS } from '../../../config/AdminConfig/AdminEndpoint';
+
+// API Response wrapper
+interface ApiResponse<T> {
+  Data: T;
+  IsSuccess: boolean;
+  Message: string;
+  ErrorCode: string;
+  IsAuthorized: boolean;
+}
+
+// API Response interfaces (matches backend ActivityLogDto)
+interface ActivityLogDto {
+  Id: number;
+  UserId: number;
+  UserName: string;
+  Action: string;
+  Type: string;
+  Details: string | null;
+  IpAddress: string | null;
+  CreatedAt: string;
+}
+
+interface PaginatedResponse<T> {
+  PageSize: number;
+  PageIndex: number;
+  Records: number;
+  Pages: number;
+  Items: T[];
+}
+
+interface CountResponse {
+  count: number;
+}
 
 @Injectable({
   providedIn: 'root',
 })
-export class ActivityService {
-  private activities = signal<ActivityLog[]>(this.generateMockActivities());
+export class ActivityService extends BaseHttpService {
+  private recentActivities = signal<ActivityLog[]>([]);
+  private todayCount = signal<number>(0);
+  private weekCount = signal<number>(0);
 
-  getActivities() {
-    return this.activities.asReadonly();
+  constructor() {
+    super();
   }
 
-  getRecentActivities(limit: number = 10): ActivityLog[] {
-    return this.activities().slice(0, limit);
+  // ============================================
+  // INITIALIZATION
+  // ============================================
+
+  init(): void {
+    this.loadRecentActivities();
+    this.loadActivityCounts();
   }
 
-  filterActivities(type?: ActivityType): ActivityLog[] {
-    if (!type) return this.activities();
-    return this.activities().filter((a) => a.type === type);
+  // ============================================
+  // LOAD DATA FROM API
+  // ============================================
+
+  loadRecentActivities(limit: number = 10): void {
+    this.get<ApiResponse<PaginatedResponse<ActivityLogDto>>>(
+      `${Admin_API_ENDPOINTS.ActivityLogs.GET_ALL}?page=1&pageSize=${limit}`
+    ).subscribe({
+      next: (response) => {
+        if (response.IsSuccess && response.Data?.Items) {
+          const activities = response.Data.Items.map((a) => this.mapActivityDto(a));
+          this.recentActivities.set(activities);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load activities, using mock data', err);
+        this.recentActivities.set(this.generateMockActivities());
+      },
+    });
   }
 
-  addActivity(activity: Omit<ActivityLog, 'id' | 'timestamp'>): ActivityLog {
-    const newActivity: ActivityLog = {
-      ...activity,
-      id: `activity-${Date.now()}`,
-      timestamp: new Date(),
+  loadActivityCounts(): void {
+    // Today count - API might return just a number or wrapped
+    this.get<ApiResponse<number> | number>(Admin_API_ENDPOINTS.ActivityLogs.TODAY_COUNT).subscribe({
+      next: (response) => {
+        if (typeof response === 'number') {
+          this.todayCount.set(response);
+        } else if (response.IsSuccess) {
+          this.todayCount.set(response.Data);
+        }
+      },
+      error: () => this.todayCount.set(125),
+    });
+
+    // Week count
+    this.get<ApiResponse<number> | number>(Admin_API_ENDPOINTS.ActivityLogs.WEEK_COUNT).subscribe({
+      next: (response) => {
+        if (typeof response === 'number') {
+          this.weekCount.set(response);
+        } else if (response.IsSuccess) {
+          this.weekCount.set(response.Data);
+        }
+      },
+      error: () => this.weekCount.set(1250),
+    });
+  }
+
+  // ============================================
+  // GETTERS
+  // ============================================
+
+  getRecentActivities(): ActivityLog[] {
+    return this.recentActivities();
+  }
+
+  getRecentActivitiesSignal() {
+    return this.recentActivities.asReadonly();
+  }
+
+  getTodayActivityCount() {
+    return this.todayCount.asReadonly();
+  }
+
+  getWeekActivityCount() {
+    return this.weekCount.asReadonly();
+  }
+
+  // ============================================
+  // API CALLS
+  // ============================================
+
+  fetchActivities(params: {
+    page?: number;
+    pageSize?: number;
+    type?: number;
+    userId?: number;
+  }): Observable<PaginatedResponse<ActivityLog>> {
+    const queryParams: string[] = [];
+    queryParams.push(`page=${params.page ?? 1}`);
+    queryParams.push(`pageSize=${params.pageSize ?? 10}`);
+    if (params.type !== undefined) queryParams.push(`type=${params.type}`);
+    if (params.userId) queryParams.push(`userId=${params.userId}`);
+
+    const url = `${Admin_API_ENDPOINTS.ActivityLogs.GET_ALL}?${queryParams.join('&')}`;
+
+    return this.get<ApiResponse<PaginatedResponse<ActivityLogDto>>>(url).pipe(
+      map((response) => ({
+        PageSize: response.Data.PageSize,
+        PageIndex: response.Data.PageIndex,
+        Records: response.Data.Records,
+        Pages: response.Data.Pages,
+        Items: response.Data.Items.map((a) => this.mapActivityDto(a)),
+      }))
+    );
+  }
+
+  // ============================================
+  // FILTERING (LOCAL)
+  // ============================================
+
+  filterByType(type: ActivityType): ActivityLog[] {
+    return this.recentActivities().filter((a) => a.type === type);
+  }
+
+  // ============================================
+  // MAPPERS
+  // ============================================
+
+  private mapActivityDto(dto: ActivityLogDto): ActivityLog {
+    return {
+      id: String(dto.Id),
+      timestamp: new Date(dto.CreatedAt),
+      userId: String(dto.UserId),
+      userName: dto.UserName,
+      action: dto.Action,
+      type: dto.Type as ActivityType,
+      details: dto.Details ?? undefined,
     };
-    this.activities.update((activities) => [newActivity, ...activities]);
-    return newActivity;
   }
 
-  getTodayActivityCount(): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return this.activities().filter((a) => a.timestamp >= today).length;
-  }
-
-  getWeekActivityCount(): number {
-    const weekAgo = new Date();
-    weekAgo.setDate(weekAgo.getDate() - 7);
-    return this.activities().filter((a) => a.timestamp >= weekAgo).length;
-  }
+  // ============================================
+  // MOCK DATA (Fallback)
+  // ============================================
 
   private generateMockActivities(): ActivityLog[] {
     const activities: ActivityLog[] = [];
-    const actions = {
-      Login: ['logged in', 'signed in', 'accessed the system'],
-      Badge: ['submitted badge', 'earned badge', 'completed challenge'],
-      Upload: ['uploaded resource', 'added document', 'shared file'],
-      Completion: ['completed mission', 'finished lesson', 'submitted assignment'],
-      Update: ['updated profile', 'changed settings', 'modified content'],
-    };
+    const actions = [
+      { action: 'submitted badge', type: 'Badge' as ActivityType },
+      { action: 'logged in', type: 'Login' as ActivityType },
+      { action: 'uploaded evidence', type: 'Upload' as ActivityType },
+      { action: 'completed mission', type: 'Completion' as ActivityType },
+      { action: 'updated profile', type: 'Update' as ActivityType },
+    ];
 
-    // Generate 500 mock activities
-    for (let i = 1; i <= 500; i++) {
-      const types: ActivityType[] = ['Login', 'Badge', 'Upload', 'Completion', 'Update'];
-      const type = types[Math.floor(Math.random() * types.length)];
-      const actionList = actions[type];
-      const action = actionList[Math.floor(Math.random() * actionList.length)];
-
+    for (let i = 0; i < 10; i++) {
+      const actionType = actions[Math.floor(Math.random() * actions.length)];
       const isTeacher = Math.random() > 0.5;
-      const userId = isTeacher
-        ? `teacher-${Math.floor(Math.random() * 40) + 1}`
-        : `student-${Math.floor(Math.random() * 800) + 1}`;
+      const userNum = Math.floor(Math.random() * 40) + 1;
 
       activities.push({
-        id: `activity-${i}`,
-        timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        userId,
-        userName: isTeacher ? `Teacher ${userId.split('-')[1]}` : `Student ${userId.split('-')[1]}`,
-        userAvatar: `https://ui-avatars.com/api/?name=${isTeacher ? 'Teacher' : 'Student'}+${
-          userId.split('-')[1]
-        }&background=random`,
-        action,
-        type,
-        details: `Action performed at ${new Date().toLocaleTimeString()}`,
+        id: `activity-${i + 1}`,
+        timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+        userId: isTeacher ? `teacher-${userNum}` : `student-${userNum}`,
+        userName: isTeacher ? `Teacher ${userNum}` : `Student ${userNum}`,
+        action: actionType.action,
+        type: actionType.type,
+        details: `${actionType.action} - ${isTeacher ? 'Teacher' : 'Student'} ${userNum}`,
       });
     }
 

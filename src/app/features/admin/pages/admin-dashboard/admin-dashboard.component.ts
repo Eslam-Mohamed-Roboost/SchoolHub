@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
@@ -14,12 +14,24 @@ import { StatsCard, ActivityLog } from '../../models/admin.models';
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css',
 })
-export class AdminDashboardComponent {
+export class AdminDashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private badgeService = inject(BadgeService);
   private activityService = inject(ActivityService);
   private portfolioAnalytics = inject(AdminPortfolioAnalyticsService);
   private teacherAnalytics = inject(TeacherSubjectAnalyticsService);
+
+  ngOnInit(): void {
+    // Initialize all services - ensures data loads on page refresh
+    this.dashboardService.init();
+    this.badgeService.init();
+    this.activityService.init();
+    this.portfolioAnalytics.init();
+    this.teacherAnalytics.init();
+  }
+
+  // Loading state - true until data is loaded
+  isLoading = computed(() => this.dashboardService.getIsLoading()());
 
   currentDate = computed(() => new Date());
 
@@ -38,7 +50,7 @@ export class AdminDashboardComponent {
 
   statsCards = computed(() => this.dashboardService.getStatsCards());
   pendingApprovals = computed(() => this.badgeService.getPendingSubmissions());
-  recentActivities = computed(() => this.activityService.getRecentActivities(10));
+  recentActivities = computed(() => this.activityService.getRecentActivities());
 
   selectedActivityFilter = signal<string>('All');
 
@@ -127,12 +139,16 @@ export class AdminDashboardComponent {
       format: 'zip' as const,
     };
 
-    const blob = this.teacherAnalytics.exportEvidenceBySubject(request);
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `evidence-export-${this.selectedSubject()}-${Date.now()}.json`;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    this.teacherAnalytics.exportEvidenceBySubject(request).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `evidence-export-${this.selectedSubject()}-${Date.now()}.zip`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => console.error('Failed to export evidence', err),
+    });
   }
 }

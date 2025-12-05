@@ -1,276 +1,351 @@
 import { Injectable, signal, computed } from '@angular/core';
+import { Observable, map, catchError, of } from 'rxjs';
+import { BaseHttpService } from '../../../core/services/base-http.service';
+import { Admin_API_ENDPOINTS } from '../../../config/AdminConfig/AdminEndpoint';
 import {
   TeacherSubjectMatrix,
   SubjectAnalytics,
-  ResourceUsageStats,
   TeacherPerformance,
   EvidenceExportRequest,
 } from '../models/admin-analytics.model';
 
+// API Response interfaces
+interface TeacherSubjectMatrixApiResponse {
+  teacherId: string;
+  teacherName: string;
+  email: string;
+  subjects: string[];
+  grades: string[];
+  cpdBadgesEarned: number;
+  portfolioActivity: number;
+  lastActive: string;
+}
+
+interface SubjectAnalyticsApiResponse {
+  subject: string;
+  teacherCount: number;
+  studentCount: number;
+  portfolioCompletionRate: number;
+  cpdBadgeCompletionRate: number;
+  resourceUsage: {
+    totalResources: number;
+    downloadsThisMonth: number;
+    uploadsThisMonth: number;
+    mostPopularResource: string;
+  };
+  topTeachers: TeacherPerformance[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
-export class TeacherSubjectAnalyticsService {
-  // Mock teacher-subject data
-  private mockTeachers: TeacherSubjectMatrix[] = [
-    {
-      teacherId: 't001',
-      teacherName: 'Sarah Johnson',
-      email: 'sarah.johnson@school.ae',
-      subjects: ['English Language Arts'],
-      grades: ['6', '7'],
-      cpdBadgesEarned: 8,
-      portfolioActivity: 45,
-      lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000),
-    },
-    {
-      teacherId: 't002',
-      teacherName: 'Mohammed Al-Farsi',
-      email: 'mohammed.alfarsi@school.ae',
-      subjects: ['ICT', 'Mathematics'],
-      grades: ['6', '7'],
-      cpdBadgesEarned: 12,
-      portfolioActivity: 67,
-      lastActive: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    },
-    {
-      teacherId: 't003',
-      teacherName: 'Emily Chen',
-      email: 'emily.chen@school.ae',
-      subjects: ['Science'],
-      grades: ['6'],
-      cpdBadgesEarned: 6,
-      portfolioActivity: 32,
-      lastActive: new Date(Date.now() - 4 * 60 * 60 * 1000),
-    },
-    {
-      teacherId: 't004',
-      teacherName: 'Ahmed Hassan',
-      email: 'ahmed.hassan@school.ae',
-      subjects: ['Arabic', 'Islamic Studies'],
-      grades: ['6', '7'],
-      cpdBadgesEarned: 10,
-      portfolioActivity: 54,
-      lastActive: new Date(Date.now() - 3 * 60 * 60 * 1000),
-    },
-    {
-      teacherId: 't005',
-      teacherName: 'Lisa Martinez',
-      email: 'lisa.martinez@school.ae',
-      subjects: ['Mathematics', 'Science'],
-      grades: ['7'],
-      cpdBadgesEarned: 9,
-      portfolioActivity: 41,
-      lastActive: new Date(Date.now() - 5 * 60 * 60 * 1000),
-    },
-    {
-      teacherId: 't006',
-      teacherName: 'Fatima Al-Mazrouei',
-      email: 'fatima.almazrouei@school.ae',
-      subjects: ['Social Studies'],
-      grades: ['6', '7'],
-      cpdBadgesEarned: 7,
-      portfolioActivity: 28,
-      lastActive: new Date(Date.now() - 6 * 60 * 60 * 1000),
-    },
-    {
-      teacherId: 't007',
-      teacherName: 'David Wilson',
-      email: 'david.wilson@school.ae',
-      subjects: ['Physical Education'],
-      grades: ['6', '7'],
-      cpdBadgesEarned: 5,
-      portfolioActivity: 19,
-      lastActive: new Date(Date.now() - 8 * 60 * 60 * 1000),
-    },
-    {
-      teacherId: 't008',
-      teacherName: 'Aisha Abdullah',
-      email: 'aisha.abdullah@school.ae',
-      subjects: ['English Language Arts', 'Social Studies'],
-      grades: ['6'],
-      cpdBadgesEarned: 11,
-      portfolioActivity: 52,
-      lastActive: new Date(Date.now() - 1 * 60 * 60 * 1000),
-    },
-  ];
+export class TeacherSubjectAnalyticsService extends BaseHttpService {
+  private teacherMatrix = signal<TeacherSubjectMatrix[]>([]);
+  private subjectAnalytics = signal<SubjectAnalytics | null>(null);
+  private selectedSubject = signal<string>('All Subjects');
+  private isLoading = signal(false);
 
-  private teachersSignal = signal<TeacherSubjectMatrix[]>(this.mockTeachers);
-
-  // Available subjects
-  readonly availableSubjects = [
-    'All Subjects',
-    'English Language Arts',
-    'ICT',
-    'Mathematics',
-    'Science',
-    'Arabic',
-    'Islamic Studies',
-    'Social Studies',
-    'Physical Education',
-  ];
-
-  /**
-   * Get complete teacher-subject matrix
-   */
-  getTeacherSubjectMatrix(): TeacherSubjectMatrix[] {
-    return this.teachersSignal();
-  }
-
-  /**
-   * Get analytics filtered by subject
-   */
-  getSubjectFilteredAnalytics(subject: string): SubjectAnalytics {
-    const teachers = this.getTeachersBySubject(subject);
-    const totalStudents = subject === 'All Subjects' ? 99 : this.getStudentCountBySubject(subject);
-
-    return {
-      subject,
-      teacherCount: teachers.length,
-      studentCount: totalStudents,
-      portfolioCompletionRate: this.calculatePortfolioCompletion(subject),
-      cpdBadgeCompletionRate: this.calculateCPDCompletion(teachers),
-      resourceUsage: this.getResourceUsageBySubject(subject),
-      topTeachers: this.getTopTeachersBySubject(subject, 5),
-    };
-  }
-
-  /**
-   * Get teachers filtered by subject
-   */
-  getTeachersBySubject(subject: string): TeacherSubjectMatrix[] {
-    if (subject === 'All Subjects') {
-      return this.teachersSignal();
+  // Available subjects computed from matrix
+  readonly availableSubjects = computed(() => {
+    const subjects = new Set<string>();
+    subjects.add('All Subjects');
+    const matrix = this.teacherMatrix();
+    if (matrix && Array.isArray(matrix)) {
+      matrix.forEach((t) => {
+        if (t && t.subjects && Array.isArray(t.subjects)) {
+          t.subjects.forEach((s) => subjects.add(s));
+        }
+      });
     }
-    return this.teachersSignal().filter((teacher) => teacher.subjects.includes(subject));
+    return Array.from(subjects);
+  });
+
+  constructor() {
+    super();
   }
 
-  /**
-   * Get resource usage statistics by subject
-   */
-  getResourceUsageBySubject(subject: string): ResourceUsageStats {
-    const usageMap: { [key: string]: ResourceUsageStats } = {
-      'English Language Arts': {
-        totalResources: 45,
-        downloadsThisMonth: 128,
-        uploadsThisMonth: 23,
-        mostPopularResource: 'Essay Writing Guide.pdf',
-      },
-      ICT: {
-        totalResources: 38,
-        downloadsThisMonth: 156,
-        uploadsThisMonth: 31,
-        mostPopularResource: 'Python Basics Tutorial.mp4',
-      },
-      Mathematics: {
-        totalResources: 52,
-        downloadsThisMonth: 142,
-        uploadsThisMonth: 19,
-        mostPopularResource: 'Algebra Practice Set.pdf',
-      },
-      Science: {
-        totalResources: 41,
-        downloadsThisMonth: 134,
-        uploadsThisMonth: 27,
-        mostPopularResource: 'Lab Safety Checklist.pdf',
-      },
-      'All Subjects': {
-        totalResources: 245,
-        downloadsThisMonth: 689,
-        uploadsThisMonth: 127,
-        mostPopularResource: 'Digital Citizenship Guide.pdf',
-      },
-    };
+  // ============================================
+  // INITIALIZATION
+  // ============================================
 
-    return (
-      usageMap[subject] || {
-        totalResources: 0,
-        downloadsThisMonth: 0,
-        uploadsThisMonth: 0,
-        mostPopularResource: 'N/A',
+  init(): void {
+    // Always load fresh data when component initializes
+    this.loadTeacherMatrix();
+  }
+
+  // ============================================
+  // LOAD DATA FROM API
+  // ============================================
+
+  // ============================================
+  // HELPERS
+  // ============================================
+
+  private extractData<T>(response: any): T | null {
+    if (!response) return null;
+
+    // Check if it's wrapped in ApiResponse structure
+    if (typeof response === 'object') {
+      // Standard ApiResponse wrapper
+      if ('Data' in response && 'IsSuccess' in response) {
+        if (response.IsSuccess) {
+          return response.Data;
+        }
+        return null;
       }
+
+      // List wrapper with Items property (common in this API)
+      if ('Items' in response && Array.isArray(response.Items)) {
+        return response.Items as T;
+      }
+    }
+
+    // It's direct data
+    return response as T;
+  }
+
+  // ============================================
+  // LOAD DATA FROM API
+  // ============================================
+
+  loadTeacherMatrix(): void {
+    this.isLoading.set(true);
+    console.log('Loading Teacher Matrix from:', Admin_API_ENDPOINTS.TeacherSubjects.MATRIX);
+
+    this.get<any>(`${Admin_API_ENDPOINTS.TeacherSubjects.MATRIX}?page=1&pageSize=100`).subscribe({
+      next: (response) => {
+        console.log('Teacher Matrix Response:', response);
+        // The API might return { Items: [...] } or just [...] or { Data: { Items: [...] } }
+        // Based on other endpoints, it likely returns { Items: [...] } directly for paginated lists
+
+        let items: TeacherSubjectMatrixApiResponse[] = [];
+
+        if (response && Array.isArray(response)) {
+          items = response;
+        } else if (response && Array.isArray(response.Items)) {
+          items = response.Items;
+        } else if (response && response.Data && Array.isArray(response.Data.Items)) {
+          items = response.Data.Items;
+        }
+
+        if (items.length > 0) {
+          const matrix = items.map((t) => ({
+            ...t,
+            lastActive: new Date(t.lastActive),
+          }));
+          this.teacherMatrix.set(matrix);
+        } else {
+          console.warn('Teacher Matrix data is empty or invalid format');
+        }
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load teacher matrix, using mock data', err);
+        this.loadMockData();
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  loadAnalyticsBySubject(subject: string): void {
+    this.selectedSubject.set(subject);
+    this.isLoading.set(true);
+
+    const url =
+      subject === 'All Subjects'
+        ? `${Admin_API_ENDPOINTS.TeacherSubjects.ANALYTICS}?page=1&pageSize=100`
+        : `${Admin_API_ENDPOINTS.TeacherSubjects.ANALYTICS}?Subject=${encodeURIComponent(
+            subject
+          )}&page=1&pageSize=100`;
+
+    console.log('Loading Subject Analytics from:', url);
+
+    this.get<any>(url).subscribe({
+      next: (response) => {
+        console.log('Subject Analytics Response:', response);
+        const data = this.extractData<SubjectAnalyticsApiResponse>(response);
+
+        if (data) {
+          this.subjectAnalytics.set(data);
+        } else {
+          console.warn('Subject Analytics data is null');
+          this.subjectAnalytics.set(this.getMockSubjectAnalytics(subject));
+        }
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load subject analytics, using mock', err);
+        this.subjectAnalytics.set(this.getMockSubjectAnalytics(subject));
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  // ============================================
+  // GETTERS
+  // ============================================
+
+  getTeacherSubjectMatrix(): TeacherSubjectMatrix[] {
+    return this.teacherMatrix();
+  }
+
+  getTeacherMatrix() {
+    return this.teacherMatrix.asReadonly();
+  }
+
+  getSubjectAnalytics() {
+    return this.subjectAnalytics.asReadonly();
+  }
+
+  getSubjectFilteredAnalytics(subject: string): SubjectAnalytics | null {
+    if (subject !== this.selectedSubject()) {
+      this.loadAnalyticsBySubject(subject);
+    }
+    return this.subjectAnalytics();
+  }
+
+  getSelectedSubject() {
+    return this.selectedSubject.asReadonly();
+  }
+
+  getIsLoading() {
+    return this.isLoading.asReadonly();
+  }
+
+  // Computed
+  readonly totalTeachers = computed(() => this.teacherMatrix().length);
+  readonly uniqueSubjects = computed(() => {
+    const subjects = new Set<string>();
+    this.teacherMatrix().forEach((t) => t.subjects.forEach((s) => subjects.add(s)));
+    return Array.from(subjects);
+  });
+
+  // ============================================
+  // API CALLS
+  // ============================================
+
+  fetchTeachersBySubject(subject: string): Observable<TeacherSubjectMatrix[]> {
+    const url =
+      subject === 'All Subjects'
+        ? `${Admin_API_ENDPOINTS.TeacherSubjects.BY_SUBJECT}?page=1&pageSize=100`
+        : `${Admin_API_ENDPOINTS.TeacherSubjects.BY_SUBJECT}?Subject=${encodeURIComponent(
+            subject
+          )}&page=1&pageSize=100`;
+
+    return this.get<{ Items: TeacherSubjectMatrixApiResponse[] }>(url).pipe(
+      map((r) =>
+        r.Items.map((t) => ({
+          ...t,
+          lastActive: new Date(t.lastActive),
+        }))
+      ),
+      catchError(() => of([]))
     );
   }
 
-  /**
-   * Get top performing teachers by subject
-   */
-  getTopTeachersBySubject(subject: string, limit: number = 5): TeacherPerformance[] {
-    const teachers = this.getTeachersBySubject(subject);
+  exportEvidenceBySubject(request: EvidenceExportRequest): Observable<Blob> {
+    return this.http.post(Admin_API_ENDPOINTS.Evidence.EXPORT, request, {
+      responseType: 'blob',
+    });
+  }
 
-    return teachers
-      .map((teacher) => ({
-        teacherName: teacher.teacherName,
-        subject: teacher.subjects.join(', '),
-        cpdBadges: teacher.cpdBadgesEarned,
-        studentEngagement: Math.round((teacher.portfolioActivity / 67) * 100), // Relative to max
-        portfolioReviews: teacher.portfolioActivity,
-      }))
-      .sort((a, b) => b.cpdBadges - a.cpdBadges)
+  // ============================================
+  // FILTERING (LOCAL)
+  // ============================================
+
+  getTeachersForSubject(subject: string): TeacherSubjectMatrix[] {
+    if (subject === 'All Subjects') return this.teacherMatrix();
+    return this.teacherMatrix().filter((t) => t.subjects.includes(subject));
+  }
+
+  getTeachersForGrade(grade: string): TeacherSubjectMatrix[] {
+    return this.teacherMatrix().filter((t) => t.grades.includes(grade));
+  }
+
+  getTopTeachersByCPD(limit = 5): TeacherSubjectMatrix[] {
+    return [...this.teacherMatrix()]
+      .sort((a, b) => b.cpdBadgesEarned - a.cpdBadgesEarned)
       .slice(0, limit);
   }
 
-  /**
-   * Export evidence by subject and date range
-   */
-  exportEvidenceBySubject(request: EvidenceExportRequest): Blob {
-    // In production, this would generate actual files
-    const data = {
-      request,
-      exportDate: new Date(),
-      message: 'Evidence export functionality - Backend integration required',
+  // ============================================
+  // MOCK DATA (Fallback)
+  // ============================================
+
+  private loadMockData(): void {
+    this.teacherMatrix.set([
+      {
+        teacherId: 't001',
+        teacherName: 'Sarah Johnson',
+        email: 'sarah.johnson@school.ae',
+        subjects: ['English Language Arts'],
+        grades: ['6', '7'],
+        cpdBadgesEarned: 8,
+        portfolioActivity: 45,
+        lastActive: new Date(),
+      },
+      {
+        teacherId: 't002',
+        teacherName: 'Mohammed Al-Farsi',
+        email: 'mohammed.alfarsi@school.ae',
+        subjects: ['ICT', 'Computer Science'],
+        grades: ['6', '7'],
+        cpdBadgesEarned: 12,
+        portfolioActivity: 67,
+        lastActive: new Date(),
+      },
+      {
+        teacherId: 't003',
+        teacherName: 'Fatima Ahmed',
+        email: 'fatima.ahmed@school.ae',
+        subjects: ['Arabic'],
+        grades: ['6'],
+        cpdBadgesEarned: 5,
+        portfolioActivity: 32,
+        lastActive: new Date(Date.now() - 86400000),
+      },
+      {
+        teacherId: 't004',
+        teacherName: 'James Wilson',
+        email: 'james.wilson@school.ae',
+        subjects: ['Mathematics', 'Science'],
+        grades: ['7'],
+        cpdBadgesEarned: 9,
+        portfolioActivity: 54,
+        lastActive: new Date(),
+      },
+    ]);
+  }
+
+  private getMockSubjectAnalytics(subject: string): SubjectAnalytics {
+    return {
+      subject,
+      teacherCount: subject === 'All Subjects' ? 4 : 2,
+      studentCount: subject === 'All Subjects' ? 99 : 50,
+      portfolioCompletionRate: 85,
+      cpdBadgeCompletionRate: 53,
+      resourceUsage: {
+        totalResources: 45,
+        downloadsThisMonth: 128,
+        uploadsThisMonth: 23,
+        mostPopularResource: 'Lesson Plan Template.docx',
+      },
+      topTeachers: [
+        {
+          teacherName: 'Sarah Johnson',
+          subject: 'English Language Arts',
+          cpdBadges: 8,
+          studentEngagement: 67,
+          portfolioReviews: 45,
+        },
+        {
+          teacherName: 'Mohammed Al-Farsi',
+          subject: 'ICT',
+          cpdBadges: 12,
+          studentEngagement: 89,
+          portfolioReviews: 67,
+        },
+      ],
     };
-
-    const jsonData = JSON.stringify(data, null, 2);
-    return new Blob([jsonData], { type: 'application/json' });
-  }
-
-  /**
-   * Get CPD completion rate for a subject
-   */
-  getCPDCompletionBySubject(subject: string): number {
-    const teachers = this.getTeachersBySubject(subject);
-    if (teachers.length === 0) return 0;
-
-    const avgBadges = teachers.reduce((sum, t) => sum + t.cpdBadgesEarned, 0) / teachers.length;
-    const maxBadges = 15; // Assuming max 15 CPD badges available
-    return Math.round((avgBadges / maxBadges) * 100);
-  }
-
-  // Private helper methods
-  private getStudentCountBySubject(subject: string): number {
-    const countMap: { [key: string]: number } = {
-      'English Language Arts': 78,
-      ICT: 71,
-      Mathematics: 67,
-      Science: 64,
-      Arabic: 49,
-      'Islamic Studies': 44,
-      'Social Studies': 38,
-      'Physical Education': 23,
-    };
-    return countMap[subject] || 0;
-  }
-
-  private calculatePortfolioCompletion(subject: string): number {
-    const completionMap: { [key: string]: number } = {
-      'English Language Arts': 85,
-      ICT: 78,
-      Mathematics: 72,
-      Science: 68,
-      Arabic: 65,
-      'Islamic Studies': 62,
-      'Social Studies': 58,
-      'Physical Education': 45,
-      'All Subjects': 71,
-    };
-    return completionMap[subject] || 0;
-  }
-
-  private calculateCPDCompletion(teachers: TeacherSubjectMatrix[]): number {
-    if (teachers.length === 0) return 0;
-    const avgBadges = teachers.reduce((sum, t) => sum + t.cpdBadgesEarned, 0) / teachers.length;
-    const maxBadges = 15;
-    return Math.round((avgBadges / maxBadges) * 100);
   }
 }

@@ -1,35 +1,35 @@
 export interface PortfolioCompletionStats {
-  totalStudents: number;
-  activePortfolios: number;
-  completionRate: number;
-  byClass: ClassPortfolioStats[];
-  bySubject: SubjectPortfolioStats[];
-  recentUpdates: PortfolioUpdate[];
+  TotalStudents: number;
+  ActivePortfolios: number;
+  CompletionRate: number;
+  ByClass: ClassPortfolioStats[];
+  BySubject: SubjectPortfolioStats[];
+  RecentUpdates: PortfolioUpdate[];
 }
 
 export interface ClassPortfolioStats {
-  className: string;
-  totalStudents: number;
-  activePortfolios: number;
-  completionRate: number;
-  grade: number;
+  ClassName: string;
+  TotalStudents: number;
+  ActivePortfolios: number;
+  CompletionRate: number;
+  Grade: number;
 }
 
 export interface SubjectPortfolioStats {
-  subjectName: string;
-  totalSubmissions: number;
-  activeStudents: number;
-  recentActivity: number; // last 7 days
+  SubjectName: string;
+  TotalSubmissions: number;
+  ActiveStudents: number;
+  RecentActivity: number; // last 7 days
 }
 
 export interface PortfolioUpdate {
-  studentId: string;
-  studentName: string;
-  className: string;
-  subject: string;
-  updateType: 'upload' | 'reflection' | 'feedback';
-  timestamp: Date;
-  itemCount: number;
+  StudentId: string;
+  StudentName: string;
+  ClassName: string;
+  Subject: string;
+  UpdateType: 'upload' | 'reflection' | 'feedback';
+  Timestamp: Date;
+  ItemCount: number;
 }
 
 export interface TeacherSubjectMatrix {
