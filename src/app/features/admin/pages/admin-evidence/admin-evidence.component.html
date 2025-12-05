@@ -48,18 +48,22 @@
           <div class="stat-content">
             <div class="stat-label">Breakdown</div>
             <div class="text-sm mt-2 space-y-1">
-              <div class="flex justify-between">
-                <span>Portfolios:</span>
-                <span class="font-bold">{{ statData.byType.portfolios }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>CPD:</span>
-                <span class="font-bold">{{ statData.byType.cpd }}</span>
-              </div>
-              <div class="flex justify-between">
-                <span>Badges:</span>
-                <span class="font-bold">{{ statData.byType.badges }}</span>
-              </div>
+              @if (statData.byType) {
+                <div class="flex justify-between">
+                  <span>Portfolios:</span>
+                  <span class="font-bold">{{ statData.byType.portfolios }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>CPD:</span>
+                  <span class="font-bold">{{ statData.byType.cpd }}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Badges:</span>
+                  <span class="font-bold">{{ statData.byType.badges }}</span>
+                </div>
+              } @else {
+                <div class="text-gray-500 text-xs">No breakdown available</div>
+              }
             </div>
           </div>
         </div>
