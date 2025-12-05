@@ -2,28 +2,27 @@
   <div class="dashboard-header">
     <div class="welcome-section">
       <h1 class="dashboard-title">Welcome back, Rahmah!</h1>
-      <p class="dashboard-subtitle">{{ currentDate() | date:'fullDate' }}</p>
+      <p class="dashboard-subtitle">{{ currentDate() | date : 'fullDate' }}</p>
     </div>
   </div>
 
   <!-- Quick Stats Cards -->
   <div class="stats-grid">
     @for (card of statsCards(); track card.title) {
-      <div class="stats-card">
-        <div class="stats-card-header">
-          <span class="stats-icon">{{ card.icon }}</span>
-          <h3 class="stats-title">{{ card.title }}</h3>
-        </div>
-        <div class="stats-value">{{ card.value }}</div>
-        @if (card.breakdown) {
-          <div class="stats-breakdown">{{ card.breakdown }}</div>
-        }
-        @if (card.comparison) {
-          <div class="stats-comparison" [class.trend-up]="card.trend === 'up'">
-            {{ card.comparison }}
-          </div>
-        }
+    <div class="stats-card">
+      <div class="stats-card-header">
+        <span class="stats-icon">{{ card.icon }}</span>
+        <h3 class="stats-title">{{ card.title }}</h3>
       </div>
+      <div class="stats-value">{{ card.value }}</div>
+      @if (card.breakdown) {
+      <div class="stats-breakdown">{{ card.breakdown }}</div>
+      } @if (card.comparison) {
+      <div class="stats-comparison" [class.trend-up]="card.trend === 'up'">
+        {{ card.comparison }}
+      </div>
+      }
+    </div>
     }
   </div>
 
@@ -32,15 +31,209 @@
     <h2 class="section-title">Quick Actions</h2>
     <div class="quick-actions-grid">
       @for (action of quickActions; track action.label) {
-        <button 
-          class="quick-action-btn"
-          [routerLink]="action.route"
-          (click)="action.action && handleQuickAction(action.action)"
-          [attr.title]="action.description">
-          <span class="action-icon">{{ action.icon }}</span>
-          <span class="action-label">{{ action.label }}</span>
-        </button>
+      <button
+        class="quick-action-btn"
+        [routerLink]="action.route"
+        (click)="action.action && handleQuickAction(action.action)"
+        [attr.title]="action.description"
+      >
+        <span class="action-icon">{{ action.icon }}</span>
+        <span class="action-label">{{ action.label }}</span>
+      </button>
       }
+    </div>
+  </div>
+
+  <!-- SECTION 2: Portfolio Hub Monitor -->
+  <div class="portfolio-monitor-section">
+    <div class="section-header">
+      <h2 class="section-title">📚 Student Portfolio Hub Monitor</h2>
+      <a routerLink="/student/portfolio-hub" class="view-link">View All Portfolios →</a>
+    </div>
+
+    <!-- Portfolio Completion by Class -->
+    <div class="portfolio-completion-grid">
+      @for (classStats of portfolioStats().byClass; track classStats.className) {
+      <div class="completion-card">
+        <div class="completion-header">
+          <h4>{{ classStats.className }}</h4>
+          <span class="completion-rate">{{ classStats.completionRate }}%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" [style.width.%]="classStats.completionRate"></div>
+        </div>
+        <div class="completion-meta">
+          {{ classStats.activePortfolios }}/{{ classStats.totalStudents }} students
+        </div>
+      </div>
+      }
+    </div>
+
+    <!-- Recent Portfolio Updates -->
+    <div class="recent-updates">
+      <h3>Recent Portfolio Activity</h3>
+      <div class="updates-list">
+        @for (update of portfolioStats().recentUpdates; track update.studentId) {
+        <div class="update-item">
+          <span class="update-icon">
+            @if (update.updateType === 'upload') { 📤 } @if (update.updateType === 'reflection') {
+            ✍️ } @if (update.updateType === 'feedback') { 💬 }
+          </span>
+          <div class="update-info">
+            <div class="update-text">
+              <strong>{{ update.studentName }}</strong>
+              ({{ update.className }}) {{ update.updateType }} {{ update.itemCount }} item(s) in
+              {{ update.subject }}
+            </div>
+            <div class="update-time">{{ formatTimeAgo(update.timestamp) }}</div>
+          </div>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: Teacher Subject Analytics -->
+  <div class="teacher-analytics-section">
+    <div class="section-header">
+      <h2 class="section-title">👩‍🏫 Teacher Subject Analytics</h2>
+      <div class="subject-filter-dropdown">
+        <label for="subject-filter">Filter by Subject:</label>
+        <select
+          id="subject-filter"
+          [value]="selectedSubject()"
+          (change)="selectSubject($any($event.target).value)"
+          class="subject-select"
+        >
+          @for (subject of availableSubjects; track subject) {
+          <option [value]="subject">{{ subject }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Subject Analytics Cards -->
+    <div class="analytics-cards-grid">
+      <div class="analytics-card">
+        <div class="card-icon">👥</div>
+        <div class="card-content">
+          <div class="card-value">{{ subjectAnalytics().teacherCount }}</div>
+          <div class="card-label">Teachers</div>
+        </div>
+      </div>
+      <div class="analytics-card">
+        <div class="card-icon">🎓</div>
+        <div class="card-content">
+          <div class="card-value">{{ subjectAnalytics().studentCount }}</div>
+          <div class="card-label">Students</div>
+        </div>
+      </div>
+      <div class="analytics-card">
+        <div class="card-icon">📁</div>
+        <div class="card-content">
+          <div class="card-value">{{ subjectAnalytics().portfolioCompletionRate }}%</div>
+          <div class="card-label">Portfolio Completion</div>
+        </div>
+      </div>
+      <div class="analytics-card">
+        <div class="card-icon">🏆</div>
+        <div class="card-content">
+          <div class="card-value">{{ subjectAnalytics().cpdBadgeCompletionRate }}%</div>
+          <div class="card-label">CPD Completion</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Teachers Table -->
+    <div class="top-teachers-table">
+      <h3>Top Performing Teachers</h3>
+      <table class="teachers-table">
+        <thead>
+          <tr>
+            <th>Teacher</th>
+            <th>Subject(s)</th>
+            <th>CPD Badges</th>
+            <th>Student Engagement</th>
+            <th>Portfolio Reviews</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (teacher of subjectAnalytics().topTeachers; track teacher.teacherName) {
+          <tr>
+            <td>{{ teacher.teacherName }}</td>
+            <td>{{ teacher.subject }}</td>
+            <td>
+              <span class="badge-pill">{{ teacher.cpdBadges }}</span>
+            </td>
+            <td>
+              <span class="engagement-bar" [style.width.%]="teacher.studentEngagement"
+                >{{ teacher.studentEngagement }}%</span
+              >
+            </td>
+            <td>{{ teacher.portfolioReviews }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION 4: Evidence Collection Center -->
+  <div class="evidence-collection-section">
+    <div class="section-header">
+      <h2 class="section-title">📋 Evidence Collection & ADEK Reports</h2>
+    </div>
+
+    <div class="evidence-stats-grid">
+      <div class="evidence-stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-details">
+          <div class="stat-value">{{ evidenceStats().totalEvidenceItems }}</div>
+          <div class="stat-label">Total Evidence Items</div>
+        </div>
+      </div>
+      <div class="evidence-stat-card">
+        <div class="stat-icon">📅</div>
+        <div class="stat-details">
+          <div class="stat-value">{{ evidenceStats().thisMonth }}</div>
+          <div class="stat-label">Collected This Month</div>
+        </div>
+      </div>
+      <div class="evidence-stat-card">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-details">
+          <div class="stat-value">{{ evidenceStats().pendingReview }}</div>
+          <div class="stat-label">Pending Review</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Evidence Export Builder -->
+    <div class="export-builder">
+      <h3>ADEK Report Builder</h3>
+      <div class="export-info">
+        <div class="export-breakdown">
+          <div class="breakdown-item">
+            <span class="breakdown-label">Student Portfolios:</span>
+            <span class="breakdown-value">{{ evidenceStats().byType.portfolios }}</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Teacher CPD:</span>
+            <span class="breakdown-value">{{ evidenceStats().byType.cpd }}</span>
+          </div>
+          <div class="breakdown-item">
+            <span class="breakdown-label">Badge Submissions:</span>
+            <span class="breakdown-value">{{ evidenceStats().byType.badges }}</span>
+          </div>
+        </div>
+        <button class="export-btn" (click)="downloadEvidence()">
+          <span class="btn-icon">⬇️</span>
+          Download Evidence Package ({{ selectedSubject() }})
+        </button>
+      </div>
+      <p class="export-note">
+        📌 Export includes last 30 days of evidence for selected subject area
+      </p>
     </div>
   </div>
 
@@ -56,34 +249,34 @@
 
       <div class="activity-filters">
         @for (filter of activityFilters; track filter) {
-          <button 
-            class="filter-btn"
-            [class.active]="selectedActivityFilter() === filter"
-            (click)="filterActivities(filter)">
-            {{ filter }}
-          </button>
+        <button
+          class="filter-btn"
+          [class.active]="selectedActivityFilter() === filter"
+          (click)="filterActivities(filter)"
+        >
+          {{ filter }}
+        </button>
         }
       </div>
 
       <div class="activity-feed">
         @for (activity of filteredActivities(); track activity.id) {
-          <div class="activity-item" [class]="getActivityTypeClass(activity.type)">
-            <div class="activity-avatar">
-              <img [src]="activity.userAvatar" [alt]="activity.userName" />
-            </div>
-            <div class="activity-content">
-              <div class="activity-user">
-                <span class="user-name">{{ activity.userName }}</span>
-                <span class="activity-action">{{ activity.action }}</span>
-              </div>
-              <div class="activity-time">{{ formatTimeAgo(activity.timestamp) }}</div>
-            </div>
+        <div class="activity-item" [class]="getActivityTypeClass(activity.type)">
+          <div class="activity-avatar">
+            <img [src]="activity.userAvatar" [alt]="activity.userName" />
           </div>
-        }
-        @empty {
-          <div class="no-activities">
-            <p>No activities found</p>
+          <div class="activity-content">
+            <div class="activity-user">
+              <span class="user-name">{{ activity.userName }}</span>
+              <span class="activity-action">{{ activity.action }}</span>
+            </div>
+            <div class="activity-time">{{ formatTimeAgo(activity.timestamp) }}</div>
           </div>
+        </div>
+        } @empty {
+        <div class="no-activities">
+          <p>No activities found</p>
+        </div>
         }
       </div>
 
@@ -95,30 +288,28 @@
       <div class="section-header">
         <h2 class="section-title">Pending Approvals</h2>
         @if (pendingApprovals().length > 0) {
-          <span class="badge-count">{{ pendingApprovals().length }}</span>
+        <span class="badge-count">{{ pendingApprovals().length }}</span>
         }
       </div>
 
       @if (pendingApprovals().length > 0) {
-        <div class="pending-approvals">
-          @for (submission of pendingApprovals().slice(0, 3); track submission.id) {
-            <div class="approval-preview">
-              <div class="approval-icon">{{ submission.badgeIcon }}</div>
-              <div class="approval-info">
-                <div class="approval-badge">{{ submission.badgeName }}</div>
-                <div class="approval-user">{{ submission.userName }}</div>
-              </div>
-            </div>
-          }
+      <div class="pending-approvals">
+        @for (submission of pendingApprovals().slice(0, 3); track submission.id) {
+        <div class="approval-preview">
+          <div class="approval-icon">{{ submission.badgeIcon }}</div>
+          <div class="approval-info">
+            <div class="approval-badge">{{ submission.badgeName }}</div>
+            <div class="approval-user">{{ submission.userName }}</div>
+          </div>
         </div>
-        <a routerLink="/admin/evidence" class="review-btn">
-          Review Now
-        </a>
+        }
+      </div>
+      <a routerLink="/admin/evidence" class="review-btn"> Review Now </a>
       } @else {
-        <div class="no-approvals">
-          <p>✅ All caught up!</p>
-          <p class="text-muted">No pending badge approvals</p>
-        </div>
+      <div class="no-approvals">
+        <p>✅ All caught up!</p>
+        <p class="text-muted">No pending badge approvals</p>
+      </div>
       }
     </div>
   </div>

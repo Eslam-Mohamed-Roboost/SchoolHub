@@ -4,6 +4,8 @@ import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
 import { BadgeService } from '../../services/badge.service';
 import { ActivityService } from '../../services/activity.service';
+import { AdminPortfolioAnalyticsService } from '../../services/admin-portfolio-analytics.service';
+import { TeacherSubjectAnalyticsService } from '../../services/teacher-subject-analytics.service';
 import { StatsCard, ActivityLog } from '../../models/admin.models';
 
 @Component({
@@ -16,8 +18,23 @@ export class AdminDashboardComponent {
   private dashboardService = inject(DashboardService);
   private badgeService = inject(BadgeService);
   private activityService = inject(ActivityService);
+  private portfolioAnalytics = inject(AdminPortfolioAnalyticsService);
+  private teacherAnalytics = inject(TeacherSubjectAnalyticsService);
 
   currentDate = computed(() => new Date());
+
+  // Portfolio Analytics Data
+  portfolioStats = computed(() => this.portfolioAnalytics.getPortfolioCompletionStats());
+  evidenceStats = computed(() => this.portfolioAnalytics.getEvidenceCollectionStats());
+  teacherSubjectMatrix = computed(() => this.teacherAnalytics.getTeacherSubjectMatrix());
+
+  // Subject filtering
+  selectedSubject = signal<string>('All Subjects');
+  availableSubjects = this.teacherAnalytics.availableSubjects;
+
+  subjectAnalytics = computed(() =>
+    this.teacherAnalytics.getSubjectFilteredAnalytics(this.selectedSubject())
+  );
 
   statsCards = computed(() => this.dashboardService.getStatsCards());
   pendingApprovals = computed(() => this.badgeService.getPendingSubmissions());
@@ -92,5 +109,30 @@ export class AdminDashboardComponent {
 
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}d ago`;
+  }
+
+  // Portfolio-specific methods
+  selectSubject(subject: string): void {
+    this.selectedSubject.set(subject);
+  }
+
+  downloadEvidence(): void {
+    const request = {
+      dateRange: {
+        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), // Last 30 days
+        end: new Date(),
+      },
+      subjects: [this.selectedSubject()],
+      evidenceTypes: ['portfolios' as const, 'cpd' as const, 'badges' as const],
+      format: 'zip' as const,
+    };
+
+    const blob = this.teacherAnalytics.exportEvidenceBySubject(request);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `evidence-export-${this.selectedSubject()}-${Date.now()}.json`;
+    link.click();
+    window.URL.revokeObjectURL(url);
   }
 }

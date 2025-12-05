@@ -377,3 +377,391 @@
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+/* Portfolio Monitoring Sections */
+.portfolio-monitor-section,
+.teacher-analytics-section,
+.evidence-collection-section {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Portfolio Completion Grid */
+.portfolio-completion-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.completion-card {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  transition: transform 0.2s;
+}
+
+.completion-card:hover {
+  transform: translateY(-2px);
+}
+
+.completion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.completion-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.completion-rate {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4f46e5;
+}
+
+.progress-bar-container {
+  height: 12px;
+  background: white;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #4f46e5 0%, #6366f1 100%);
+  transition: width 0.3s ease;
+}
+
+.completion-meta {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Recent Updates */
+.recent-updates {
+  margin-top: 2rem;
+}
+
+.recent-updates h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.updates-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.update-item {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  border-left: 3px solid #4f46e5;
+}
+
+.update-icon {
+  font-size: 1.5rem;
+}
+
+.update-info {
+  flex: 1;
+}
+
+.update-text {
+  color: #333;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.update-time {
+  color: #999;
+  font-size: 0.75rem;
+}
+
+/* Teacher Analytics */
+.subject-filter-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.subject-filter-dropdown label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.subject-select {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.subject-select:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+/* Analytics Cards Grid */
+.analytics-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+
+.analytics-card {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.analytics-card .card-icon {
+  font-size: 2.5rem;
+}
+
+.analytics-card .card-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.analytics-card .card-label {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Top Teachers Table */
+.top-teachers-table {
+  margin-top: 2rem;
+}
+
+.top-teachers-table h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.teachers-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.teachers-table thead {
+  background: #f3f4f6;
+}
+
+.teachers-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.teachers-table td {
+  padding: 1rem 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.875rem;
+}
+
+.badge-pill {
+  background: #4f46e5;
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.engagement-bar {
+  display: inline-block;
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* Evidence Collection */
+.evidence-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.evidence-stat-card {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.evidence-stat-card .stat-icon {
+  font-size: 2.5rem;
+}
+
+.stat-details {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Export Builder */
+.export-builder {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 2px dashed #cbd5e1;
+}
+
+.export-builder h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #1a1a1a;
+}
+
+.export-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 1rem;
+}
+
+.export-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.breakdown-label {
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.breakdown-value {
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.export-btn {
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+}
+
+.btn-icon {
+  font-size: 1.25rem;
+}
+
+.export-note {
+  color: #666;
+  font-size: 0.875rem;
+  margin: 0;
+  font-style: italic;
+}
+
+.view-link {
+  color: #4f46e5;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+
+.view-link:hover {
+  color: #6366f1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .portfolio-completion-grid,
+  .analytics-cards-grid,
+  .evidence-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .export-info {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .export-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .teachers-table {
+    font-size: 0.75rem;
+  }
+
+  .teachers-table th,
+  .teachers-table td {
+    padding: 0.5rem;
+  }
+}

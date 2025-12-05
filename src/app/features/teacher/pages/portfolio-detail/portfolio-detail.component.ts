@@ -199,15 +199,15 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
                 </div>
                 <div class="mb-3">
                   <label class="text-muted small">Submissions</label>
-                  <div class="fw-bold">{{ portfolio.submissions?.length || 0 }}</div>
+                  <div class="fw-bold">{{ portfolio.submissions.length || 0 }}</div>
                 </div>
                 <div class="mb-3">
                   <label class="text-muted small">Feedback</label>
-                  <div class="fw-bold">{{ portfolio.feedback?.length || 0 }} comments</div>
+                  <div class="fw-bold">{{ portfolio.feedback.length || 0 }} comments</div>
                 </div>
                 <div class="mb-3">
                   <label class="text-muted small">Badges Earned</label>
-                  <div class="fw-bold">{{ portfolio.badges?.length || 0 }}</div>
+                  <div class="fw-bold">{{ portfolio.badges.length || 0 }}</div>
                 </div>
                 <div class="mb-0">
                   <label class="text-muted small">Last Updated</label>
