@@ -1,0 +1,152 @@
+<div class="evidence-dashboard">
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">Evidence Showcase</h1>
+    <p class="page-subtitle">ADEK Compliance & Evidence Management</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading evidence statistics...</p>
+    </div>
+  } @else {
+    <!-- Stats Grid -->
+    @if (stats(); as statData) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📂</div>
+          <div class="stat-content">
+            <div class="stat-label">Total Evidence Items</div>
+            <div class="stat-value">{{ statData.totalEvidenceItems }}</div>
+            <div class="stat-sublabel">Across all categories</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-content">
+            <div class="stat-label">Added This Month</div>
+            <div class="stat-value">{{ statData.thisMonth }}</div>
+            <div class="stat-sublabel text-green-600">
+              <i class="fas fa-arrow-up"></i> New Items
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">⏳</div>
+          <div class="stat-content">
+            <div class="stat-label">Pending Review</div>
+            <div class="stat-value">{{ statData.pendingReview }}</div>
+            <div class="stat-sublabel text-yellow-600">Action Required</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📊</div>
+          <div class="stat-content">
+            <div class="stat-label">Breakdown</div>
+            <div class="text-sm mt-2 space-y-1">
+              <div class="flex justify-between">
+                <span>Portfolios:</span>
+                <span class="font-bold">{{ statData.byType.portfolios }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>CPD:</span>
+                <span class="font-bold">{{ statData.byType.cpd }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span>Badges:</span>
+                <span class="font-bold">{{ statData.byType.badges }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Export Section -->
+    <div class="export-section">
+      <h3 class="section-title">Export Evidence Report</h3>
+      
+      <form class="export-form" (submit)="onExport($event)">
+        <!-- Date Range -->
+        <div class="form-group">
+          <label class="form-label">Date Range</label>
+          <select class="form-select" [value]="dateRange()" (change)="updateDateRange($event)">
+            <option value="30">Last 30 Days</option>
+            <option value="90">Last 3 Months</option>
+            <option value="365">Last Year</option>
+            <option value="all">All Time</option>
+          </select>
+        </div>
+
+        <!-- Format -->
+        <div class="form-group">
+          <label class="form-label">Export Format</label>
+          <select class="form-select" [value]="exportFormat()" (change)="updateFormat($event)">
+            <option value="excel">Excel Report (.xlsx)</option>
+            <option value="pdf">PDF Summary (.pdf)</option>
+            <option value="zip">Full Archive (.zip)</option>
+          </select>
+        </div>
+
+        <!-- Evidence Types -->
+        <div class="form-group col-span-full">
+          <label class="form-label mb-2">Include Evidence Types</label>
+          <div class="checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" 
+                     [checked]="selectedTypes().includes('portfolios')"
+                     (change)="toggleType('portfolios')">
+              Student Portfolios
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" 
+                     [checked]="selectedTypes().includes('cpd')"
+                     (change)="toggleType('cpd')">
+              Teacher CPD
+            </label>
+            <label class="checkbox-label">
+              <input type="checkbox" 
+                     [checked]="selectedTypes().includes('badges')"
+                     (change)="toggleType('badges')">
+              Badge Achievements
+            </label>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-export" [disabled]="isExporting()">
+          @if (isExporting()) {
+            <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+            Processing...
+          } @else {
+            📥 Generate Export
+          }
+        </button>
+      </form>
+    </div>
+
+    <!-- Recent Exports (Placeholder for now) -->
+    <div class="recent-exports">
+      <h3 class="section-title">Recent Exports</h3>
+      <div class="export-list">
+        <div class="export-item">
+          <div class="export-info">
+            <h4>ADEK Compliance Report - Q4</h4>
+            <p>Generated on Dec 01, 2025 • ZIP Archive</p>
+          </div>
+          <span class="status-badge status-completed">Completed</span>
+        </div>
+        <div class="export-item">
+          <div class="export-info">
+            <h4>Monthly Portfolio Summary</h4>
+            <p>Generated on Nov 30, 2025 • Excel</p>
+          </div>
+          <span class="status-badge status-completed">Completed</span>
+        </div>
+      </div>
+    </div>
+  }
+</div>

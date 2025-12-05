@@ -1,0 +1,188 @@
+<div class="analytics-dashboard">
+  <!-- Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Advanced Analytics</h1>
+      <p class="page-subtitle">Teacher Performance & Subject Analysis</p>
+    </div>
+    <div class="header-actions">
+      <select 
+        class="subject-select" 
+        [value]="selectedSubject()" 
+        (change)="onSubjectChange($event)">
+        @for (subject of availableSubjects(); track subject) {
+          <option [value]="subject">{{ subject }}</option>
+        }
+      </select>
+      <button class="btn btn-secondary" (click)="exportData()">
+        📊 Export Report
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading analytics data...</p>
+    </div>
+  } @else {
+    <!-- Subject Stats Cards -->
+    @if (subjectAnalytics(); as stats) {
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-content">
+            <div class="stat-label">Total Students</div>
+            <div class="stat-value">{{ stats.studentCount }}</div>
+            <div class="stat-sublabel">in {{ stats.subject }}</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">👨‍🏫</div>
+          <div class="stat-content">
+            <div class="stat-label">Teachers</div>
+            <div class="stat-value">{{ stats.teacherCount }}</div>
+            <div class="stat-sublabel">Active</div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">📁</div>
+          <div class="stat-content">
+            <div class="stat-label">Portfolio Completion</div>
+            <div class="stat-value">{{ stats.portfolioCompletionRate }}%</div>
+            <div class="progress-bar">
+              <div class="progress-value" [style.width.%]="stats.portfolioCompletionRate"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">🏅</div>
+          <div class="stat-content">
+            <div class="stat-label">CPD Completion</div>
+            <div class="stat-value">{{ stats.cpdBadgeCompletionRate }}%</div>
+            <div class="progress-bar">
+              <div class="progress-value" [style.width.%]="stats.cpdBadgeCompletionRate" style="background: #10b981"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content-grid">
+        <!-- Teacher Matrix Table -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Teacher Performance Matrix</h3>
+          </div>
+          <div class="table-container">
+            <table class="analytics-table">
+              <thead>
+                <tr>
+                  <th (click)="sortBy('teacherName')">Teacher</th>
+                  <th>Subjects</th>
+                  <th>Grades</th>
+                  <th (click)="sortBy('cpdBadgesEarned')">CPD Badges</th>
+                  <th (click)="sortBy('portfolioActivity')">Portfolio Activity</th>
+                  <th (click)="sortBy('lastActive')">Last Active</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (teacher of sortedTeachers(); track teacher.teacherId) {
+                  <tr>
+                    <td>
+                      <div class="teacher-info">
+                        <span class="teacher-name">{{ teacher.teacherName }}</span>
+                        <span class="teacher-email">{{ teacher.email }}</span>
+                      </div>
+                    </td>
+                    <td>
+                      @for (subject of teacher.subjects; track subject) {
+                        <span class="subject-tag">{{ subject }}</span>
+                      }
+                    </td>
+                    <td>
+                      @for (grade of teacher.grades; track grade) {
+                        <span class="grade-tag">{{ grade }}</span>
+                      }
+                    </td>
+                    <td class="text-center font-bold">{{ teacher.cpdBadgesEarned }}</td>
+                    <td>
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ teacher.portfolioActivity }}</span>
+                        <div class="progress-bar w-24">
+                          <div class="progress-value" [style.width.%]="(teacher.portfolioActivity / 100) * 100"></div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{{ formatDate(teacher.lastActive) }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="6" class="text-center py-4 text-gray-500">No teachers found for this subject</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right Column: Top Teachers & Resources -->
+        <div class="flex flex-col gap-6">
+          <!-- Top Performers -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Top Performers</h3>
+            </div>
+            <div class="top-teachers-list">
+              @for (teacher of stats.topTeachers; track teacher.teacherName; let i = $index) {
+                <div class="top-teacher-item">
+                  <div class="rank">{{ i + 1 }}</div>
+                  <div class="teacher-details">
+                    <h4>{{ teacher.teacherName }}</h4>
+                    <p>{{ teacher.subject }}</p>
+                  </div>
+                  <div class="score">{{ teacher.studentEngagement }}%</div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Resource Usage -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Resource Usage</h3>
+            </div>
+            <div class="space-y-4">
+              @if (stats.resourceUsage) {
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-gray-600">Total Resources</span>
+                  <span class="font-bold text-gray-900">{{ stats.resourceUsage.totalResources }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-gray-600">Downloads (Month)</span>
+                  <span class="font-bold text-blue-600">{{ stats.resourceUsage.downloadsThisMonth }}</span>
+                </div>
+                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                  <span class="text-gray-600">Uploads (Month)</span>
+                  <span class="font-bold text-green-600">{{ stats.resourceUsage.uploadsThisMonth }}</span>
+                </div>
+                <div class="p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <div class="text-xs text-blue-600 font-medium uppercase mb-1">Most Popular</div>
+                  <div class="text-sm font-semibold text-blue-900 truncate" title="{{ stats.resourceUsage.mostPopularResource }}">
+                    {{ stats.resourceUsage.mostPopularResource }}
+                  </div>
+                </div>
+              } @else {
+                <div class="text-center py-4 text-gray-500">
+                  No resource usage data available
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>
