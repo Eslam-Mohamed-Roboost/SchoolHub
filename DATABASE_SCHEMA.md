@@ -106,7 +106,7 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column         | Type         | Constraints             | Description                                 |
 | -------------- | ------------ | ----------------------- | ------------------------------------------- |
-| `Id`           | UUID         | PRIMARY KEY             | Unique user identifier                      |
+| `Id`           | BIGINT       | PRIMARY KEY             | Unique user identifier (Snowflake ID)       |
 | `Name`         | VARCHAR(200) | NOT NULL                | Full name                                   |
 | `UserName`     | VARCHAR(100) | NOT NULL, UNIQUE        | Login username                              |
 | `Email`        | VARCHAR(255) | NOT NULL, UNIQUE        | Email address                               |
@@ -115,7 +115,7 @@ SchoolHub.Infrastructure/         (Data Access)
 | `Role`         | INTEGER      | NOT NULL                | FK to Roles (Student=1, Teacher=2, Admin=3) |
 | `IsActive`     | BOOLEAN      | DEFAULT TRUE            | Account status                              |
 | `Avatar`       | TEXT         | NULL                    | Profile picture URL                         |
-| `ClassId`      | UUID         | NULL                    | FK to Classes (for students)                |
+| `ClassId`      | BIGINT       | NULL                    | FK to Classes (for students)                |
 | `LastLogin`    | TIMESTAMP    | NULL                    | Last login datetime                         |
 | `CreatedAt`    | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Account creation                            |
 | `UpdatedAt`    | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Last update                                 |
@@ -135,10 +135,10 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column         | Type        | Constraints             | Description                    |
 | -------------- | ----------- | ----------------------- | ------------------------------ |
-| `Id`           | UUID        | PRIMARY KEY             | Class identifier               |
+| `Id`           | BIGINT      | PRIMARY KEY             | Class identifier (Snowflake ID)|
 | `Name`         | VARCHAR(50) | NOT NULL                | Class name (e.g., "6A", "7B")  |
 | `Grade`        | INTEGER     | NOT NULL                | Grade level (6 or 7)           |
-| `TeacherId`    | UUID        | NULL                    | FK to Users (homeroom teacher) |
+| `TeacherId`    | BIGINT      | NULL                    | FK to Users (homeroom teacher) |
 | `StudentCount` | INTEGER     | DEFAULT 0               | Cached student count           |
 | `CreatedAt`    | TIMESTAMP   | NOT NULL, DEFAULT NOW() | Creation date                  |
 
@@ -157,13 +157,13 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column             | Type         | Constraints             | Description                 |
 | ------------------ | ------------ | ----------------------- | --------------------------- |
-| `Id`               | UUID         | PRIMARY KEY             | Mission identifier          |
+| `Id`               | BIGINT       | PRIMARY KEY             | Mission identifier (Snowflake ID)|
 | `Number`           | INTEGER      | NOT NULL, UNIQUE        | Mission number (1-8)        |
 | `Title`            | VARCHAR(200) | NOT NULL                | Mission title               |
 | `Description`      | TEXT         | NULL                    | Mission description         |
 | `Icon`             | VARCHAR(50)  | NULL                    | Icon/emoji                  |
 | `EstimatedMinutes` | INTEGER      | DEFAULT 30              | Estimated completion time   |
-| `BadgeId`          | UUID         | NOT NULL                | FK to Badges (earned badge) |
+| `BadgeId`          | BIGINT       | NOT NULL                | FK to Badges (earned badge) |
 | `Order`            | INTEGER      | NOT NULL                | Display order               |
 | `IsEnabled`        | BOOLEAN      | DEFAULT TRUE            | Active status               |
 | `CreatedAt`        | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Creation date               |
@@ -193,8 +193,8 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column             | Type         | Constraints             | Description                                   |
 | ------------------ | ------------ | ----------------------- | --------------------------------------------- |
-| `Id`               | UUID         | PRIMARY KEY             | Activity identifier                           |
-| `MissionId`        | UUID         | NOT NULL                | FK to Missions                                |
+| `Id`               | BIGINT       | PRIMARY KEY             | Activity identifier (Snowflake ID)|
+| `MissionId`        | BIGINT       | NOT NULL                | FK to Missions                                |
 | `Number`           | INTEGER      | NOT NULL                | Activity number within mission                |
 | `Title`            | VARCHAR(200) | NOT NULL                | Activity title                                |
 | `Type`             | VARCHAR(50)  | NOT NULL                | 'OneNote', 'Video', 'Game', 'Reading', 'Quiz' |
@@ -219,9 +219,9 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column                | Type         | Constraints             | Description                             |
 | --------------------- | ------------ | ----------------------- | --------------------------------------- |
-| `Id`                  | UUID         | PRIMARY KEY             | Progress identifier                     |
-| `StudentId`           | UUID         | NOT NULL                | FK to Users                             |
-| `MissionId`           | UUID         | NOT NULL                | FK to Missions                          |
+| `Id`                  | BIGINT       | PRIMARY KEY             | Progress identifier (Snowflake ID)|
+| `StudentId`           | BIGINT       | NOT NULL                | FK to Users                             |
+| `MissionId`           | BIGINT       | NOT NULL                | FK to Missions                          |
 | `Status`              | VARCHAR(50)  | NOT NULL                | 'NotStarted', 'InProgress', 'Completed' |
 | `CompletedActivities` | INTEGER      | DEFAULT 0               | Count of completed activities           |
 | `TotalActivities`     | INTEGER      | NOT NULL                | Total activities in mission             |
@@ -245,9 +245,9 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column        | Type      | Constraints             | Description              |
 | ------------- | --------- | ----------------------- | ------------------------ |
-| `Id`          | UUID      | PRIMARY KEY             | Progress identifier      |
-| `StudentId`   | UUID      | NOT NULL                | FK to Users              |
-| `ActivityId`  | UUID      | NOT NULL                | FK to Activities         |
+| `Id`          | BIGINT    | PRIMARY KEY             | Progress identifier (Snowflake ID)|
+| `StudentId`   | BIGINT    | NOT NULL                | FK to Users              |
+| `ActivityId`  | BIGINT    | NOT NULL                | FK to Activities         |
 | `IsCompleted` | BOOLEAN   | DEFAULT FALSE           | Completion status        |
 | `CompletedAt` | TIMESTAMP | NULL                    | Completion datetime      |
 | `Notes`       | TEXT      | NULL                    | Student notes/reflection |
@@ -271,7 +271,7 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column        | Type         | Constraints             | Description                                           |
 | ------------- | ------------ | ----------------------- | ----------------------------------------------------- |
-| `Id`          | UUID         | PRIMARY KEY             | Badge identifier                                      |
+| `Id`          | BIGINT       | PRIMARY KEY             | Badge identifier (Snowflake ID)|
 | `Name`        | VARCHAR(200) | NOT NULL                | Badge name                                            |
 | `Description` | TEXT         | NULL                    | Badge description                                     |
 | `Icon`        | VARCHAR(100) | NULL                    | Icon/emoji                                            |
@@ -295,11 +295,11 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column        | Type      | Constraints             | Description                      |
 | ------------- | --------- | ----------------------- | -------------------------------- |
-| `Id`          | UUID      | PRIMARY KEY             | Award identifier                 |
-| `StudentId`   | UUID      | NOT NULL                | FK to Users                      |
-| `BadgeId`     | UUID      | NOT NULL                | FK to Badges                     |
+| `Id`          | BIGINT    | PRIMARY KEY             | Award identifier (Snowflake ID)|
+| `StudentId`   | BIGINT    | NOT NULL                | FK to Users                      |
+| `BadgeId`     | BIGINT    | NOT NULL                | FK to Badges                     |
 | `EarnedDate`  | TIMESTAMP | NOT NULL, DEFAULT NOW() | When earned                      |
-| `MissionId`   | UUID      | NULL                    | FK to Missions (if from mission) |
+| `MissionId`   | BIGINT    | NULL                    | FK to Missions (if from mission) |
 | `AutoAwarded` | BOOLEAN   | DEFAULT TRUE            | Auto vs manual award             |
 
 **Unique Constraint:** `(StudentId, BadgeId)`
@@ -317,14 +317,14 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column            | Type         | Constraints             | Description                            |
 | ----------------- | ------------ | ----------------------- | -------------------------------------- |
-| `Id`              | UUID         | PRIMARY KEY             | Submission identifier                  |
-| `TeacherId`       | UUID         | NOT NULL                | FK to Users                            |
-| `BadgeId`         | UUID         | NOT NULL                | FK to Badges                           |
+| `Id`              | BIGINT       | PRIMARY KEY             | Submission identifier (Snowflake ID)|
+| `TeacherId`       | BIGINT       | NOT NULL                | FK to Users                            |
+| `BadgeId`         | BIGINT       | NOT NULL                | FK to Badges                           |
 | `EvidenceLink`    | TEXT         | NOT NULL                | Link to evidence (OneNote, video, etc) |
 | `SubmitterNotes`  | TEXT         | NULL                    | Teacher's notes                        |
 | `SubmittedAt`     | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Submission datetime                    |
 | `Status`          | VARCHAR(50)  | NOT NULL                | 'Pending', 'Approved', 'Rejected'      |
-| `ReviewedBy`      | UUID         | NULL                    | FK to Users (admin)                    |
+| `ReviewedBy`      | BIGINT       | NULL                    | FK to Users (admin)                    |
 | `ReviewedAt`      | TIMESTAMP    | NULL                    | Review datetime                        |
 | `ReviewNotes`     | TEXT         | NULL                    | Admin feedback                         |
 | `CpdHoursAwarded` | DECIMAL(4,2) | NULL                    | Awarded CPD hours                      |
@@ -343,8 +343,8 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column                | Type         | Constraints     | Description                                       |
 | --------------------- | ------------ | --------------- | ------------------------------------------------- |
-| `Id`                  | UUID         | PRIMARY KEY     | Level identifier                                  |
-| `StudentId`           | UUID         | NOT NULL UNIQUE | FK to Users                                       |
+| `Id`                  | BIGINT       | PRIMARY KEY     | Level identifier (Snowflake ID)|
+| `StudentId`           | BIGINT       | NOT NULL UNIQUE | FK to Users                                       |
 | `CurrentLevel`        | INTEGER      | DEFAULT 1       | Level (1-4)                                       |
 | `LevelName`           | VARCHAR(100) | NULL            | 'Digital Scout', 'Explorer', 'Champion', 'Leader' |
 | `BadgesEarned`        | INTEGER      | DEFAULT 0       | Total badges earned                               |
@@ -367,506 +367,10 @@ SchoolHub.Infrastructure/         (Data Access)
 
 | Column      | Type         | Constraints             | Description         |
 | ----------- | ------------ | ----------------------- | ------------------- |
-| `Id`        | UUID         | PRIMARY KEY             | Subject identifier  |
+| `Id`        | BIGINT       | PRIMARY KEY             | Subject identifier (Snowflake ID)|
 | `Name`      | VARCHAR(200) | NOT NULL                | Subject name        |
 | `Icon`      | VARCHAR(100) | NULL                    | Subject icon        |
-| `Color`     | VARCHAR(50)  | NULL                    | Display color (hex) |
-| `IsActive`  | BOOLEAN      | DEFAULT TRUE            | Active status       |
-| `CreatedAt` | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Creation date       |
-
-**Examples:** Math, Science, Arabic, English, Islamic Studies, Art, PE
-
----
-
-#### `PortfolioFiles`
-
-**Purpose:** Student portfolio file uploads
-
-| Column         | Type         | Constraints             | Description                                |
-| -------------- | ------------ | ----------------------- | ------------------------------------------ |
-| `Id`           | UUID         | PRIMARY KEY             | File identifier                            |
-| `StudentId`    | UUID         | NOT NULL                | FK to Users                                |
-| `SubjectId`    | UUID         | NOT NULL                | FK to Subjects                             |
-| `FileName`     | VARCHAR(500) | NOT NULL                | Original filename                          |
-| `FileType`     | VARCHAR(50)  | NOT NULL                | 'pdf', 'docx', 'pptx', 'jpg', 'png', 'mp4' |
-| `FileSize`     | BIGINT       | NOT NULL                | File size in bytes                         |
-| `StoragePath`  | TEXT         | NOT NULL                | Cloud storage path/URL                     |
-| `ThumbnailUrl` | TEXT         | NULL                    | Thumbnail preview URL                      |
-| `PreviewUrl`   | TEXT         | NULL                    | Preview URL                                |
-| `DownloadUrl`  | TEXT         | NOT NULL                | Download URL                               |
-| `UploadedAt`   | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Upload datetime                            |
-| `UpdatedAt`    | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Last update                                |
-
-**Indexes:**
-
-- `idx_portfolio_files_student` on `StudentId`
-- `idx_portfolio_files_subject` on `SubjectId`
-- `idx_portfolio_files_uploaded` on `UploadedAt`
-
----
-
-#### `PortfolioReflections`
-
-**Purpose:** Student reflections (rich text)
-
-| Column        | Type      | Constraints             | Description                        |
-| ------------- | --------- | ----------------------- | ---------------------------------- |
-| `Id`          | UUID      | PRIMARY KEY             | Reflection identifier              |
-| `StudentId`   | UUID      | NOT NULL                | FK to Users                        |
-| `SubjectId`   | UUID      | NOT NULL                | FK to Subjects                     |
-| `Content`     | TEXT      | NOT NULL                | HTML content from rich text editor |
-| `Prompt`      | TEXT      | NULL                    | Reflection prompt/question         |
-| `IsAutoSaved` | BOOLEAN   | DEFAULT FALSE           | Auto-save vs manual save           |
-| `CreatedAt`   | TIMESTAMP | NOT NULL, DEFAULT NOW() | Creation datetime                  |
-| `UpdatedAt`   | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update                        |
-
-**Indexes:**
-
-- `idx_portfolio_reflections_student` on `StudentId`
-- `idx_portfolio_reflections_subject` on `SubjectId`
-
----
-
-#### `TeacherFeedback`
-
-**Purpose:** Teacher feedback on student work
-
-| Column      | Type        | Constraints             | Description                     |
-| ----------- | ----------- | ----------------------- | ------------------------------- |
-| `Id`        | UUID        | PRIMARY KEY             | Feedback identifier             |
-| `StudentId` | UUID        | NOT NULL                | FK to Users (student)           |
-| `TeacherId` | UUID        | NOT NULL                | FK to Users (teacher)           |
-| `SubjectId` | UUID        | NULL                    | FK to Subjects                  |
-| `FileId`    | UUID        | NULL                    | FK to PortfolioFiles (optional) |
-| `Comment`   | TEXT        | NOT NULL                | Feedback comment                |
-| `Type`      | VARCHAR(50) | NOT NULL                | 'Comment', 'RevisionRequest'    |
-| `CreatedAt` | TIMESTAMP   | NOT NULL, DEFAULT NOW() | Feedback datetime               |
-
-**Indexes:**
-
-- `idx_feedback_student` on `StudentId`
-- `idx_feedback_teacher` on `TeacherId`
-- `idx_feedback_created` on `CreatedAt`
-
----
-
-#### `PortfolioLikes`
-
-**Purpose:** Teacher likes on student portfolios
-
-| Column      | Type      | Constraints             | Description           |
-| ----------- | --------- | ----------------------- | --------------------- |
-| `Id`        | UUID      | PRIMARY KEY             | Like identifier       |
-| `TeacherId` | UUID      | NOT NULL                | FK to Users (teacher) |
-| `StudentId` | UUID      | NOT NULL                | FK to Users (student) |
-| `SubjectId` | UUID      | NULL                    | FK to Subjects        |
-| `CreatedAt` | TIMESTAMP | NOT NULL, DEFAULT NOW() | Like datetime         |
-
-**Unique Constraint:** `(TeacherId, StudentId, SubjectId)`
-
-**Indexes:**
-
-- `idx_portfolio_likes_student` on `StudentId`
-- `idx_portfolio_likes_teacher` on `TeacherId`
-
----
-
-#### `PortfolioStatus`
-
-**Purpose:** Track portfolio review status
-
-| Column           | Type        | Constraints             | Description                            |
-| ---------------- | ----------- | ----------------------- | -------------------------------------- |
-| `Id`             | UUID        | PRIMARY KEY             | Status identifier                      |
-| `StudentId`      | UUID        | NOT NULL                | FK to Users                            |
-| `SubjectId`      | UUID        | NOT NULL                | FK to Subjects                         |
-| `Status`         | VARCHAR(50) | NOT NULL                | 'Pending', 'Reviewed', 'NeedsRevision' |
-| `LastReviewedBy` | UUID        | NULL                    | FK to Users (teacher)                  |
-| `LastReviewedAt` | TIMESTAMP   | NULL                    | Last review datetime                   |
-| `UpdatedAt`      | TIMESTAMP   | NOT NULL, DEFAULT NOW() | Last update                            |
-
-**Unique Constraint:** `(StudentId, SubjectId)`
-
-**Indexes:**
-
-- `idx_portfolio_status_student` on `StudentId`
-- `idx_portfolio_status_status` on `Status`
-
----
-
-### 5. Teacher CPD (Continuous Professional Development)
-
-#### `CpdModules`
-
-**Purpose:** CPD training modules for teachers
-
-| Column            | Type         | Constraints             | Description                           |
-| ----------------- | ------------ | ----------------------- | ------------------------------------- |
-| `Id`              | UUID         | PRIMARY KEY             | Module identifier                     |
-| `Title`           | VARCHAR(300) | NOT NULL                | Module title                          |
-| `Description`     | TEXT         | NULL                    | Module description                    |
-| `DurationMinutes` | INTEGER      | NOT NULL                | Duration in minutes                   |
-| `Icon`            | VARCHAR(100) | NULL                    | Module icon                           |
-| `Color`           | VARCHAR(50)  | NULL                    | Display color                         |
-| `BackgroundColor` | VARCHAR(50)  | NULL                    | Background color                      |
-| `VideoUrl`        | TEXT         | NULL                    | Tutorial video URL                    |
-| `VideoProvider`   | VARCHAR(50)  | NULL                    | 'youtube', 'vimeo', 'self-hosted'     |
-| `GuideContent`    | TEXT         | NULL                    | HTML guide content                    |
-| `FormUrl`         | TEXT         | NULL                    | Assessment/quiz form URL              |
-| `BadgeId`         | UUID         | NULL                    | FK to Badges (earned upon completion) |
-| `Order`           | INTEGER      | NOT NULL                | Display order                         |
-| `IsActive`        | BOOLEAN      | DEFAULT TRUE            | Active status                         |
-| `CreatedAt`       | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Creation date                         |
-
-**Indexes:**
-
-- `idx_cpd_modules_order` on `Order`
-
----
-
-#### `TeacherCpdProgress`
-
-**Purpose:** Teacher progress on CPD modules
-
-| Column           | Type         | Constraints | Description                             |
-| ---------------- | ------------ | ----------- | --------------------------------------- |
-| `Id`             | UUID         | PRIMARY KEY | Progress identifier                     |
-| `TeacherId`      | UUID         | NOT NULL    | FK to Users                             |
-| `ModuleId`       | UUID         | NOT NULL    | FK to CpdModules                        |
-| `Status`         | VARCHAR(50)  | NOT NULL    | 'NotStarted', 'InProgress', 'Completed' |
-| `StartedAt`      | TIMESTAMP    | NULL        | When started                            |
-| `CompletedAt`    | TIMESTAMP    | NULL        | When completed                          |
-| `LastAccessedAt` | TIMESTAMP    | NULL        | Last access datetime                    |
-| `EvidenceFiles`  | JSONB        | NULL        | Array of evidence file URLs             |
-| `HoursEarned`    | DECIMAL(4,2) | NULL        | CPD hours earned                        |
-
-**Unique Constraint:** `(TeacherId, ModuleId)`
-
-**Indexes:**
-
-- `idx_cpd_progress_teacher` on `TeacherId`
-- `idx_cpd_progress_status` on `Status`
-
----
-
-#### `TeacherSubjects`
-
-**Purpose:** Teacher-subject assignments
-
-| Column       | Type      | Constraints             | Description           |
-| ------------ | --------- | ----------------------- | --------------------- |
-| `Id`         | UUID      | PRIMARY KEY             | Assignment identifier |
-| `TeacherId`  | UUID      | NOT NULL                | FK to Users           |
-| `SubjectId`  | UUID      | NOT NULL                | FK to Subjects        |
-| `Grade`      | INTEGER   | NOT NULL                | Grade level (6 or 7)  |
-| `AssignedAt` | TIMESTAMP | NOT NULL, DEFAULT NOW() | Assignment date       |
-
-**Unique Constraint:** `(TeacherId, SubjectId, Grade)`
-
-**Indexes:**
-
-- `idx_teacher_subjects_teacher` on `TeacherId`
-- `idx_teacher_subjects_subject` on `SubjectId`
-
----
-
-### 6. Challenges & Quizzes
-
-#### `Challenges`
-
-**Purpose:** Challenge Zone activities
-
-| Column             | Type         | Constraints             | Description                                 |
-| ------------------ | ------------ | ----------------------- | ------------------------------------------- |
-| `Id`               | UUID         | PRIMARY KEY             | Challenge identifier                        |
-| `Title`            | VARCHAR(300) | NOT NULL                | Challenge title                             |
-| `Description`      | TEXT         | NULL                    | Challenge description                       |
-| `Type`             | VARCHAR(50)  | NOT NULL                | 'Quiz', 'Game', 'Creative', 'Investigation' |
-| `Difficulty`       | VARCHAR(50)  | NOT NULL                | 'Easy', 'Medium', 'Hard'                    |
-| `EstimatedMinutes` | INTEGER      | DEFAULT 15              | Estimated time                              |
-| `Icon`             | VARCHAR(100) | NULL                    | Challenge icon                              |
-| `BackgroundColor`  | VARCHAR(50)  | NULL                    | Display color                               |
-| `ContentUrl`       | TEXT         | NULL                    | Embedded content/game URL                   |
-| `Points`           | INTEGER      | DEFAULT 25              | Points awarded                              |
-| `IsActive`         | BOOLEAN      | DEFAULT TRUE            | Active status                               |
-| `CreatedAt`        | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Creation date                               |
-
-**Indexes:**
-
-- `idx_challenges_difficulty` on `Difficulty`
-- `idx_challenges_type` on `Type`
-
----
-
-#### `StudentChallenges`
-
-**Purpose:** Student challenge progress/completion
-
-| Column         | Type        | Constraints             | Description                             |
-| -------------- | ----------- | ----------------------- | --------------------------------------- |
-| `Id`           | UUID        | PRIMARY KEY             | Progress identifier                     |
-| `StudentId`    | UUID        | NOT NULL                | FK to Users                             |
-| `ChallengeId`  | UUID        | NOT NULL                | FK to Challenges                        |
-| `Status`       | VARCHAR(50) | NOT NULL                | 'NotStarted', 'InProgress', 'Completed' |
-| `Score`        | INTEGER     | NULL                    | Challenge score                         |
-| `PointsEarned` | INTEGER     | DEFAULT 0               | Points earned                           |
-| `CompletedAt`  | TIMESTAMP   | NULL                    | Completion datetime                     |
-| `CreatedAt`    | TIMESTAMP   | NOT NULL, DEFAULT NOW() | First attempt                           |
-| `UpdatedAt`    | TIMESTAMP   | NOT NULL, DEFAULT NOW() | Last update                             |
-
-**Unique Constraint:** `(StudentId, ChallengeId)`
-
-**Indexes:**
-
-- `idx_student_challenges_student` on `StudentId`
-- `idx_student_challenges_status` on `Status`
-
----
-
-#### `QuizAttempts`
-
-**Purpose:** Mission quiz attempts (Check Your Understanding)
-
-| Column          | Type         | Constraints             | Description                   |
-| --------------- | ------------ | ----------------------- | ----------------------------- |
-| `Id`            | UUID         | PRIMARY KEY             | Attempt identifier            |
-| `StudentId`     | UUID         | NOT NULL                | FK to Users                   |
-| `MissionId`     | UUID         | NOT NULL                | FK to Missions                |
-| `Score`         | DECIMAL(5,2) | NOT NULL                | Score percentage (0-100)      |
-| `PassScore`     | DECIMAL(5,2) | DEFAULT 70.00           | Passing threshold             |
-| `IsPassed`      | BOOLEAN      | NOT NULL                | Pass/fail status              |
-| `Answers`       | JSONB        | NULL                    | JSON of question answers      |
-| `AttemptNumber` | INTEGER      | NOT NULL                | Attempt count (allow retakes) |
-| `CreatedAt`     | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Attempt datetime              |
-
-**Indexes:**
-
-- `idx_quiz_attempts_student` on `StudentId`
-- `idx_quiz_attempts_mission` on `MissionId`
-- `idx_quiz_attempts_created` on `CreatedAt`
-
----
-
-### 7. Notifications & Activity
-
-#### `Notifications`
-
-**Purpose:** User notifications
-
-| Column      | Type         | Constraints             | Description                                       |
-| ----------- | ------------ | ----------------------- | ------------------------------------------------- |
-| `Id`        | UUID         | PRIMARY KEY             | Notification identifier                           |
-| `UserId`    | UUID         | NOT NULL                | FK to Users                                       |
-| `Type`      | VARCHAR(50)  | NOT NULL                | 'MissionComplete', 'BadgeEarned', 'LevelUp', etc. |
-| `Title`     | VARCHAR(300) | NOT NULL                | Notification title                                |
-| `Message`   | TEXT         | NOT NULL                | Notification message                              |
-| `Icon`      | VARCHAR(100) | NULL                    | Icon/emoji                                        |
-| `Link`      | TEXT         | NULL                    | Deep link URL                                     |
-| `IsRead`    | BOOLEAN      | DEFAULT FALSE           | Read status                                       |
-| `CreatedAt` | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Notification datetime                             |
-| `ReadAt`    | TIMESTAMP    | NULL                    | When read                                         |
-
-**Indexes:**
-
-- `idx_notifications_user` on `UserId`
-- `idx_notifications_is_read` on `IsRead`
-- `idx_notifications_created` on `CreatedAt`
-
----
-
-#### `ActivityLogs`
-
-**Purpose:** System activity audit trail
-
-| Column      | Type         | Constraints             | Description                                        |
-| ----------- | ------------ | ----------------------- | -------------------------------------------------- |
-| `Id`        | UUID         | PRIMARY KEY             | Log identifier                                     |
-| `UserId`    | UUID         | NOT NULL                | FK to Users                                        |
-| `Action`    | VARCHAR(300) | NOT NULL                | Action description                                 |
-| `Type`      | VARCHAR(50)  | NOT NULL                | 'Login', 'Badge', 'Upload', 'Completion', 'Update' |
-| `Details`   | TEXT         | NULL                    | Additional details                                 |
-| `IpAddress` | VARCHAR(50)  | NULL                    | IP address                                         |
-| `UserAgent` | TEXT         | NULL                    | Browser user agent                                 |
-| `CreatedAt` | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Log datetime                                       |
-
-**Indexes:**
-
-- `idx_activity_logs_user` on `UserId`
-- `idx_activity_logs_type` on `Type`
-- `idx_activity_logs_created` on `CreatedAt` (DESC)
-
----
-
-### 8. Admin & Settings
-
-#### `Announcements`
-
-**Purpose:** System-wide announcements
-
-| Column           | Type         | Constraints             | Description                           |
-| ---------------- | ------------ | ----------------------- | ------------------------------------- |
-| `Id`             | UUID         | PRIMARY KEY             | Announcement identifier               |
-| `Title`          | VARCHAR(300) | NOT NULL                | Announcement title                    |
-| `Content`        | TEXT         | NOT NULL                | Announcement content (HTML)           |
-| `Priority`       | VARCHAR(50)  | NOT NULL                | 'Normal', 'Important', 'Urgent'       |
-| `TargetAudience` | JSONB        | NOT NULL                | Array of roles ['Student', 'Teacher'] |
-| `IsPinned`       | BOOLEAN      | DEFAULT FALSE           | Pin to top                            |
-| `ShowAsPopup`    | BOOLEAN      | DEFAULT FALSE           | Show as popup                         |
-| `SendEmail`      | BOOLEAN      | DEFAULT FALSE           | Send email notification               |
-| `PublishedAt`    | TIMESTAMP    | NULL                    | Publish datetime                      |
-| `ViewCount`      | INTEGER      | DEFAULT 0               | View count                            |
-| `CreatedBy`      | UUID         | NOT NULL                | FK to Users (admin)                   |
-| `CreatedAt`      | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Creation datetime                     |
-
-**Indexes:**
-
-- `idx_announcements_published` on `PublishedAt`
-- `idx_announcements_priority` on `Priority`
-
----
-
-#### `WeeklyChallenges`
-
-**Purpose:** Teacher weekly challenges
-
-| Column               | Type         | Constraints             | Description                       |
-| -------------------- | ------------ | ----------------------- | --------------------------------- |
-| `Id`                 | UUID         | PRIMARY KEY             | Challenge identifier              |
-| `WeekNumber`         | INTEGER      | NOT NULL                | Week number                       |
-| `Title`              | VARCHAR(300) | NOT NULL                | Challenge title                   |
-| `Description`        | TEXT         | NOT NULL                | Challenge description             |
-| `ResourceLinks`      | JSONB        | NULL                    | Array of resource URLs            |
-| `TutorialVideo`      | TEXT         | NULL                    | Tutorial video URL                |
-| `SubmissionFormLink` | TEXT         | NULL                    | Submission form URL               |
-| `Status`             | VARCHAR(50)  | NOT NULL                | 'Draft', 'Published', 'Scheduled' |
-| `PublishedAt`        | TIMESTAMP    | NULL                    | Publish datetime                  |
-| `AutoNotify`         | BOOLEAN      | DEFAULT TRUE            | Auto-notify teachers              |
-| `CreatedBy`          | UUID         | NOT NULL                | FK to Users (admin)               |
-| `CreatedAt`          | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Creation datetime                 |
-
-**Indexes:**
-
-- `idx_weekly_challenges_week` on `WeekNumber`
-- `idx_weekly_challenges_status` on `Status`
-
----
-
-#### `SystemSettings`
-
-**Purpose:** Global system configuration
-
-| Column         | Type         | Constraints             | Description                                   |
-| -------------- | ------------ | ----------------------- | --------------------------------------------- |
-| `Id`           | UUID         | PRIMARY KEY             | Setting identifier                            |
-| `SettingKey`   | VARCHAR(200) | NOT NULL UNIQUE         | Setting key                                   |
-| `SettingValue` | TEXT         | NOT NULL                | Setting value (JSON for complex)              |
-| `DataType`     | VARCHAR(50)  | NOT NULL                | 'String', 'Number', 'Boolean', 'JSON'         |
-| `Category`     | VARCHAR(100) | NOT NULL                | 'General', 'Email', 'Notifications', 'Backup' |
-| `Description`  | TEXT         | NULL                    | Setting description                           |
-| `UpdatedBy`    | UUID         | NULL                    | FK to Users (admin)                           |
-| `UpdatedAt`    | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Last update                                   |
-
-**Examples:**
-
-- `school_name` → "Abu Dhabi School"
-- `academic_year` → "2024-2025"
-- `admin_email` → "admin@school.ae"
-- `cpd_target_hours` → "20"
-
----
-
-#### `SystemLogs`
-
-**Purpose:** System error and debug logs
-
-| Column       | Type         | Constraints             | Description                 |
-| ------------ | ------------ | ----------------------- | --------------------------- |
-| `Id`         | UUID         | PRIMARY KEY             | Log identifier              |
-| `Level`      | VARCHAR(50)  | NOT NULL                | 'Info', 'Warning', 'Error'  |
-| `UserId`     | UUID         | NULL                    | FK to Users (if applicable) |
-| `Action`     | VARCHAR(300) | NOT NULL                | Action/event description    |
-| `Details`    | TEXT         | NULL                    | Detailed log message        |
-| `IpAddress`  | VARCHAR(50)  | NULL                    | IP address                  |
-| `StackTrace` | TEXT         | NULL                    | Error stack trace           |
-| `CreatedAt`  | TIMESTAMP    | NOT NULL, DEFAULT NOW() | Log datetime                |
-
-**Indexes:**
-
-- `idx_system_logs_level` on `Level`
-- `idx_system_logs_created` on `CreatedAt` (DESC)
-
----
-
-### 9. Leaderboard & Gamification
-
-#### `Leaderboards`
-
-**Purpose:** Class-based leaderboard rankings (privacy-conscious)
-
-| Column        | Type      | Constraints             | Description            |
-| ------------- | --------- | ----------------------- | ---------------------- |
-| `Id`          | UUID      | PRIMARY KEY             | Leaderboard identifier |
-| `StudentId`   | UUID      | NOT NULL                | FK to Users            |
-| `ClassId`     | UUID      | NOT NULL                | FK to Classes          |
-| `TotalPoints` | INTEGER   | DEFAULT 0               | Total points earned    |
-| `Rank`        | INTEGER   | NULL                    | Rank within class      |
-| `IsOptedOut`  | BOOLEAN   | DEFAULT FALSE           | Student opt-out status |
-| `IsAnonymous` | BOOLEAN   | DEFAULT FALSE           | Display anonymously    |
-| `UpdatedAt`   | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update            |
-
-**Unique Constraint:** `(StudentId, ClassId)`
-
-**Indexes:**
-
-- `idx_leaderboards_class` on `ClassId`
-- `idx_leaderboards_rank` on `ClassId, Rank`
-
----
-
-#### `Streaks`
-
-**Purpose:** Student login/activity streaks
-
-| Column             | Type      | Constraints             | Description              |
-| ------------------ | --------- | ----------------------- | ------------------------ |
-| `Id`               | UUID      | PRIMARY KEY             | Streak identifier        |
-| `StudentId`        | UUID      | NOT NULL UNIQUE         | FK to Users              |
-| `CurrentStreak`    | INTEGER   | DEFAULT 0               | Current consecutive days |
-| `LongestStreak`    | INTEGER   | DEFAULT 0               | Longest streak ever      |
-| `LastActivityDate` | DATE      | NULL                    | Last activity date       |
-| `UpdatedAt`        | TIMESTAMP | NOT NULL, DEFAULT NOW() | Last update              |
-
-**Indexes:**
-
-- `idx_streaks_student` on `StudentId`
-
----
-
-### 10. ADEK Reports & Evidence
-
-#### `EvidenceCollections`
-
-**Purpose:** Track evidence collected for ADEK reports
-
-| Column        | Type        | Constraints             | Description                          |
-| ------------- | ----------- | ----------------------- | ------------------------------------ |
-| `Id`          | UUID        | PRIMARY KEY             | Evidence identifier                  |
-| `Type`        | VARCHAR(50) | NOT NULL                | 'Portfolio', 'CPD', 'Badge'          |
-| `SubjectId`   | UUID        | NULL                    | FK to Subjects                       |
-| `DateFrom`    | DATE        | NOT NULL                | Collection period start              |
-| `DateTo`      | DATE        | NOT NULL                | Collection period end                |
-| `FileUrl`     | TEXT        | NULL                    | Exported file URL                    |
-| `FileFormat`  | VARCHAR(50) | NULL                    | 'zip', 'pdf', 'excel'                |
-| `Status`      | VARCHAR(50) | NOT NULL                | 'Pending', 'Generated', 'Downloaded' |
-| `ItemCount`   | INTEGER     | DEFAULT 0               | Number of items collected            |
-| `GeneratedBy` | UUID        | NULL                    | FK to Users (admin)                  |
-| `GeneratedAt` | TIMESTAMP   | NULL                    | Generation datetime                  |
-| `CreatedAt`   | TIMESTAMP   | NOT NULL, DEFAULT NOW() | Request datetime                     |
-
-**Indexes:**
-
-- `idx_evidence_type` on `Type`
-- `idx_evidence_date_range` on `DateFrom, DateTo`
+| `Color`     | VARCHAR(50)  | NULL                    | Display color
 
 ---
 
@@ -1131,3 +635,4 @@ Container:     Docker
 ---
 
 _This schema is optimized for 800 students, 40 teachers, and growth to 2,000+ students. All tables use UUIDs for distributed system compatibility._
+s

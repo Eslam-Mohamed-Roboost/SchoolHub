@@ -62,6 +62,9 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
 
   constructor() {
     super();
+    // Initialize with mock data immediately
+    this.loadMockData();
+    this.subjectAnalytics.set(this.getMockSubjectAnalytics('All Subjects'));
   }
 
   // ============================================
@@ -69,7 +72,7 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
   // ============================================
 
   init(): void {
-    // Always load fresh data when component initializes
+    // Try to load fresh data from API (constructor already loaded mock data)
     this.loadTeacherMatrix();
   }
 
@@ -115,11 +118,10 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
     this.get<any>(`${Admin_API_ENDPOINTS.TeacherSubjects.MATRIX}?page=1&pageSize=100`).subscribe({
       next: (response) => {
         console.log('Teacher Matrix Response:', response);
-        // The API might return { Items: [...] } or just [...] or { Data: { Items: [...] } }
-        // Based on other endpoints, it likely returns { Items: [...] } directly for paginated lists
 
-        let items: TeacherSubjectMatrixApiResponse[] = [];
+        let items: any[] = [];
 
+        // Extract items from various possible response structures
         if (response && Array.isArray(response)) {
           items = response;
         } else if (response && Array.isArray(response.Items)) {
@@ -129,11 +131,19 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
         }
 
         if (items.length > 0) {
+          // Map PascalCase API response to camelCase frontend model
           const matrix = items.map((t) => ({
-            ...t,
-            lastActive: new Date(t.lastActive),
+            teacherId: t.TeacherId || t.teacherId || '',
+            teacherName: t.TeacherName || t.teacherName || '',
+            email: t.Email || t.email || '',
+            subjects: t.Subjects || t.subjects || [],
+            grades: t.Grades || t.grades || [],
+            cpdBadgesEarned: t.CpdBadgesEarned || t.cpdBadgesEarned || 0,
+            portfolioActivity: t.PortfolioActivity || t.portfolioActivity || 0,
+            lastActive: new Date(t.LastActive || t.lastActive || Date.now()),
           }));
           this.teacherMatrix.set(matrix);
+          console.log('Mapped Teacher Matrix:', matrix);
         } else {
           console.warn('Teacher Matrix data is empty or invalid format');
         }
@@ -163,10 +173,37 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
     this.get<any>(url).subscribe({
       next: (response) => {
         console.log('Subject Analytics Response:', response);
-        const data = this.extractData<SubjectAnalyticsApiResponse>(response);
+        const rawData = this.extractData<any>(response);
 
-        if (data) {
-          this.subjectAnalytics.set(data);
+        if (rawData) {
+          // Map PascalCase API response to camelCase frontend model
+          const mapped: SubjectAnalytics = {
+            subject: rawData.Subject || rawData.subject || subject,
+            teacherCount: rawData.TeacherCount || rawData.teacherCount || 0,
+            studentCount: rawData.StudentCount || rawData.studentCount || 0,
+            portfolioCompletionRate:
+              rawData.PortfolioCompletionRate || rawData.portfolioCompletionRate || 0,
+            cpdBadgeCompletionRate:
+              rawData.CpdBadgeCompletionRate || rawData.cpdBadgeCompletionRate || 0,
+            resourceUsage: {
+              totalResources:
+                rawData.ResourceUsage?.TotalResources || rawData.resourceUsage?.totalResources || 0,
+              downloadsThisMonth:
+                rawData.ResourceUsage?.DownloadsThisMonth ||
+                rawData.resourceUsage?.downloadsThisMonth ||
+                0,
+              uploadsThisMonth:
+                rawData.ResourceUsage?.UploadsThisMonth ||
+                rawData.resourceUsage?.uploadsThisMonth ||
+                0,
+              mostPopularResource:
+                rawData.ResourceUsage?.MostPopularResource ||
+                rawData.resourceUsage?.mostPopularResource ||
+                'N/A',
+            },
+            topTeachers: rawData.TopTeachers || rawData.topTeachers || [],
+          };
+          this.subjectAnalytics.set(mapped);
         } else {
           console.warn('Subject Analytics data is null');
           this.subjectAnalytics.set(this.getMockSubjectAnalytics(subject));

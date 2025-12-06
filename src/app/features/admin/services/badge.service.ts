@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, computed } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { BadgeSubmission, Badge, BadgeStatus } from '../models/admin.models';
 import { ApplicationRole } from '../../../core/enums/application-role.enum';
@@ -76,6 +76,26 @@ export class BadgeService extends BaseHttpService {
   private badges = signal<Badge[]>([]);
   private statistics = signal<BadgeStatisticsDto | null>(null);
   private isLoaded = signal(false);
+
+  // Computed signal for badges by category
+  private badgesByCategory = computed(() => {
+    const stats = this.statistics();
+    if (stats?.ByCategory) {
+      return stats.ByCategory.map((c) => ({ category: c.Category, count: c.Count }));
+    }
+
+    // Fallback to local calculation from submissions
+    const submissions = this.submissions();
+    const categoryMap = new Map<string, number>();
+
+    submissions.forEach((s) => {
+      categoryMap.set(s.badgeCategory, (categoryMap.get(s.badgeCategory) || 0) + 1);
+    });
+
+    return Array.from(categoryMap.entries())
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count);
+  });
 
   constructor() {
     super();
@@ -274,23 +294,8 @@ export class BadgeService extends BaseHttpService {
     };
   }
 
-  getBadgesByCategory(): { category: string; count: number }[] {
-    const stats = this.statistics();
-    if (stats?.ByCategory) {
-      return stats.ByCategory.map((c) => ({ category: c.Category, count: c.Count }));
-    }
-
-    // Fallback to local calculation from submissions
-    const submissions = this.submissions();
-    const categoryMap = new Map<string, number>();
-
-    submissions.forEach((s) => {
-      categoryMap.set(s.badgeCategory, (categoryMap.get(s.badgeCategory) || 0) + 1);
-    });
-
-    return Array.from(categoryMap.entries())
-      .map(([category, count]) => ({ category, count }))
-      .sort((a, b) => b.count - a.count);
+  getBadgesByCategory() {
+    return this.badgesByCategory;
   }
 
   // ============================================
