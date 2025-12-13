@@ -26,7 +26,7 @@ export class AdminCpdComponent implements OnInit {
   teacherCPDData = this.cpdService.getTeacherProgress();
   cpdStats = this.cpdService.getStatistics();
   cpdByMonth = this.cpdService.getCpdByMonth();
-  badgesByCategory = computed(() => this.badgeService.getBadgesByCategory());
+  badgesByCategory = this.badgeService.getBadgesByCategory();
 
   // Participation calculated from teacher data
   teacherParticipation = computed(() => {
