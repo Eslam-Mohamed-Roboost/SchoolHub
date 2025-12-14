@@ -244,8 +244,14 @@ export class CpdService extends BaseHttpService {
     if (dateFrom) params.push(`dateFrom=${dateFrom.toISOString()}`);
     if (dateTo) params.push(`dateTo=${dateTo.toISOString()}`);
 
-    const url = `${Admin_API_ENDPOINTS.CPD.EXPORT}?${params.join('&')}`;
-    return this.get<Blob>(url);
+    const endpoint = `${Admin_API_ENDPOINTS.CPD.EXPORT}?${params.join('&')}`;
+
+    // Construct full URL with base URL
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const cleanBaseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const url = `${cleanBaseUrl}/${cleanEndpoint}`;
+
+    return this.http.get(url, { responseType: 'blob' });
   }
 
   // ============================================

@@ -9,12 +9,12 @@
       <button class="btn btn-secondary" (click)="exportToExcel()">
         📊 Export to Excel
       </button>
-      <button class="btn btn-secondary" (click)="exportToPDF()">
+      <!-- <button class="btn btn-secondary" (click)="exportToPDF()">
         📄 Export to PDF
       </button>
       <button class="btn btn-primary" (click)="emailToTeachers()">
         📧 Email to Teachers
-      </button>
+      </button> -->
     </div>
   </div>
 
@@ -77,15 +77,19 @@
       <h3 class="chart-title">CPD Hours by Month</h3>
       <p class="chart-subtitle">Last 12 months</p>
       <div class="bar-chart">
-        @for (item of cpdByMonth(); track item.month) {
-          <div class="bar-item">
-            <div class="bar-container">
-              <div class="bar" [style.height.%]="getBarWidth(item.hours, getMaxChartValue(cpdByMonth()))">
-                <span class="bar-value">{{ item.hours }}</span>
+        @if (cpdByMonth().length > 0) {
+          @for (item of cpdByMonth(); track item.month) {
+            <div class="bar-item">
+              <div class="bar-container">
+                <div class="bar" [style.height.%]="getBarWidth(item.hours, getMaxChartValue(cpdByMonth()))">
+                  <span class="bar-value">{{ item.hours }}</span>
+                </div>
               </div>
+              <div class="bar-label">{{ item.month }}</div>
             </div>
-            <div class="bar-label">{{ item.month }}</div>
-          </div>
+          }
+        } @else {
+          <div class="empty-state">No CPD data available for the selected period</div>
         }
       </div>
     </div>
@@ -95,15 +99,19 @@
       <h3 class="chart-title">Badges by Category</h3>
       <p class="chart-subtitle">Distribution of earned badges</p>
       <div class="horizontal-bars">
-        @for (cat of badgesByCategory().slice(0, 6); track cat.category) {
-          <div class="h-bar-item">
-            <div class="h-bar-label">{{ cat.category }}</div>
-            <div class="h-bar-container">
-              <div class="h-bar" [style.width.%]="getBarWidth(cat.count, badgesByCategory()[0].count)">
-                {{ cat.count }}
+        @if (badgesByCategory().length > 0) {
+          @for (cat of badgesByCategory().slice(0, 6); track cat.category) {
+            <div class="h-bar-item">
+              <div class="h-bar-label">{{ cat.category }}</div>
+              <div class="h-bar-container">
+                <div class="h-bar" [style.width.%]="getBarWidth(cat.count, badgesByCategory()[0].count)">
+                  {{ cat.count }}
+                </div>
               </div>
             </div>
-          </div>
+          }
+        } @else {
+          <div class="empty-state">No badge categories data available</div>
         }
       </div>
     </div>
@@ -129,10 +137,9 @@
             </div>
           </div>
         </div>
-        <div class="pie-visual">
-          <div class="pie-segment active" 
-               [style.--percentage]="(teacherParticipation().active / (teacherParticipation().active + teacherParticipation().inactive)) * 100">
-          </div>
+        <div class="pie-visual" 
+             [style.background]="'conic-gradient(#10b981 0% ' + ((teacherParticipation().active / (teacherParticipation().active + teacherParticipation().inactive)) * 100) + '%, #ef4444 ' + ((teacherParticipation().active / (teacherParticipation().active + teacherParticipation().inactive)) * 100) + '% 100%)'"
+             [style.box-shadow]="'0 4px 12px rgba(0, 0, 0, 0.1)'">
         </div>
       </div>
     </div>

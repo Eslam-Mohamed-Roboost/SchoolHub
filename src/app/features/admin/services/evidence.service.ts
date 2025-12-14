@@ -62,8 +62,14 @@ export class EvidenceService extends BaseHttpService {
   // ============================================
 
   exportEvidence(request: EvidenceExportRequest): Observable<Blob> {
-    // Try API first
-    return this.http.post(Admin_API_ENDPOINTS.Evidence.EXPORT, request, {
+    // Construct full URL with base URL to call backend API
+    const endpoint = Admin_API_ENDPOINTS.Evidence.EXPORT.startsWith('/')
+      ? Admin_API_ENDPOINTS.Evidence.EXPORT.slice(1)
+      : Admin_API_ENDPOINTS.Evidence.EXPORT;
+    const cleanBaseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const url = `${cleanBaseUrl}/${endpoint}`;
+
+    return this.http.post(url, request, {
       responseType: 'blob',
     });
   }

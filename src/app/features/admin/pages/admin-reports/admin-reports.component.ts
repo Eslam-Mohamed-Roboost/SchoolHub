@@ -1,7 +1,10 @@
-import { Component, signal, computed } from '@angular/core';
+import { Component, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../config/environment';
+import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoint';
 
 interface ReportType {
   id: string;
@@ -25,6 +28,9 @@ interface ReportParameters {
   styleUrl: './admin-reports.component.css',
 })
 export class AdminReportsComponent {
+  private http = inject(HttpClient);
+  private baseUrl = environment.apiUrl;
+
   selectedReport = signal<string | null>(null);
 
   // Report parameters
@@ -115,10 +121,74 @@ export class AdminReportsComponent {
 
   exportReport(format: 'excel' | 'pdf') {
     const report = this.getSelectedReportInfo();
-    if (!report) return;
+    if (!report) {
+      alert('Please select a report first');
+      return;
+    }
+
+    const params = this.parameters();
+    const requestBody = {
+      ReportType: report.id,
+      DateFrom: params.dateFrom.toISOString(),
+      DateTo: params.dateTo.toISOString(),
+      UserType: params.userType,
+      IncludeCharts: params.includeCharts,
+      Format: format,
+    };
 
     console.log(`Exporting ${report.name} as ${format.toUpperCase()}`);
-    alert(`Exporting ${report.name} to ${format.toUpperCase()}...`);
+
+    // Construct full URL
+    const endpoint = Admin_API_ENDPOINTS.Reports.EXPORT.startsWith('/')
+      ? Admin_API_ENDPOINTS.Reports.EXPORT.slice(1)
+      : Admin_API_ENDPOINTS.Reports.EXPORT;
+    const cleanBaseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const url = `${cleanBaseUrl}/${endpoint}`;
+
+    this.http
+      .post(url, requestBody, {
+        responseType: 'blob',
+      })
+      .subscribe({
+        next: (blob) => {
+          // Validate blob
+          if (blob && blob.size > 0) {
+            // Check if it's actually a blob and not an error response
+            if (blob.type === 'application/json' || blob.type === 'text/html') {
+              console.error('Received incorrect content type - API may not be implemented');
+              alert(
+                'Export API endpoint is not yet implemented on the backend. Please contact the administrator.'
+              );
+              return;
+            }
+
+            // Download the file
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = downloadUrl;
+            const extension = format === 'excel' ? 'xlsx' : 'pdf';
+            const filename = `${report.id}-report-${
+              new Date().toISOString().split('T')[0]
+            }.${extension}`;
+            link.download = filename;
+            link.click();
+            window.URL.revokeObjectURL(downloadUrl);
+
+            console.log(`Successfully downloaded ${filename}`);
+          } else {
+            console.error('Received empty blob');
+            alert('Export failed - received empty file. Please try again.');
+          }
+        },
+        error: (err) => {
+          console.error('Failed to export report:', err);
+          alert(
+            `Failed to generate export: ${
+              err.message || 'Unknown error'
+            }. The API endpoint may not be implemented yet.`
+          );
+        },
+      });
   }
 
   scheduleReport() {

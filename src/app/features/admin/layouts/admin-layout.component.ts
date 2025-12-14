@@ -25,6 +25,6 @@ export class AdminLayoutComponent {
     { path: '/admin/analytics', label: 'Analytics' },
     { path: '/admin/evidence', label: 'Evidence Showcase' },
     { path: '/admin/cpd', label: 'CPD Tracking' },
-    { path: '/admin/reports', label: 'Reports' },
+    // { path: '/admin/reports', label: 'Reports' },
   ];
 }

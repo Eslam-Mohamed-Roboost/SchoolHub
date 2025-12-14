@@ -11,9 +11,11 @@ interface UserApiResponse {
   Name: string;
   Email: string;
   Role: number;
-  IsActive: boolean;
+  Status: string;
   CreatedAt: string;
   PhoneNumber: string;
+  BadgeCount: number;
+  LastLogin: Date;
 }
 
 interface PaginatedResponse<T> {
@@ -66,8 +68,10 @@ export class UserService extends BaseHttpService {
     pageIndex?: number;
     pageSize?: number;
     search?: string;
+    email?: string;
     role?: number;
     status?: string;
+    isActive?: boolean;
   }): void {
     this.isLoading.set(true);
 
@@ -75,8 +79,16 @@ export class UserService extends BaseHttpService {
     queryParams.push(`page=${params?.pageIndex ?? this.currentPage()}`);
     queryParams.push(`pageSize=${params?.pageSize ?? this.pageSize()}`);
     if (params?.search) queryParams.push(`Search=${encodeURIComponent(params.search)}`);
-    if (params?.role) queryParams.push(`Role=${params.role}`);
-    if (params?.status) queryParams.push(`Status=${params.status}`);
+    if (params?.email) queryParams.push(`email=${encodeURIComponent(params.email)}`);
+    if (params?.role) queryParams.push(`role=${params.role}`);
+    if (params?.isActive !== undefined) queryParams.push(`IsActve=${params.isActive}`);
+
+    // Legacy status mapping if needed, or remove if replaced by isActive
+    if (params?.status && params.isActive === undefined) {
+      // If status is passed but isActive isn't, try to map it
+      const isActive = params.status === 'Active';
+      queryParams.push(`IsActve=${isActive}`);
+    }
 
     const url = `${User_API_ENDPOINTS.GET_ALL}?${queryParams.join('&')}`;
 
@@ -142,7 +154,7 @@ export class UserService extends BaseHttpService {
     }
 
     if (status) {
-      filtered = filtered.filter((u) => u.status === status);
+      filtered = filtered.filter((u) => u.Status === status);
     }
 
     return filtered;
@@ -177,7 +189,7 @@ export class UserService extends BaseHttpService {
       Name: userData.name,
       Email: userData.email,
       RoleID: userData.role,
-      IsActive: userData.status === 'Active',
+      IsActive: userData.Status === 'Active',
       PhoneNumber: '',
     };
 
@@ -223,10 +235,15 @@ export class UserService extends BaseHttpService {
     if (params?.role) queryParams.push(`Role=${params.role}`);
     if (params?.status) queryParams.push(`Status=${params.status}`);
 
-    const url =
+    const endpoint =
       queryParams.length > 0
         ? `${User_API_ENDPOINTS.EXPORT}?${queryParams.join('&')}`
         : User_API_ENDPOINTS.EXPORT;
+
+    // Construct full URL with base URL
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint.slice(1) : endpoint;
+    const cleanBaseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const url = `${cleanBaseUrl}/${cleanEndpoint}`;
 
     return this.http.get(url, { responseType: 'blob' });
   }
@@ -255,11 +272,11 @@ export class UserService extends BaseHttpService {
   }
 
   getActiveUsers(): User[] {
-    return this.users().filter((u) => u.status === 'Active');
+    return this.users().filter((u) => u.Status === 'Active');
   }
 
   getInactiveUsers(): User[] {
-    return this.users().filter((u) => u.status === 'Inactive');
+    return this.users().filter((u) => u.Status === 'Inactive');
   }
 
   // ============================================
@@ -272,9 +289,9 @@ export class UserService extends BaseHttpService {
       name: response.Name,
       email: response.Email,
       role: response.Role as ApplicationRole,
-      status: response.IsActive ? 'Active' : 'Inactive',
-      badgeCount: 0,
-      lastLogin: new Date(),
+      Status: response.Status as UserStatus,
+      badgeCount: response.BadgeCount,
+      lastLogin: new Date(response.LastLogin),
       joinDate: new Date(response.CreatedAt),
     };
   }
@@ -305,7 +322,7 @@ export class UserService extends BaseHttpService {
         name: `${roleLabel} ${i}`,
         email: `${roleLabel.toLowerCase()}${i}@school.ae`,
         role: role,
-        status: Math.random() > 0.1 ? 'Active' : 'Inactive',
+        Status: Math.random() > 0.1 ? 'Active' : 'Inactive',
         badgeCount: Math.floor(Math.random() * 10),
         lastLogin: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
         joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),

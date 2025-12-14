@@ -18,7 +18,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'analytics', component: AdminAnalyticsComponent },
       { path: 'evidence', component: AdminEvidenceComponent },
       { path: 'cpd', component: AdminCpdComponent },
-      { path: 'reports', component: AdminReportsComponent },
+      // { path: 'reports', component: AdminReportsComponent },
     ],
   },
 ];

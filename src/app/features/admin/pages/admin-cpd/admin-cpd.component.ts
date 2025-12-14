@@ -77,14 +77,63 @@ export class AdminCpdComponent implements OnInit {
   }
 
   exportToExcel() {
-    const teachers = this.sortedTeachers();
-    const csv = this.convertToCSV(teachers);
-    this.downloadFile(csv, 'cpd-report.csv', 'text/csv');
+    this.cpdService.exportCpdReport('excel', this.dateRange().from, this.dateRange().to).subscribe({
+      next: (blob) => {
+        // Check if blob is valid
+        if (blob && blob.size > 0) {
+          // Check if it's actually a blob and not an error response
+          if (blob.type === 'application/json') {
+            console.error('Received JSON instead of Excel file - API may not be implemented');
+            alert(
+              'Export API endpoint is not yet implemented on the backend. Please contact the administrator.'
+            );
+            return;
+          }
+          this.downloadFile(blob, `cpd-report-${new Date().toISOString().split('T')[0]}.xlsx`);
+        } else {
+          console.error('Received empty blob');
+          alert('Export failed - received empty file. Please try again.');
+        }
+      },
+      error: (err) => {
+        console.error('Failed to export Excel:', err);
+        alert(
+          `Failed to generate Excel export: ${
+            err.message || 'Unknown error'
+          }. The API endpoint may not be implemented yet.`
+        );
+      },
+    });
   }
 
   exportToPDF() {
-    console.log('Export to PDF functionality - to be implemented with PDF library');
-    alert('PDF export will be available soon. Use Excel export for now.');
+    this.cpdService.exportCpdReport('pdf', this.dateRange().from, this.dateRange().to).subscribe({
+      next: (blob) => {
+        // Check if blob is valid
+        if (blob && blob.size > 0) {
+          // Check if it's actually a blob and not an error response
+          if (blob.type === 'application/json') {
+            console.error('Received JSON instead of PDF file - API may not be implemented');
+            alert(
+              'Export API endpoint is not yet implemented on the backend. Please contact the administrator.'
+            );
+            return;
+          }
+          this.downloadFile(blob, `cpd-report-${new Date().toISOString().split('T')[0]}.pdf`);
+        } else {
+          console.error('Received empty blob');
+          alert('Export failed - received empty file. Please try again.');
+        }
+      },
+      error: (err) => {
+        console.error('Failed to export PDF:', err);
+        alert(
+          `Failed to generate PDF export: ${
+            err.message || 'Unknown error'
+          }. The API endpoint may not be implemented yet.`
+        );
+      },
+    });
   }
 
   emailToTeachers() {
@@ -103,13 +152,13 @@ export class AdminCpdComponent implements OnInit {
       t.categories.join('; '),
     ]);
 
-    return [headers.join(','), ...rows.map((row) => row.map((cell) => `"${cell}"`).join(','))].join(
-      '\n'
-    );
+    return [
+      headers.join(','),
+      ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+    ].join('\n');
   }
 
-  private downloadFile(content: string, filename: string, type: string) {
-    const blob = new Blob([content], { type });
+  private downloadFile(blob: Blob, filename: string) {
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

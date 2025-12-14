@@ -5,7 +5,7 @@ export interface User {
   name: string;
   email: string;
   role: ApplicationRole;
-  status: UserStatus;
+  Status: string;
   class?: string;
   badgeCount: number;
   lastLogin: Date;

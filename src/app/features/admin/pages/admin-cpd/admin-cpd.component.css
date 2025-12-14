@@ -291,11 +291,6 @@
   width: 120px;
   height: 120px;
   border-radius: 50%;
-  background: conic-gradient(
-    #10b981 0% calc(var(--percentage) * 1%),
-    #ef4444 calc(var(--percentage) * 1%) 100%
-  );
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 /* Table Section */
@@ -462,4 +457,12 @@
   .cpd-table {
     min-width: 800px;
   }
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 3rem 2rem;
+  color: var(--text-secondary, #999);
+  font-size: 0.9rem;
 }

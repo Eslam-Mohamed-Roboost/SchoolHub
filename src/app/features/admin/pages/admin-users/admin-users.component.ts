@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed } from '@angular/core';
+import { Component, inject, signal, computed, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormsModule,
@@ -26,8 +26,6 @@ export class AdminUsersComponent {
   searchQuery = signal('');
   roleFilter = signal<ApplicationRole | ''>('');
   statusFilter = signal<UserStatus | ''>('');
-  currentPage = signal(1);
-  itemsPerPage = signal(50);
 
   // Modals
   showAddUserModal = signal(false);
@@ -39,24 +37,11 @@ export class AdminUsersComponent {
   // Form
   userForm: FormGroup;
 
-  // Computed filtered users
-  filteredUsers = computed(() => {
-    return this.userService.searchUsers(
-      this.searchQuery(),
-      this.roleFilter() || undefined,
-      this.statusFilter() || undefined
-    );
-  });
+  // Computed filtered users - REMOVED in favor of server-side filtering
+  // filteredUsers = ...
 
-  // Paginated users
-  paginatedUsers = computed(() => {
-    const filtered = this.filteredUsers();
-    const start = (this.currentPage() - 1) * this.itemsPerPage();
-    const end = start + this.itemsPerPage();
-    return filtered.slice(start, end);
-  });
-
-  totalPages = computed(() => Math.ceil(this.filteredUsers().length / this.itemsPerPage()));
+  // Display users from service (already paginated by API)
+  paginatedUsers = this.users;
 
   // Available options
   roles: ApplicationRole[] = [
@@ -79,33 +64,64 @@ export class AdminUsersComponent {
       class: [''],
       notes: [''],
     });
+
+    // Effect to reload users when filters change (Server-side filtering)
+    effect(
+      () => {
+        const query = this.searchQuery();
+        const role = this.roleFilter();
+        const status = this.statusFilter();
+
+        // Map status to isActive boolean
+        let isActive: boolean | undefined;
+        if (status === 'Active') isActive = true;
+        else if (status === 'Inactive') isActive = false;
+
+        // Determine if query is email or general search
+        const isEmail = query.includes('@');
+
+        this.userService.loadUsers({
+          pageIndex: 1, // Reset to first page on filter change
+          pageSize: this.pageSize(),
+          search: isEmail ? undefined : query,
+          email: isEmail ? query : undefined,
+          role: role ? Number(role) : undefined,
+          isActive: isActive,
+          status: status || undefined, // Keep status for legacy if needed
+        });
+      },
+      { allowSignalWrites: true }
+    );
   }
 
   // Search and filter methods
   onSearch(query: string) {
     this.searchQuery.set(query);
-    this.currentPage.set(1);
   }
 
   onRoleFilter(role: string) {
     this.roleFilter.set(role as ApplicationRole | '');
-    this.currentPage.set(1);
   }
 
   onStatusFilter(status: string) {
     this.statusFilter.set(status as UserStatus | '');
-    this.currentPage.set(1);
   }
 
   onItemsPerPageChange(items: number) {
-    this.itemsPerPage.set(items);
-    this.currentPage.set(1);
+    this.userService.setPageSize(items);
   }
+
+  // Pagination from service
+  currentPage = this.userService.getCurrentPage();
+  pageSize = this.userService.getPageSize();
+  totalRecords = this.userService.getTotalRecords();
+
+  totalPages = computed(() => Math.ceil(this.totalRecords() / this.pageSize()));
 
   // Pagination
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages()) {
-      this.currentPage.set(page);
+      this.userService.goToPage(page);
     }
   }
 
@@ -229,34 +245,46 @@ export class AdminUsersComponent {
 
   // Export users
   exportUsers() {
-    const users = this.filteredUsers();
-    const csv = this.convertToCSV(users);
-    this.downloadCSV(csv, 'users-export.csv');
-  }
+    const roleFilter = this.roleFilter() || undefined;
+    const statusFilter = this.statusFilter() || undefined;
 
-  private convertToCSV(users: User[]): string {
-    const headers = ['Name', 'Email', 'Role', 'Status', 'Class', 'Badge Count', 'Last Login'];
-    const rows = users.map((u) => [
-      u.name,
-      u.email,
-      u.role,
-      u.status,
-      u.class || '',
-      u.badgeCount.toString(),
-      new Date(u.lastLogin).toLocaleString(),
-    ]);
-
-    return [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
-  }
-
-  private downloadCSV(csv: string, filename: string) {
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    window.URL.revokeObjectURL(url);
+    this.userService
+      .exportUsers({
+        role: roleFilter as number | undefined,
+        status: statusFilter,
+      })
+      .subscribe({
+        next: (blob) => {
+          // Check if blob is valid
+          if (blob && blob.size > 0) {
+            // Check if it's actually a blob and not an error response
+            if (blob.type === 'application/json') {
+              console.error('Received JSON instead of CSV file - API may not be implemented');
+              alert(
+                'Export API endpoint is not yet implemented on the backend. Please contact the administrator.'
+              );
+              return;
+            }
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `users-export-${new Date().toISOString().split('T')[0]}.xlsx`;
+            link.click();
+            window.URL.revokeObjectURL(url);
+          } else {
+            console.error('Received empty blob');
+            alert('Export failed - received empty file. Please try again.');
+          }
+        },
+        error: (err) => {
+          console.error('Failed to export users:', err);
+          alert(
+            `Failed to generate export: ${
+              err.message || 'Unknown error'
+            }. The API endpoint may not be implemented yet.`
+          );
+        },
+      });
   }
 
   // Helper methods

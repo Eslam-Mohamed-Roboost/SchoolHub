@@ -74,6 +74,8 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
   init(): void {
     // Try to load fresh data from API (constructor already loaded mock data)
     this.loadTeacherMatrix();
+    // Load analytics for the initial subject
+    this.loadAnalyticsBySubject(this.selectedSubject());
   }
 
   // ============================================
@@ -201,7 +203,13 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
                 rawData.resourceUsage?.mostPopularResource ||
                 'N/A',
             },
-            topTeachers: rawData.TopTeachers || rawData.topTeachers || [],
+            topTeachers: (rawData.TopTeachers || rawData.topTeachers || []).map((t: any) => ({
+              teacherName: t.TeacherName || t.teacherName || '',
+              subject: t.Subject || t.subject || '',
+              cpdBadges: t.CpdBadges || t.cpdBadges || 0,
+              studentEngagement: t.StudentEngagement || t.studentEngagement || 0,
+              portfolioReviews: t.PortfolioReviews || t.portfolioReviews || 0,
+            })),
           };
           this.subjectAnalytics.set(mapped);
         } else {
@@ -281,7 +289,14 @@ export class TeacherSubjectAnalyticsService extends BaseHttpService {
   }
 
   exportEvidenceBySubject(request: EvidenceExportRequest): Observable<Blob> {
-    return this.http.post(Admin_API_ENDPOINTS.Evidence.EXPORT, request, {
+    // Construct full URL with base URL to call backend API
+    const endpoint = Admin_API_ENDPOINTS.Evidence.EXPORT.startsWith('/')
+      ? Admin_API_ENDPOINTS.Evidence.EXPORT.slice(1)
+      : Admin_API_ENDPOINTS.Evidence.EXPORT;
+    const cleanBaseUrl = this.baseUrl.endsWith('/') ? this.baseUrl.slice(0, -1) : this.baseUrl;
+    const url = `${cleanBaseUrl}/${endpoint}`;
+
+    return this.http.post(url, request, {
       responseType: 'blob',
     });
   }

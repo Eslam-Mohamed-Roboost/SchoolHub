@@ -75,10 +75,16 @@ export class BadgeService extends BaseHttpService {
   private submissions = signal<BadgeSubmission[]>([]);
   private badges = signal<Badge[]>([]);
   private statistics = signal<BadgeStatisticsDto | null>(null);
+  private cpdCategories = signal<{ Category: string; Count: number }[]>([]);
   private isLoaded = signal(false);
 
   // Computed signal for badges by category
   private badgesByCategory = computed(() => {
+    const cpdCategories = this.cpdCategories();
+    if (cpdCategories && cpdCategories.length > 0) {
+      return cpdCategories.map((c) => ({ category: c.Category, count: c.Count }));
+    }
+
     const stats = this.statistics();
     if (stats?.ByCategory) {
       return stats.ByCategory.map((c) => ({ category: c.Category, count: c.Count }));
@@ -109,6 +115,7 @@ export class BadgeService extends BaseHttpService {
     this.loadBadges();
     this.loadSubmissions();
     this.loadStatistics();
+    this.loadCpdCategories();
   }
 
   // ============================================
@@ -158,6 +165,19 @@ export class BadgeService extends BaseHttpService {
         }
       },
       error: (err) => console.error('Failed to load badge statistics', err),
+    });
+  }
+
+  loadCpdCategories(): void {
+    this.get<ApiResponse<{ Category: string; Count: number }[]>>(
+      Admin_API_ENDPOINTS.CPD.CATEGORIES
+    ).subscribe({
+      next: (response) => {
+        if (response.IsSuccess && response.Data) {
+          this.cpdCategories.set(response.Data);
+        }
+      },
+      error: (err) => console.error('Failed to load CPD categories', err),
     });
   }
 

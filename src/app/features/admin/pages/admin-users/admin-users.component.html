@@ -6,10 +6,10 @@
       <p class="page-subtitle">Manage all users, roles, and permissions</p>
     </div>
     <div class="header-actions">
-      <button class="btn btn-secondary" (click)="openBulkImportModal()">
+      <!-- <button class="btn btn-secondary" (click)="openBulkImportModal()">
         <span class="icon">📤</span>
         Bulk Import
-      </button>
+      </button> -->
       <button class="btn btn-primary" (click)="openAddUserModal()">
         <span class="icon">➕</span>
         Add User
@@ -36,7 +36,7 @@
         class="filter-select">
         <option value="">All Roles</option>
         @for (role of roles; track role) {
-          <option [value]="role">{{ role }}</option>
+          <option [value]="role">{{ getRoleName(role) }}</option>
         }
       </select>
 
@@ -95,9 +95,9 @@
               </span>
             </td>
             <td>
-              <span class="status-badge" [class.status-active]="user.status === 'Active'" 
-                    [class.status-inactive]="user.status === 'Inactive'">
-                {{ user.status }}
+              <span class="status-badge" [class.status-active]="user.Status === 'Active'" 
+                    [class.status-inactive]="user.Status === 'Inactive'">
+                {{ user.Status }}
               </span>
             </td>
             <td>{{ formatDate(user.lastLogin) }}</td>
@@ -106,9 +106,9 @@
             </td>
             <td>
               <div class="action-buttons">
-                <button class="btn-icon" title="View Profile">
+                <!-- <button class="btn-icon" title="View Profile">
                   👁️
-                </button>
+                </button> -->
                 <button class="btn-icon" title="Edit User" (click)="openEditUserModal(user)">
                   ✏️
                 </button>
@@ -132,9 +132,9 @@
   <!-- Pagination -->
   <div class="pagination-section">
     <div class="pagination-info">
-      Showing {{ (currentPage() - 1) * itemsPerPage() + 1 }} - 
-      {{ Math.min(currentPage() * itemsPerPage(), filteredUsers().length) }} 
-      of {{ filteredUsers().length }} users
+      Showing {{ (currentPage() - 1) * pageSize() + 1 }} - 
+      {{ Math.min(currentPage() * pageSize(), totalRecords()) }} 
+      of {{ totalRecords() }} users
     </div>
 
     <div class="pagination-controls">
@@ -169,7 +169,7 @@
     <div class="items-per-page">
       <label>Rows per page:</label>
       <select 
-        [value]="itemsPerPage()"
+        [value]="pageSize()"
         (change)="onItemsPerPageChange(+$any($event.target).value)">
         @for (option of itemsPerPageOptions; track option) {
           <option [value]="option">{{ option }}</option>
