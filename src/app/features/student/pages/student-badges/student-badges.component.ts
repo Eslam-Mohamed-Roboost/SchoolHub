@@ -1,6 +1,7 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StudentPortfolioService } from '../../services/student-portfolio.service';
+import { StudentBadgesService } from '../../services/student-badges.service';
 
 @Component({
   selector: 'app-student-badges',
@@ -20,17 +21,19 @@ import { StudentPortfolioService } from '../../services/student-portfolio.servic
         <div class="stat-card">
           <div class="stat-icon">🎖️</div>
           <div class="stat-info">
-            <div class="stat-value">4</div>
+            <div class="stat-value">{{ badgesSummary()?.EarnedBadges || 0 }}</div>
             <div class="stat-label">Badges Earned</div>
-            <div class="stat-sub">4 more to go!</div>
+            <div class="stat-sub">{{ badgesSummary()?.BadgesUntilNextLevel || 0 }} more to go!</div>
           </div>
         </div>
         <div class="stat-card">
           <div class="stat-icon">📊</div>
           <div class="stat-info">
-            <div class="stat-value">Digital Scout</div>
+            <div class="stat-value">{{ badgesSummary()?.CurrentLevel || 'Digital Scout' }}</div>
             <div class="stat-label">Current Level</div>
-            <div class="stat-sub">1 more to level up!</div>
+            <div class="stat-sub">
+              {{ badgesSummary()?.BadgesUntilNextLevel || 0 }} more to level up!
+            </div>
           </div>
         </div>
         <div class="stat-card">
@@ -46,13 +49,13 @@ import { StudentPortfolioService } from '../../services/student-portfolio.servic
       <!-- Badge Gallery -->
       <div class="gallery-section">
         <div class="filter-tabs">
-          <button class="tab active">All Badges (8)</button>
-          <button class="tab">Earned (4) ✨</button>
-          <button class="tab">Locked (4) 🔒</button>
+          <button class="tab active">All Badges ({{ totalBadgesCount() }})</button>
+          <button class="tab">Earned ({{ earnedBadgesCount() }}) ✨</button>
+          <button class="tab">Locked ({{ lockedBadgesCount() }}) 🔒</button>
         </div>
 
         <div class="badges-grid">
-          @for (badge of badges; track badge.id) {
+          @for (badge of badges(); track badge.id) {
           <div class="badge-card" [class.locked]="!badge.earned">
             <div class="badge-visual">
               <span class="badge-emoji">{{ badge.icon }}</span>
@@ -81,7 +84,7 @@ import { StudentPortfolioService } from '../../services/student-portfolio.servic
       <div class="gallery-section mt-4">
         <h3 class="mb-3"><i class="fas fa-folder-open text-info me-2"></i>Portfolio Badges</h3>
         <div class="badges-grid">
-          @for (badge of portfolioBadges; track badge.id) {
+          @for (badge of portfolioBadges(); track badge.id) {
           <div class="badge-card" [class.locked]="!badge.earnedDate">
             <div class="badge-visual">
               <span class="badge-emoji"
@@ -425,9 +428,34 @@ import { StudentPortfolioService } from '../../services/student-portfolio.servic
 })
 export class StudentBadgesComponent implements OnInit {
   private portfolioService = inject(StudentPortfolioService);
+  private badgesService = inject(StudentBadgesService);
 
-  portfolioBadges: any[] = [];
-  badges = [
+  // Computed signals from services
+  badgesSummary = computed(() => this.badgesService.getBadgesSummary());
+  portfolioBadges = computed(() => this.portfolioService.getAvailableBadges());
+
+  // Derived computed signals
+  totalBadgesCount = computed(() => this.badgesSummary()?.TotalBadges || 0);
+  earnedBadgesCount = computed(() => this.badgesSummary()?.EarnedBadges || 0);
+  lockedBadgesCount = computed(() => this.badgesSummary()?.LockedBadges || 0);
+
+  badges = computed(() => {
+    const summary = this.badgesSummary();
+    if (summary && summary.Badges && summary.Badges.length > 0) {
+      return summary.Badges.map((b) => ({
+        id: b.Id,
+        name: b.Name,
+        icon: b.Icon,
+        earned: b.Earned,
+        date: b.EarnDate || '',
+        requirement: b.Requirement,
+      }));
+    }
+    // Mock data for when API hasn't loaded yet
+    return this.mockBadges;
+  });
+
+  private mockBadges = [
     {
       id: 1,
       name: 'Digital Citizen',
@@ -495,7 +523,7 @@ export class StudentBadgesComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.portfolioBadges = this.portfolioService.getAvailableBadges();
+    this.badgesService.loadBadges();
   }
 
   formatDate(date: Date): string {

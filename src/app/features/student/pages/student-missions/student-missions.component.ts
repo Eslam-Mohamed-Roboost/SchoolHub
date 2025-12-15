@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { StudentMissionsService } from '../../services/student-missions.service';
 
 @Component({
   selector: 'app-student-missions',
@@ -16,7 +17,7 @@ import { RouterLink } from '@angular/router';
       </header>
 
       <div class="missions-grid">
-        @for (mission of missions; track mission.id) {
+        @for (mission of missions(); track mission.id) {
         <div class="mission-card" [class.locked]="mission.status === 'locked'">
           <div class="mission-icon">{{ mission.icon }}</div>
           <div class="mission-content">
@@ -196,8 +197,30 @@ import { RouterLink } from '@angular/router';
     `,
   ],
 })
-export class StudentMissionsComponent {
-  missions = [
+export class StudentMissionsComponent implements OnInit {
+  private missionsService = inject(StudentMissionsService);
+
+  // Use computed signal from service
+  missions = computed(() => {
+    const apiMissions = this.missionsService.getAllMissions();
+    // If we have API data, use it; otherwise fall back to mock data
+    if (apiMissions && apiMissions.length > 0) {
+      return apiMissions.map((m) => ({
+        id: m.Id,
+        title: m.Title,
+        description: m.Description,
+        icon: m.Icon,
+        status: m.Status,
+        progress: m.Progress,
+        badge: m.Badge,
+        duration: m.Duration,
+      }));
+    }
+    // Mock data for when API hasn't loaded yet
+    return this.mockMissions;
+  });
+
+  private mockMissions = [
     {
       id: 1,
       title: 'Digital Citizenship Foundations',
@@ -279,4 +302,8 @@ export class StudentMissionsComponent {
       duration: '45 mins',
     },
   ];
+
+  ngOnInit(): void {
+    this.missionsService.loadAllMissions();
+  }
 }

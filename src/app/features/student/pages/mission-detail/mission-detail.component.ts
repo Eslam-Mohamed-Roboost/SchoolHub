@@ -1,111 +1,106 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { RouterLink, ActivatedRoute } from '@angular/router';
+import { StudentMissionsService } from '../../services/student-missions.service';
 
 @Component({
   selector: 'app-mission-detail',
   imports: [CommonModule, RouterLink],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="mission-detail">
+    <div class="mission-detail" aria-live="polite">
       <!-- Back Button -->
       <a routerLink="/student/missions" class="back-link">← Back to Missions</a>
 
-      <!-- Hero Section -->
-      <header class="mission-hero">
-        <div class="hero-icon">🛡️</div>
-        <div class="hero-content">
-          <div class="badges">
-            <span class="status-badge in-progress">In Progress</span>
-            <span class="time-badge">⏱️ 20 mins left</span>
-          </div>
-          <h1>Mission 3: Online Safety & Privacy</h1>
-          <p>Learn how to create strong passwords and protect your personal information online.</p>
-          <div class="progress-section">
-            <div class="progress-text">
-              <span>Your Progress: 60%</span>
-              <span>3/5 Activities</span>
-            </div>
-            <div class="progress-track">
-              <div class="progress-fill" style="width: 60%"></div>
-            </div>
+      @if (missionsService.isLoadingData()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading mission...</span>
           </div>
         </div>
-        <div class="hero-reward">
-          <div class="reward-label">REWARD</div>
-          <div class="reward-icon">🛡️</div>
-          <div class="reward-name">Safety Shield</div>
+      } @else if (!mission()) {
+        <div class="text-center py-5">
+          <h2>Mission not found</h2>
+          <p class="text-muted">We couldn't find this mission. Please go back and try another one.</p>
         </div>
-      </header>
-
-      <div class="content-grid">
-        <!-- Activities List -->
-        <div class="activities-list">
-          <h2>Mission Activities</h2>
-
-          <div class="activity-item completed">
-            <div class="activity-status">✅</div>
-            <div class="activity-info">
-              <h3>1. Introduction Video</h3>
-              <p>Watch the video about online privacy.</p>
+      } @else {
+        <!-- Hero Section -->
+        <header class="mission-hero">
+          <div class="hero-icon">{{ mission()?.Icon || '🛡️' }}</div>
+          <div class="hero-content">
+            <div class="badges">
+              <span class="status-badge" [class.in-progress]="mission()?.Status === 'in-progress'"
+                [class.completed]="mission()?.Status === 'completed'">
+                {{ mission()?.Status === 'completed' ? 'Completed' : mission()?.Status === 'in-progress' ? 'In Progress' : 'Locked' }}
+              </span>
+              <span class="time-badge">
+                ⏱️ {{ mission()?.Progress || 0 }}% complete
+              </span>
             </div>
-            <button class="btn-action secondary">Review</button>
+            <h1>{{ mission()?.Title }}</h1>
+            <p>{{ mission()?.Description }}</p>
+            <div class="progress-section">
+              <div class="progress-text">
+                <span>Your Progress: {{ mission()?.Progress || 0 }}%</span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" [style.width.%]="mission()?.Progress || 0"></div>
+              </div>
+            </div>
+          </div>
+          <div class="hero-reward">
+            <div class="reward-label">REWARD</div>
+            <div class="reward-icon">🏆</div>
+            <div class="reward-name">{{ mission()?.Badge }}</div>
+          </div>
+        </header>
+
+        <div class="content-grid">
+          <!-- Activities List -->
+          <div class="activities-list">
+            <h2>Mission Activities</h2>
+
+            @if (mission()?.Activities && mission()!.Activities.length > 0) {
+              @for (activity of mission()!.Activities; track activity.Id) {
+                <div class="activity-item" [class.completed]="activity.Completed">
+                  <div class="activity-status">
+                    {{ activity.Completed ? '✅' : activity.Order }}
+                  </div>
+                  <div class="activity-info">
+                    <h3>{{ activity.Order }}. {{ activity.Title }}</h3>
+                    <p>{{ activity.Content }}</p>
+                  </div>
+                  <button
+                    class="btn-action"
+                    [class.secondary]="activity.Completed"
+                    [class.primary]="!activity.Completed"
+                    type="button"
+                  >
+                    {{ activity.Completed ? 'Review' : 'Start Activity' }}
+                  </button>
+                </div>
+              }
+            } @else {
+              <p class="text-muted">No activities defined for this mission yet.</p>
+            }
           </div>
 
-          <div class="activity-item completed">
-            <div class="activity-status">✅</div>
-            <div class="activity-info">
-              <h3>2. Reading: Password Power</h3>
-              <p>Read about what makes a password strong.</p>
+          <!-- Sidebar Info -->
+          <aside class="mission-sidebar">
+            <div class="sidebar-card">
+              <h3>What You'll Learn</h3>
+              <ul class="learning-list">
+                <li>{{ mission()?.Description }}</li>
+              </ul>
             </div>
-            <button class="btn-action secondary">Review</button>
-          </div>
 
-          <div class="activity-item completed">
-            <div class="activity-status">✅</div>
-            <div class="activity-info">
-              <h3>3. Interactive: Password Checker</h3>
-              <p>Test different passwords to see their strength.</p>
+            <div class="sidebar-card teacher-note">
+              <h3>Teacher's Note 👨‍🏫</h3>
+              <p>Complete all activities to earn the <strong>{{ mission()?.Badge }}</strong> badge.</p>
             </div>
-            <button class="btn-action secondary">Review</button>
-          </div>
-
-          <div class="activity-item active">
-            <div class="activity-status">4️⃣</div>
-            <div class="activity-info">
-              <h3>4. Reflection: My Digital Pledge</h3>
-              <p>Write your promise to keep your data safe.</p>
-            </div>
-            <button class="btn-action primary">Start Activity</button>
-          </div>
-
-          <div class="activity-item locked">
-            <div class="activity-status">🔒</div>
-            <div class="activity-info">
-              <h3>5. Quiz: Check Your Understanding</h3>
-              <p>Pass the quiz to earn your badge!</p>
-            </div>
-            <button class="btn-action disabled" disabled>Locked</button>
-          </div>
+          </aside>
         </div>
-
-        <!-- Sidebar Info -->
-        <aside class="mission-sidebar">
-          <div class="sidebar-card">
-            <h3>What You'll Learn</h3>
-            <ul class="learning-list">
-              <li>Create strong, secure passwords</li>
-              <li>Identify personal vs. private info</li>
-              <li>Understand privacy settings</li>
-              <li>Spot phishing attempts</li>
-            </ul>
-          </div>
-
-          <div class="sidebar-card teacher-note">
-            <h3>Teacher's Note 👨‍🏫</h3>
-            <p>"Remember to think about what information you share on gaming profiles!"</p>
-          </div>
-        </aside>
-      </div>
+      }
     </div>
   `,
   styles: [
@@ -371,4 +366,18 @@ import { RouterLink } from '@angular/router';
     `,
   ],
 })
-export class MissionDetailComponent {}
+export class MissionDetailComponent implements OnInit {
+  private route = inject(ActivatedRoute);
+  missionsService = inject(StudentMissionsService);
+
+  mission = computed(() => this.missionsService.getCurrentMission());
+
+  ngOnInit(): void {
+    const missionId = this.route.snapshot.params['id'] as string;
+    if (missionId) {
+      this.missionsService.loadMissionDetails(missionId);
+    } else {
+      console.error('Missing mission id in route');
+    }
+  }
+}

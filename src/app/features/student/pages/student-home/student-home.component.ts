@@ -1,8 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.component';
 import { StudentPortfolioService } from '../../services/student-portfolio.service';
+import { StudentDashboardService } from '../../services/student-dashboard.service';
+import { StudentActivityService } from '../../services/student-activity.service';
 import { PortfolioFile } from '../../models/student-portfolio.model';
 
 @Component({
@@ -12,7 +14,7 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
     <div class="student-home container mx-auto px-4 py-6">
       <!-- Welcome Header -->
       <div class="mb-5">
-        <h2 class="fw-bold">Welcome back, {{ studentName }}! 👋</h2>
+        <h2 class="fw-bold">Welcome back, {{ studentName() }}! 👋</h2>
         <p class="text-muted">Let's continue your digital citizenship journey</p>
       </div>
 
@@ -21,7 +23,7 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
         <div class="col-md-6 col-lg-3">
           <app-stat-card
             icon="fas fa-tasks"
-            [value]="missions.completed + '/' + missions.total"
+            [value]="missions().completed + '/' + missions().total"
             label="Missions Completed"
             color="primary"
           ></app-stat-card>
@@ -29,7 +31,7 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
         <div class="col-md-6 col-lg-3">
           <app-stat-card
             icon="fas fa-award"
-            [value]="badges.earned.toString()"
+            [value]="badges().earned.toString()"
             label="Badges Earned"
             color="warning"
           ></app-stat-card>
@@ -37,7 +39,9 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
         <div class="col-md-6 col-lg-3">
           <app-stat-card
             icon="fas fa-folder-open"
-            [value]="portfolioStats.totalFiles.toString()"
+            [value]="
+              portfolioService.isLoadingData() ? '...' : portfolioStats().totalFiles.toString()
+            "
             label="Portfolio Files"
             color="info"
           ></app-stat-card>
@@ -45,7 +49,7 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
         <div class="col-md-6 col-lg-3">
           <app-stat-card
             icon="fas fa-fire"
-            [value]="currentStreak.toString() + ' days'"
+            [value]="currentStreak().toString() + ' days'"
             label="Current Streak"
             color="danger"
           ></app-stat-card>
@@ -61,21 +65,21 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
                 <h5 class="fw-bold mb-0">
                   <i class="fas fa-compass text-primary me-2"></i>Current Mission
                 </h5>
-                <span class="badge bg-warning">{{ currentMission.status }}</span>
+                <span class="badge bg-warning">{{ currentMission().status }}</span>
               </div>
             </div>
             <div class="card-body p-4">
-              <h4 class="fw-bold mb-3">{{ currentMission.title }}</h4>
+              <h4 class="fw-bold mb-3">{{ currentMission().title }}</h4>
 
               <div class="mb-3">
                 <div class="d-flex justify-content-between mb-2">
                   <span class="text-muted">Progress</span>
-                  <span class="fw-bold">{{ currentMission.progress }}%</span>
+                  <span class="fw-bold">{{ currentMission().progress }}%</span>
                 </div>
                 <div class="progress" style="height: 10px;">
                   <div
                     class="progress-bar bg-primary"
-                    [style.width.%]="currentMission.progress"
+                    [style.width.%]="currentMission().progress"
                   ></div>
                 </div>
               </div>
@@ -84,25 +88,31 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
                 <div class="col-6">
                   <div class="text-muted small">Activities Completed</div>
                   <div class="fw-bold">
-                    {{ currentMission.activitiesCompleted }}/{{ currentMission.totalActivities }}
+                    {{ currentMission().activitiesCompleted }}/{{
+                      currentMission().totalActivities
+                    }}
                   </div>
                 </div>
                 <div class="col-6">
                   <div class="text-muted small">Estimated Time</div>
                   <div class="fw-bold">
-                    <i class="fas fa-clock text-primary me-1"></i>{{ currentMission.estimatedTime }}
+                    <i class="fas fa-clock text-primary me-1"></i
+                    >{{ currentMission().estimatedTime }}
                   </div>
                 </div>
               </div>
 
-              @if (currentMission.nextActivity) {
+              @if (currentMission().nextActivity) {
               <div class="alert alert-light mb-3">
-                <strong>Next Activity:</strong> {{ currentMission.nextActivity }}
+                <strong>Next Activity:</strong> {{ currentMission().nextActivity }}
               </div>
               }
 
               <div class="d-flex gap-2">
-                <a [routerLink]="['/student/missions', currentMission.id]" class="btn btn-primary">
+                <a
+                  [routerLink]="['/student/missions', currentMission().id]"
+                  class="btn btn-primary"
+                >
                   <i class="fas fa-play me-2"></i>Resume Mission
                 </a>
                 <a routerLink="/student/missions" class="btn btn-outline-primary">
@@ -122,9 +132,17 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
               </h5>
             </div>
             <div class="card-body p-4">
-              @if (recentUploads.length > 0) {
+              @if (portfolioService.isLoadingData()) {
+              <!-- Loading State -->
+              <div class="text-center py-4">
+                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="small text-muted mt-2">Loading portfolio...</p>
+              </div>
+              } @else if (recentUploads().length > 0) {
               <div class="mb-3">
-                @for (file of recentUploads; track file.id) {
+                @for (file of recentUploads(); track file.id) {
                 <div class="d-flex align-items-center gap-2 mb-3">
                   <i [class]="getFileIcon(file.fileType) + ' fa-lg'"></i>
                   <div class="flex-grow-1">
@@ -155,7 +173,7 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
       <div class="mt-5">
         <h5 class="fw-bold mb-3">Recent Badges</h5>
         <div class="row g-3">
-          @for (badge of badges.recent.slice(0, 4); track badge) {
+          @for (badge of badges().recent.slice(0, 4); track badge) {
           <div class="col-md-3">
             <div class="card border-0 shadow-sm rounded-4 text-center p-3">
               <i class="fas fa-award fa-2x text-warning mb-2"></i>
@@ -176,44 +194,80 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
   ],
 })
 export class StudentHomeComponent implements OnInit {
-  private portfolioService = inject(StudentPortfolioService);
+  portfolioService = inject(StudentPortfolioService);
+  dashboardService = inject(StudentDashboardService);
+  activityService = inject(StudentActivityService);
 
-  studentName = 'Ahmed';
-  currentStreak = 7;
+  // Computed signals from services
+  dashboardData = computed(() => this.dashboardService.getDashboardData());
+  streakData = computed(() => this.activityService.getStreakData());
 
-  missions = {
-    completed: 3,
-    total: 8,
-    percentage: 37.5,
-  };
+  // Computed values for template
+  studentName = computed(() => this.dashboardData()?.StudentInfo?.Name || 'Student');
+  currentStreak = computed(() => this.streakData()?.CurrentStreak || 0);
 
-  badges = {
-    earned: 4,
-    recent: ['Safety Shield', 'Digital Scout', 'Kindness Champion', 'Footprint Tracker'],
-  };
+  missions = computed(() => {
+    const quickStats = this.dashboardData()?.QuickStats;
+    return {
+      completed: quickStats?.CompletedMissions || 0,
+      total: 8, // This would ideally come from mission service
+      percentage: ((quickStats?.CompletedMissions || 0) / 8) * 100,
+    };
+  });
 
-  currentMission = {
-    id: 3,
-    title: 'Online Safety & Privacy',
-    progress: 60,
-    activitiesCompleted: 3,
-    totalActivities: 5,
-    estimatedTime: '20 mins',
-    nextActivity: 'Password Security Quiz',
-    status: 'In Progress',
-  };
+  badges = computed(() => {
+    const dashboard = this.dashboardData();
+    const quickStats = dashboard?.QuickStats;
+    const recentBadges = dashboard?.RecentBadges || [];
+    return {
+      earned: quickStats?.TotalBadges || 0,
+      recent: recentBadges.map((b) => b.Name),
+    };
+  });
 
-  portfolioStats = { totalFiles: 0, totalFeedback: 0, totalBadges: 0 };
-  recentUploads: PortfolioFile[] = [];
+  currentMission = computed(() => {
+    const missions = this.dashboardData()?.InProgressMissions || [];
+    const first = missions[0];
+    if (!first) {
+      return {
+        id: 0,
+        title: 'No active mission',
+        progress: 0,
+        activitiesCompleted: 0,
+        totalActivities: 0,
+        estimatedTime: '0 mins',
+        nextActivity: '',
+        status: 'Start a mission',
+      };
+    }
+    return {
+      id: first.Id,
+      title: first.Title,
+      progress: first.Progress,
+      activitiesCompleted: Math.floor(first.Progress / 20), // Estimate
+      totalActivities: 5,
+      estimatedTime: first.Duration,
+      nextActivity: 'Continue learning',
+      status: first.Status,
+    };
+  });
 
-  ngOnInit(): void {
+  // Use computed for reactive updates
+  portfolioStats = computed(() => {
     const overview = this.portfolioService.getPortfolioOverview();
-    this.portfolioStats = {
+    return {
       totalFiles: overview.totalFiles,
       totalFeedback: overview.totalFeedback,
       totalBadges: overview.totalBadges,
     };
-    this.recentUploads = overview.recentUploads;
+  });
+
+  recentUploads = computed(() => this.portfolioService.getPortfolioOverview().recentUploads);
+
+  ngOnInit(): void {
+    // Load dashboard data
+    this.dashboardService.loadDashboard();
+    this.activityService.loadActivityStreak();
   }
 
   getFileIcon(fileType: string): string {
