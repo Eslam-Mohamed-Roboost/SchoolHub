@@ -16,6 +16,20 @@ export const Student_API_ENDPOINTS = {
   },
 
   // ============================================
+  // DIGITAL PORTFOLIO BOOK
+  // ============================================
+  PortfolioBook: {
+    GET: (subjectId: string) => `/Student/PortfolioBook/${subjectId}`,
+    SAVE_PROFILE: '/Student/PortfolioBook/Profile',
+    SAVE_GOALS: '/Student/PortfolioBook/Goals',
+    SAVE_LEARNING_STYLE: '/Student/PortfolioBook/LearningStyle',
+    SAVE_ASSIGNMENT: '/Student/PortfolioBook/Assignment',
+    SAVE_REFLECTION: '/Student/PortfolioBook/Reflection',
+    SAVE_JOURNEY: '/Student/PortfolioBook/Journey',
+    SAVE_PROJECT: '/Student/PortfolioBook/Project',
+  },
+
+  // ============================================
   // MISSIONS
   // ============================================
   Missions: {

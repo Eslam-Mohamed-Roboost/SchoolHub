@@ -1,8 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.component';
-import { CpdService } from '../../services/cpd.service';
+import { TeacherDashboardService } from '../../services/teacher-dashboard.service';
 
 interface Subject {
   id: string;
@@ -17,6 +17,7 @@ interface Subject {
   selector: 'app-teacher-dashboard',
   standalone: true,
   imports: [CommonModule, RouterLink, StatCardComponent],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="teacher-dashboard">
       <section class="hero-section text-center">
@@ -38,45 +39,56 @@ interface Subject {
 
       <!-- Quick Stats Dashboard -->
       <div class="container mb-5">
-        <div class="row g-4">
-          <div class="col-md-3 col-sm-6">
-            <app-stat-card
-              icon="fas fa-graduation-cap"
-              label="CPD Hours Completed"
-              [value]="stats.cpdHours"
-              iconColor="#6366f1"
-              iconBgColor="#e0e7ff"
-            />
+        @if (dashboardService.isLoadingData()) {
+          <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading your dashboard...</p>
           </div>
-          <div class="col-md-3 col-sm-6">
-            <app-stat-card
-              icon="fas fa-award"
-              label="Badges Earned"
-              [value]="stats.badgesEarned"
-              iconColor="#f59e0b"
-              iconBgColor="#fef3c7"
-            />
+        } @else if (!stats()) {
+          <p class="text-muted">No dashboard data available.</p>
+        } @else {
+          <div class="row g-4">
+            <div class="col-md-3 col-sm-6">
+              <app-stat-card
+                icon="fas fa-graduation-cap"
+                label="CPD Hours Completed"
+                [value]="stats()!.cpdHours"
+                iconColor="#6366f1"
+                iconBgColor="#e0e7ff"
+              />
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <app-stat-card
+                icon="fas fa-award"
+                label="Badges Earned"
+                [value]="stats()!.badgesEarned"
+                iconColor="#f59e0b"
+                iconBgColor="#fef3c7"
+              />
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <app-stat-card
+                icon="fas fa-users"
+                label="Active Students"
+                [value]="stats()!.activeStudents"
+                iconColor="#10b981"
+                iconBgColor="#d1fae5"
+              />
+            </div>
+            <div class="col-md-3 col-sm-6">
+              <app-stat-card
+                icon="fas fa-fire"
+                label="Current Streak"
+                [value]="stats()!.currentStreak + ' days'"
+                subtitle="Keep it going!"
+                iconColor="#ef4444"
+                iconBgColor="#fee2e2"
+              />
+            </div>
           </div>
-          <div class="col-md-3 col-sm-6">
-            <app-stat-card
-              icon="fas fa-users"
-              label="Active Students"
-              [value]="stats.activeStudents"
-              iconColor="#10b981"
-              iconBgColor="#d1fae5"
-            />
-          </div>
-          <div class="col-md-3 col-sm-6">
-            <app-stat-card
-              icon="fas fa-fire"
-              label="Current Streak"
-              [value]="stats.currentStreak + ' days'"
-              subtitle="Keep it going!"
-              iconColor="#ef4444"
-              iconBgColor="#fee2e2"
-            />
-          </div>
-        </div>
+        }
       </div>
 
       <div class="container mb-5">
@@ -116,9 +128,10 @@ interface Subject {
   `,
   styleUrls: ['../../teacher.css'],
 })
-export class TeacherDashboardComponent {
-  private cpdService = inject(CpdService);
-  stats = this.cpdService.getStats();
+export class TeacherDashboardComponent implements OnInit {
+  dashboardService = inject(TeacherDashboardService);
+
+  stats = computed(() => this.dashboardService.getStats());
 
   subjects: Subject[] = [
     {
@@ -186,4 +199,8 @@ export class TeacherDashboardComponent {
       description: 'Gallery',
     },
   ];
+
+  ngOnInit(): void {
+    this.dashboardService.loadDashboard();
+  }
 }

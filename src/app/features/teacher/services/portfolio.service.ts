@@ -1,10 +1,76 @@
 import { Injectable, signal } from '@angular/core';
+import { BaseHttpService } from '../../../core/services/base-http.service';
 import { Student, Portfolio, Submission, Comment, Badge } from '../models/portfolio.model';
+
+interface StudentDto {
+  Id: string;
+  Name: string;
+  Email: string;
+  Avatar?: string | null;
+  PortfolioStatus: 'pending' | 'reviewed' | 'needs-revision';
+  LatestSubmission?: {
+    Id: string;
+    Title: string;
+    Content: string;
+    SubmittedAt: string;
+    Type: 'onenote' | 'file-upload';
+    FileUrl?: string;
+    FileName?: string;
+    FileSize?: string;
+  };
+}
+
+interface PortfolioDto {
+  Id: string;
+  StudentId: string;
+  StudentName: string;
+  SubjectId: string;
+  SubjectName: string;
+  Submissions: {
+    Id: string;
+    Title: string;
+    Content: string;
+    SubmittedAt: string;
+    Type: 'onenote' | 'file-upload';
+    FileUrl?: string;
+    FileName?: string;
+    FileSize?: string;
+  }[];
+  Feedback: {
+    Id: string;
+    TeacherId: string;
+    TeacherName: string;
+    Content: string;
+    CreatedAt: string;
+    Type: 'comment' | 'revision-request';
+  }[];
+  Badges: {
+    Id: string;
+    Name: string;
+    Icon: string;
+    Description: string;
+    Color: string;
+    Category: 'subject' | 'skill' | 'achievement';
+    AwardedAt?: string;
+  }[];
+  Likes: number;
+  IsLiked: boolean;
+  LastUpdated: string;
+}
+
+interface BadgeDto {
+  Id: string;
+  Name: string;
+  Icon: string;
+  Description: string;
+  Color: string;
+  Category: 'subject' | 'skill' | 'achievement';
+}
 
 @Injectable({
   providedIn: 'root',
 })
-export class PortfolioService {
+export class PortfolioService extends BaseHttpService {
   private mockBadges: Badge[] = [
     {
       id: 'critical-thinker',
@@ -178,37 +244,45 @@ export class PortfolioService {
     },
   ]);
 
+  // ============================================
+  // API calls
+  // ============================================
+
   getStudents(subjectId: string): Student[] {
-    // In production, filter by actual class/subject enrollment
+    this.get<StudentDto[]>(`/Teacher/Portfolio/Students?subjectId=${subjectId}`).subscribe({
+      next: (dtos) => {
+        const mapped = dtos.map((s) => this.mapStudentDto(s));
+        this.students.set(mapped);
+      },
+      error: (err) => {
+        console.error('Failed to load students for subject', subjectId, err);
+      },
+    });
+
     return this.students();
   }
 
   getStudentPortfolio(studentId: string, subjectId: string): Portfolio | null {
-    let portfolio = this.portfolios().find(
-      (p) => p.studentId === studentId && p.subjectId === subjectId
+    this.get<PortfolioDto>(`/Teacher/Portfolio/${studentId}/${subjectId}`).subscribe({
+      next: (dto) => {
+        const portfolio = this.mapPortfolioDto(dto);
+        this.portfolios.update((portfolios) => {
+          const existingIndex = portfolios.findIndex((p) => p.id === portfolio.id);
+          if (existingIndex !== -1) {
+            portfolios[existingIndex] = portfolio;
+            return [...portfolios];
+          }
+          return [...portfolios, portfolio];
+        });
+      },
+      error: (err) => {
+        console.error('Failed to load portfolio', studentId, subjectId, err);
+      },
+    });
+
+    return (
+      this.portfolios().find((p) => p.studentId === studentId && p.subjectId === subjectId) || null
     );
-
-    if (!portfolio) {
-      // Create a mock portfolio if it doesn't exist
-      const student = this.students().find((s) => s.id === studentId);
-      if (!student) return null;
-
-      portfolio = {
-        id: `portfolio-${studentId}`,
-        studentId,
-        studentName: student.name,
-        subjectId,
-        subjectName: this.getSubjectName(subjectId),
-        submissions: student.latestSubmission ? [student.latestSubmission] : [],
-        feedback: [],
-        badges: [],
-        likes: 0,
-        isLiked: false,
-        lastUpdated: new Date(),
-      };
-    }
-
-    return portfolio;
   }
 
   addComment(
@@ -216,69 +290,107 @@ export class PortfolioService {
     content: string,
     type: 'comment' | 'revision-request' = 'comment'
   ): void {
-    const newComment: Comment = {
-      id: `comment-${Date.now()}`,
-      teacherId: 'teacher-1',
-      teacherName: 'Sarah Johnson',
-      content,
-      createdAt: new Date(),
-      type,
-    };
+    this.post<{ Content: string; Type: string }, void>(
+      `/Teacher/Portfolio/${portfolioId}/Comment`,
+      { Content: content, Type: type }
+    ).subscribe({
+      next: () => {
+        // Optimistic update: append comment locally
+        const newComment: Comment = {
+          id: `comment-${Date.now()}`,
+          teacherId: 'teacher-1',
+          teacherName: 'Teacher',
+          content,
+          createdAt: new Date(),
+          type,
+        };
 
-    this.portfolios.update((portfolios) =>
-      portfolios.map((p) =>
-        p.id === portfolioId ? { ...p, feedback: [...p.feedback, newComment] } : p
-      )
-    );
-
-    // Mock notification
-    console.log(`📧 Notification sent to student for portfolio ${portfolioId}`);
+        this.portfolios.update((portfolios) =>
+          portfolios.map((p) =>
+            p.id === portfolioId ? { ...p, feedback: [...p.feedback, newComment] } : p
+          )
+        );
+      },
+      error: (err) => {
+        console.error('Failed to add comment', err);
+      },
+    });
   }
 
   toggleLike(portfolioId: string): void {
-    this.portfolios.update((portfolios) =>
-      portfolios.map((p) =>
-        p.id === portfolioId
-          ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-          : p
-      )
-    );
+    this.post<{}, void>(`/Teacher/Portfolio/${portfolioId}/ToggleLike`, {}).subscribe({
+      next: () => {
+        this.portfolios.update((portfolios) =>
+          portfolios.map((p) =>
+            p.id === portfolioId
+              ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
+              : p
+          )
+        );
+      },
+      error: (err) => {
+        console.error('Failed to toggle like', err);
+      },
+    });
   }
 
   requestRevision(portfolioId: string, feedback: string): void {
-    this.addComment(portfolioId, feedback, 'revision-request');
-
-    // Update student status
-    const portfolio = this.portfolios().find((p) => p.id === portfolioId);
-    if (portfolio) {
-      this.students.update((students) =>
-        students.map((s) =>
-          s.id === portfolio.studentId ? { ...s, portfolioStatus: 'needs-revision' as const } : s
-        )
-      );
-    }
+    this.post<{ Feedback: string }, void>(
+      `/Teacher/Portfolio/${portfolioId}/RequestRevision`,
+      { Feedback: feedback }
+    ).subscribe({
+      next: () => {
+        this.addComment(portfolioId, feedback, 'revision-request');
+      },
+      error: (err) => {
+        console.error('Failed to request revision', err);
+      },
+    });
   }
 
   awardBadge(portfolioId: string, badgeId: string): void {
-    const badge = this.mockBadges.find((b) => b.id === badgeId);
-    if (!badge) return;
+    this.post<{ BadgeId: string }, void>(`/Teacher/Portfolio/${portfolioId}/AwardBadge`, {
+      BadgeId: badgeId,
+    }).subscribe({
+      next: () => {
+        const badge = this.mockBadges.find((b) => b.id === badgeId);
+        if (!badge) return;
 
-    const awardedBadge: Badge = {
-      ...badge,
-      awardedAt: new Date(),
-    };
+        const awardedBadge: Badge = {
+          ...badge,
+          awardedAt: new Date(),
+        };
 
-    this.portfolios.update((portfolios) =>
-      portfolios.map((p) =>
-        p.id === portfolioId ? { ...p, badges: [...p.badges, awardedBadge] } : p
-      )
-    );
-
-    // Mock notification
-    console.log(`🏆 Badge "${badge.name}" awarded for portfolio ${portfolioId}`);
+        this.portfolios.update((portfolios) =>
+          portfolios.map((p) =>
+            p.id === portfolioId ? { ...p, badges: [...p.badges, awardedBadge] } : p
+          )
+        );
+      },
+      error: (err) => {
+        console.error('Failed to award badge', err);
+      },
+    });
   }
 
   getAvailableBadges(): Badge[] {
+    // Backend-backed list
+    this.get<BadgeDto[]>(`/Teacher/Portfolio/Badges`).subscribe({
+      next: (dtos) => {
+        this.mockBadges = dtos.map((b) => ({
+          id: b.Id,
+          name: b.Name,
+          icon: b.Icon,
+          description: b.Description,
+          color: b.Color,
+          category: b.Category,
+        }));
+      },
+      error: (err) => {
+        console.error('Failed to load available badges', err);
+      },
+    });
+
     return this.mockBadges;
   }
 
@@ -295,4 +407,80 @@ export class PortfolioService {
     };
     return names[id] || 'Subject';
   }
+
+  private mapStudentDto(dto: StudentDto): Student {
+    return {
+      id: dto.Id,
+      name: dto.Name,
+      email: dto.Email,
+      avatar: dto.Avatar || undefined,
+      portfolioStatus: dto.PortfolioStatus,
+      latestSubmission: dto.LatestSubmission
+        ? this.mapSubmission({
+            Id: dto.LatestSubmission.Id,
+            Title: dto.LatestSubmission.Title,
+            Content: dto.LatestSubmission.Content,
+            SubmittedAt: dto.LatestSubmission.SubmittedAt,
+            Type: dto.LatestSubmission.Type,
+            FileUrl: dto.LatestSubmission.FileUrl,
+            FileName: dto.LatestSubmission.FileName,
+            FileSize: dto.LatestSubmission.FileSize,
+          })
+        : undefined,
+    };
+  }
+
+  private mapPortfolioDto(dto: PortfolioDto): Portfolio {
+    return {
+      id: dto.Id,
+      studentId: dto.StudentId,
+      studentName: dto.StudentName,
+      subjectId: dto.SubjectId,
+      subjectName: dto.SubjectName,
+      submissions: dto.Submissions.map((s) => this.mapSubmission(s)),
+      feedback: dto.Feedback.map((f) => ({
+        id: f.Id,
+        teacherId: f.TeacherId,
+        teacherName: f.TeacherName,
+        content: f.Content,
+        createdAt: new Date(f.CreatedAt),
+        type: f.Type,
+      })),
+      badges: dto.Badges.map((b) => ({
+        id: b.Id,
+        name: b.Name,
+        icon: b.Icon,
+        description: b.Description,
+        color: b.Color,
+        category: b.Category,
+        awardedAt: b.AwardedAt ? new Date(b.AwardedAt) : undefined,
+      })),
+      likes: dto.Likes,
+      isLiked: dto.IsLiked,
+      lastUpdated: new Date(dto.LastUpdated),
+    };
+  }
+
+  private mapSubmission(dto: {
+    Id: string;
+    Title: string;
+    Content: string;
+    SubmittedAt: string;
+    Type: 'onenote' | 'file-upload';
+    FileUrl?: string;
+    FileName?: string;
+    FileSize?: string;
+  }): Submission {
+    return {
+      id: dto.Id,
+      title: dto.Title,
+      content: dto.Content,
+      submittedAt: new Date(dto.SubmittedAt),
+      type: dto.Type,
+      fileUrl: dto.FileUrl,
+      fileName: dto.FileName,
+      fileSize: dto.FileSize,
+    };
+  }
 }
+

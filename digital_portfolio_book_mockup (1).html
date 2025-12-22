@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Portfolio Book - Student View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        /* Book Container */
+        .book-container {
+            perspective: 2000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .book {
+            width: 900px;
+            height: 600px;
+            position: relative;
+            transform-style: preserve-3d;
+            background: linear-gradient(to right, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+            border-radius: 10px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            display: flex;
+        }
+        
+        .book-spine {
+            width: 50px;
+            height: 100%;
+            background: linear-gradient(to bottom, #654321, #8b4513);
+            border-radius: 10px 0 0 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset -5px 0 10px rgba(0,0,0,0.3);
+        }
+        
+        .spine-text {
+            writing-mode: vertical-rl;
+            color: gold;
+            font-weight: bold;
+            font-size: 1.2em;
+            letter-spacing: 3px;
+        }
+        
+        .pages {
+            flex: 1;
+            background: white;
+            border-radius: 0 10px 10px 0;
+            padding: 40px;
+            overflow-y: auto;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.1);
+        }
+        
+        /* Page Content */
+        .page-content {
+            display: none;
+        }
+        
+        .page-content.active {
+            display: block;
+            animation: pageFlip 0.6s ease-in-out;
+        }
+        
+        @keyframes pageFlip {
+            0% {
+                opacity: 0;
+                transform: rotateY(-15deg);
+            }
+            100% {
+                opacity: 1;
+                transform: rotateY(0deg);
+            }
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .page-header h2 {
+            color: #667eea;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .page-number {
+            position: absolute;
+            bottom: 20px;
+            right: 40px;
+            font-size: 1.2em;
+            color: #999;
+            font-style: italic;
+        }
+        
+        /* Navigation Controls */
+        .book-navigation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .nav-button {
+            background: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .nav-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .page-indicator {
+            background: white;
+            padding: 10px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+        
+        /* Page Contents Grid */
+        .page-grid {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .form-field {
+            margin-bottom: 20px;
+        }
+        
+        .form-field label {
+            display: block;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .form-field input,
+        .form-field textarea,
+        .form-field select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+        
+        .form-field input:focus,
+        .form-field textarea:focus,
+        .form-field select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .form-field textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        /* Tracker Styles */
+        .tracker-card {
+            background: #f8f9ff;
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .tracker-card h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .score-display {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        
+        /* Table of Contents Sidebar */
+        .toc-sidebar {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 250px;
+        }
+        
+        .toc-sidebar h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        
+        .toc-item {
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95em;
+        }
+        
+        .toc-item:hover {
+            background: #f0f0f0;
+        }
+        
+        .toc-item.active {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .page-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Reflection Section */
+        .reflection-prompt {
+            background: #fff9e6;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #ffc107;
+            margin-bottom: 20px;
+        }
+        
+        .reflection-prompt strong {
+            color: #f57c00;
+        }
+        
+        /* Progress Dashboard */
+        .progress-dashboard {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .progress-dashboard h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .progress-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+        
+        .progress-card h3 {
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .progress-card .value {
+            font-size: 2.5em;
+            font-weight: bold;
+        }
+        
+        /* Save Button */
+        .save-button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+            transition: all 0.3s;
+        }
+        
+        .save-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 My Digital Portfolio Book</h1>
+            <p>ELA Subject | Student Name: Ahmed Al Mansoori</p>
+        </div>
+        
+        <!-- Book Container -->
+        <div class="book-container">
+            <div class="book">
+                <div class="book-spine">
+                    <div class="spine-text">MY PORTFOLIO 2024-25</div>
+                </div>
+                <div class="pages">
+                    <!-- Page 1: All About Me -->
+                    <div class="page-content active" id="page1">
+                        <div class="page-header">
+                            <h2>📖 All About Me</h2>
+                            <p style="color: #666;">Tell us who you are!</p>
+                        </div>
+                        
+                        <div class="page-grid">
+                            <div class="form-field">
+                                <label>My Full Name:</label>
+                                <input type="text" placeholder="Enter your name">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Grade & Section:</label>
+                                <input type="text" placeholder="e.g., Grade 6-A">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>My Favorite Things:</label>
+                                <textarea placeholder="What do you love? (sports, games, subjects, hobbies)"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>What Makes Me Unique:</label>
+                                <textarea placeholder="What makes you special? Share your talents and strengths!"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>My Dream for the Future:</label>
+                                <textarea placeholder="What do you want to be when you grow up?"></textarea>
+                            </div>
+                        </div>
+                        
+                        <button class="save-button">💾 Save My Profile</button>
+                        <div class="page-number">Page 1</div>
+                    </div>
+                    
+                    <!-- Page 2: Goal Setting -->
+                    <div class="page-content" id="page2">
+                        <div class="page-header">
+                            <h2>🎯 My Learning Goals</h2>
+                            <p style="color: #666;">What do you want to achieve this term?</p>
+                        </div>
+                        
+                        <div class="page-grid">
+                            <div class="form-field">
+                                <label>Academic Goal (ELA):</label>
+                                <textarea placeholder="What do you want to improve in ELA? (e.g., become a better reader, improve writing skills)"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Behavioral Goal:</label>
+                                <textarea placeholder="How do you want to improve your classroom behavior?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Personal Growth Goal:</label>
+                                <textarea placeholder="What skill do you want to develop? (e.g., time management, organization)"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>How I Will Achieve These Goals:</label>
+                                <textarea placeholder="What steps will you take to reach your goals?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Target Date:</label>
+                                <input type="date">
+                            </div>
+                        </div>
+                        
+                        <button class="save-button">💾 Save My Goals</button>
+                        <div class="page-number">Page 2</div>
+                    </div>
+                    
+                    <!-- Page 3: Learning Style -->
+                    <div class="page-content" id="page3">
+                        <div class="page-header">
+                            <h2>🧠 My Learning Style & Preferences</h2>
+                            <p style="color: #666;">How do you learn best?</p>
+                        </div>
+                        
+                        <div class="page-grid">
+                            <div class="form-field">
+                                <label>I Learn Best By:</label>
+                                <select>
+                                    <option>Select your learning style</option>
+                                    <option>Watching videos and demonstrations</option>
+                                    <option>Reading and taking notes</option>
+                                    <option>Hands-on activities and practice</option>
+                                    <option>Group discussions and collaboration</option>
+                                    <option>Working independently</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Best Time to Study:</label>
+                                <select>
+                                    <option>Morning (8am-12pm)</option>
+                                    <option>Afternoon (12pm-5pm)</option>
+                                    <option>Evening (5pm-9pm)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>I Focus Better When:</label>
+                                <textarea placeholder="Describe your ideal learning environment (quiet, music, with others, etc.)"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Tools That Help Me Learn:</label>
+                                <textarea placeholder="What tools or apps help you study? (OneNote, videos, flashcards, etc.)"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>What Distracts Me:</label>
+                                <textarea placeholder="What makes it hard for you to focus?"></textarea>
+                            </div>
+                        </div>
+                        
+                        <button class="save-button">💾 Save My Preferences</button>
+                        <div class="page-number">Page 3</div>
+                    </div>
+                    
+                    <!-- Page 4: MAP Score Tracker -->
+                    <div class="page-content" id="page4">
+                        <div class="page-header">
+                            <h2>📊 MAP Score Tracker</h2>
+                            <p style="color: #666;">Filled by Teacher | Track your MAP assessment growth</p>
+                        </div>
+                        
+                        <div class="tracker-card">
+                            <h3>Fall 2024 MAP Score</h3>
+                            <div class="score-display">185</div>
+                            <p><strong>Date Taken:</strong> September 15, 2024</p>
+                            <p><strong>Percentile:</strong> 65th</p>
+                        </div>
+                        
+                        <div class="tracker-card">
+                            <h3>Winter 2025 MAP Score</h3>
+                            <div class="score-display">192</div>
+                            <p><strong>Date Taken:</strong> January 10, 2025</p>
+                            <p><strong>Percentile:</strong> 72nd</p>
+                            <p><strong>Growth:</strong> +7 points 📈</p>
+                        </div>
+                        
+                        <div class="tracker-card">
+                            <h3>Spring 2025 MAP Score</h3>
+                            <div class="score-display">---</div>
+                            <p><strong>Target Date:</strong> May 2025</p>
+                            <p><strong>Goal:</strong> 200+</p>
+                        </div>
+                        
+                        <div class="page-number">Page 4</div>
+                    </div>
+                    
+                    <!-- Page 5: Exact Path Tracker -->
+                    <div class="page-content" id="page5">
+                        <div class="page-header">
+                            <h2>🎮 Exact Path Progress Tracker</h2>
+                            <p style="color: #666;">Filled by Teacher | Your personalized learning path</p>
+                        </div>
+                        
+                        <div class="tracker-card">
+                            <h3>Reading Progress</h3>
+                            <p><strong>Current Level:</strong> 6.2</p>
+                            <p><strong>Lessons Completed:</strong> 24/40</p>
+                            <p><strong>Minutes This Week:</strong> 120 minutes</p>
+                            <p><strong>Target Completion:</strong> End of Term 2</p>
+                        </div>
+                        
+                        <div class="tracker-card">
+                            <h3>Vocabulary Skills</h3>
+                            <p><strong>Current Level:</strong> 6.5</p>
+                            <p><strong>Words Mastered:</strong> 156</p>
+                            <p><strong>Accuracy Rate:</strong> 82%</p>
+                        </div>
+                        
+                        <div class="tracker-card">
+                            <h3>Grammar & Mechanics</h3>
+                            <p><strong>Current Level:</strong> 6.0</p>
+                            <p><strong>Lessons Completed:</strong> 18/35</p>
+                            <p><strong>Focus Areas:</strong> Punctuation, Sentence Structure</p>
+                        </div>
+                        
+                        <div class="page-number">Page 5</div>
+                    </div>
+                    
+                    <!-- Page 6: Assignment Tracker -->
+                    <div class="page-content" id="page6">
+                        <div class="page-header">
+                            <h2>📝 Assignment Tracker</h2>
+                            <p style="color: #666;">Filled by Student | Keep track of your work</p>
+                        </div>
+                        
+                        <div class="page-grid">
+                            <div class="form-field">
+                                <label>Assignment Name:</label>
+                                <input type="text" placeholder="Enter assignment title">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Due Date:</label>
+                                <input type="date">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Status:</label>
+                                <select>
+                                    <option>Not Started</option>
+                                    <option>In Progress</option>
+                                    <option>Completed</option>
+                                    <option>Submitted</option>
+                                    <option>Graded</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>My Notes:</label>
+                                <textarea placeholder="Questions? Challenges? Things to remember?"></textarea>
+                            </div>
+                            
+                            <div class="tracker-card">
+                                <h3>Recent Assignments</h3>
+                                <p>✅ Reading Response #3 - Submitted (Dec 1)</p>
+                                <p>✅ Poetry Analysis - Graded: 88% (Nov 28)</p>
+                                <p>⏳ Book Report - Due Dec 15 (In Progress)</p>
+                                <p>📝 Vocabulary Quiz - Due Dec 18 (Not Started)</p>
+                            </div>
+                        </div>
+                        
+                        <button class="save-button">💾 Add Assignment</button>
+                        <div class="page-number">Page 6</div>
+                    </div>
+                    
+                    <!-- Page 7: Weekly Reflection -->
+                    <div class="page-content" id="page7">
+                        <div class="page-header">
+                            <h2>🤔 Weekly Reflection</h2>
+                            <p style="color: #666;">Filled Every Friday | Reflect on your learning journey</p>
+                        </div>
+                        
+                        <div class="reflection-prompt">
+                            <strong>💡 Reflection Prompt:</strong> Think about this week's learning. What went well? What was challenging?
+                        </div>
+                        
+                        <div class="page-grid">
+                            <div class="form-field">
+                                <label>Week of:</label>
+                                <input type="date">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>What I Learned This Week:</label>
+                                <textarea placeholder="What new skills or knowledge did you gain?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>My Biggest Achievement:</label>
+                                <textarea placeholder="What are you most proud of this week?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Challenges I Faced:</label>
+                                <textarea placeholder="What was difficult? How did you handle it?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Help I Need:</label>
+                                <textarea placeholder="What do you need support with next week?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>My Mood This Week:</label>
+                                <select>
+                                    <option>😊 Excellent - I feel great!</option>
+                                    <option>🙂 Good - Things went well</option>
+                                    <option>😐 Okay - It was fine</option>
+                                    <option>😟 Challenging - I struggled</option>
+                                    <option>😔 Difficult - I need help</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <button class="save-button">💾 Save This Week's Reflection</button>
+                        <div class="page-number">Page 7</div>
+                    </div>
+                    
+                    <!-- Page 8: Learning Journey -->
+                    <div class="page-content" id="page8">
+                        <div class="page-header">
+                            <h2>🚀 My Learning Journey</h2>
+                            <p style="color: #666;">Filled Weekly | Document your progress and growth</p>
+                        </div>
+                        
+                        <div class="page-grid">
+                            <div class="form-field">
+                                <label>Date:</label>
+                                <input type="date">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Skills I'm Working On:</label>
+                                <textarea placeholder="What skills are you focusing on improving right now?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Evidence of My Learning:</label>
+                                <textarea placeholder="What work shows your progress? (assignments, projects, test scores)"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>How I've Grown:</label>
+                                <textarea placeholder="Compare yourself now to the beginning of term. What's better?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Next Steps:</label>
+                                <textarea placeholder="What will you focus on next to keep improving?"></textarea>
+                            </div>
+                            
+                            <div class="tracker-card">
+                                <h3>Journey Milestones 🏆</h3>
+                                <p>✨ Completed first book report (Oct 2024)</p>
+                                <p>✨ Improved writing score by 10% (Nov 2024)</p>
+                                <p>✨ Read 5 books this term (Dec 2024)</p>
+                                <p>✨ Earned "Reading Champion" badge (Dec 2024)</p>
+                            </div>
+                        </div>
+                        
+                        <button class="save-button">💾 Save Learning Entry</button>
+                        <div class="page-number">Page 8</div>
+                    </div>
+                    
+                    <!-- Page 9: My Projects -->
+                    <div class="page-content" id="page9">
+                        <div class="page-header">
+                            <h2>🎨 My Projects</h2>
+                            <p style="color: #666;">Showcase your best work!</p>
+                        </div>
+                        
+                        <div class="page-grid">
+                            <div class="form-field">
+                                <label>Project Title:</label>
+                                <input type="text" placeholder="Name your project">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Project Type:</label>
+                                <select>
+                                    <option>Writing Project</option>
+                                    <option>Research Report</option>
+                                    <option>Creative Project</option>
+                                    <option>Group Project</option>
+                                    <option>Digital Creation</option>
+                                    <option>Presentation</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Project Description:</label>
+                                <textarea placeholder="What is your project about? What did you create?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Skills I Used:</label>
+                                <textarea placeholder="What skills did you practice in this project?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>What I Learned:</label>
+                                <textarea placeholder="What did you discover or learn from this project?"></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label>Upload Project Files:</label>
+                                <input type="file" multiple style="padding: 10px; border: 2px dashed #667eea;">
+                                <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Accepted: Images, PDFs, Documents, Videos</p>
+                            </div>
+                            
+                            <div class="tracker-card">
+                                <h3>Completed Projects 📚</h3>
+                                <p>📖 "My Favorite Book" Book Report (Oct 2024) - Grade: A</p>
+                                <p>📝 Poetry Collection (Nov 2024) - Grade: B+</p>
+                                <p>🎭 Character Analysis Presentation (Dec 2024) - Grade: A-</p>
+                            </div>
+                        </div>
+                        
+                        <button class="save-button">💾 Save Project</button>
+                        <div class="page-number">Page 9</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Controls -->
+        <div class="book-navigation">
+            <button class="nav-button" id="prevBtn" onclick="changePage(-1)">
+                ⬅️ Previous Page
+            </button>
+            
+            <div class="page-indicator">
+                <span id="currentPage">1</span> / 9
+            </div>
+            
+            <button class="nav-button" id="nextBtn" onclick="changePage(1)">
+                Next Page ➡️
+            </button>
+        </div>
+        
+        <!-- Progress Dashboard (Always Visible) -->
+        <div class="progress-dashboard">
+            <h2>📊 My Progress Dashboard</h2>
+            <div class="progress-grid">
+                <div class="progress-card">
+                    <h3>Portfolio Completion</h3>
+                    <div class="value">78%</div>
+                </div>
+                <div class="progress-card">
+                    <h3>Pages Completed</h3>
+                    <div class="value">7/9</div>
+                </div>
+                <div class="progress-card">
+                    <h3>Reflections This Term</h3>
+                    <div class="value">12</div>
+                </div>
+                <div class="progress-card">
+                    <h3>Projects Uploaded</h3>
+                    <div class="value">3</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Table of Contents Sidebar -->
+    <div class="toc-sidebar">
+        <h3>📑 Book Pages</h3>
+        <div class="toc-item active" onclick="goToPage(1)">
+            <span class="page-icon">📖</span>
+            <span>All About Me</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(2)">
+            <span class="page-icon">🎯</span>
+            <span>Goal Setting</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(3)">
+            <span class="page-icon">🧠</span>
+            <span>Learning Style</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(4)">
+            <span class="page-icon">📊</span>
+            <span>MAP Scores</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(5)">
+            <span class="page-icon">🎮</span>
+            <span>Exact Path</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(6)">
+            <span class="page-icon">📝</span>
+            <span>Assignments</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(7)">
+            <span class="page-icon">🤔</span>
+            <span>Reflections</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(8)">
+            <span class="page-icon">🚀</span>
+            <span>Learning Journey</span>
+        </div>
+        <div class="toc-item" onclick="goToPage(9)">
+            <span class="page-icon">🎨</span>
+            <span>My Projects</span>
+        </div>
+    </div>
+    
+    <script>
+        let currentPage = 1;
+        const totalPages = 9;
+        
+        function changePage(direction) {
+            const newPage = currentPage + direction;
+            if (newPage >= 1 && newPage <= totalPages) {
+                goToPage(newPage);
+            }
+        }
+        
+        function goToPage(pageNum) {
+            // Hide current page
+            document.getElementById('page' + currentPage).classList.remove('active');
+            
+            // Update current page
+            currentPage = pageNum;
+            
+            // Show new page
+            document.getElementById('page' + currentPage).classList.add('active');
+            
+            // Update indicator
+            document.getElementById('currentPage').textContent = currentPage;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = (currentPage === 1);
+            document.getElementById('nextBtn').disabled = (currentPage === totalPages);
+            
+            // Update TOC
+            document.querySelectorAll('.toc-item').forEach((item, index) => {
+                item.classList.toggle('active', index + 1 === currentPage);
+            });
+            
+            // Scroll to top of book
+            document.querySelector('.book').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Initialize
+        document.getElementById('prevBtn').disabled = true;
+    </script>
+</body>
+</html>

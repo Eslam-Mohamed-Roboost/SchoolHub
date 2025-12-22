@@ -1,6 +1,7 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { BaseHttpService } from '../../../core/services/base-http.service';
 import { Student_API_ENDPOINTS } from '../../../config/StudentConfig/StudentEndpoints';
+import { ToastService } from '../../../shared/services/toast.service';
 import {
   ApiResponse,
   MissionDto,
@@ -13,6 +14,8 @@ import {
   providedIn: 'root',
 })
 export class StudentMissionsService extends BaseHttpService {
+  private toastService = inject(ToastService);
+  
   private missions = signal<MissionDto[]>([]);
   private currentMission = signal<MissionDetailDto | null>(null);
   private isLoading = signal(false);
@@ -85,8 +88,7 @@ export class StudentMissionsService extends BaseHttpService {
 
         // Show badge notification if earned
         if (progressData.BadgeEarned) {
-          console.log('Badge earned:', progressData.BadgeEarned);
-          // TODO: Show toast notification
+          this.toastService.showBadgeEarned(progressData.BadgeEarned);
         }
 
         this.isLoading.set(false);

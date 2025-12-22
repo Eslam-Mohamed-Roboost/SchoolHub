@@ -1,0 +1,622 @@
+<div class="portfolio-book-container">
+  <!-- Loading Overlay -->
+  @if (isLoading()) {
+  <div class="loading-overlay">
+    <div class="loading-spinner"></div>
+  </div>
+  }
+
+  <!-- Header -->
+  <header class="book-header">
+    <h1>📚 My Digital Portfolio Book</h1>
+    <p>{{ portfolioBook().subjectName }} | {{ portfolioBook().studentName }}</p>
+  </header>
+
+  <!-- Book Container -->
+  <div class="book-wrapper">
+    <div class="book">
+      <div class="book-spine">
+        <span class="spine-text">MY PORTFOLIO {{ portfolioBook().academicYear }}</span>
+      </div>
+      <div class="pages">
+        <!-- Page 1: All About Me -->
+        @if (currentPage() === 1) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>📖 All About Me</h2>
+            <p>Tell us who you are!</p>
+          </div>
+
+          <div class="form-field">
+            <label for="fullName">My Full Name</label>
+            <input
+              id="fullName"
+              type="text"
+              [(ngModel)]="profile.fullName"
+              placeholder="Enter your full name"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="gradeSection">Grade & Section</label>
+            <input
+              id="gradeSection"
+              type="text"
+              [(ngModel)]="profile.gradeSection"
+              placeholder="e.g., Grade 6-A"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="favoriteThings">My Favorite Things</label>
+            <textarea
+              id="favoriteThings"
+              [(ngModel)]="profile.favoriteThings"
+              placeholder="What do you love? (sports, games, subjects, hobbies)"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="uniqueness">What Makes Me Unique</label>
+            <textarea
+              id="uniqueness"
+              [(ngModel)]="profile.uniqueness"
+              placeholder="What makes you special? Share your talents and strengths!"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="futureDream">My Dream for the Future</label>
+            <textarea
+              id="futureDream"
+              [(ngModel)]="profile.futureDream"
+              placeholder="What do you want to be when you grow up?"
+            ></textarea>
+          </div>
+
+          <button class="save-button" (click)="saveProfile()" [disabled]="isSaving()">
+            💾 Save My Profile
+          </button>
+          <span class="page-number">Page 1</span>
+        </div>
+        }
+
+        <!-- Page 2: Goal Setting -->
+        @if (currentPage() === 2) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>🎯 My Learning Goals</h2>
+            <p>What do you want to achieve this term?</p>
+          </div>
+
+          <div class="form-field">
+            <label for="academicGoal">Academic Goal (ELA)</label>
+            <textarea
+              id="academicGoal"
+              [(ngModel)]="goals.academicGoal"
+              placeholder="What do you want to improve in ELA? (e.g., become a better reader)"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="behavioralGoal">Behavioral Goal</label>
+            <textarea
+              id="behavioralGoal"
+              [(ngModel)]="goals.behavioralGoal"
+              placeholder="How do you want to improve your classroom behavior?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="personalGrowthGoal">Personal Growth Goal</label>
+            <textarea
+              id="personalGrowthGoal"
+              [(ngModel)]="goals.personalGrowthGoal"
+              placeholder="What skill do you want to develop? (e.g., time management)"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="achievementSteps">How I Will Achieve These Goals</label>
+            <textarea
+              id="achievementSteps"
+              [(ngModel)]="goals.achievementSteps"
+              placeholder="What steps will you take to reach your goals?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="targetDate">Target Date</label>
+            <input
+              id="targetDate"
+              type="date"
+              [ngModel]="goals.targetDate | date : 'yyyy-MM-dd'"
+              (ngModelChange)="onTargetDateChange($event)"
+            />
+          </div>
+
+          <button class="save-button" (click)="saveGoals()" [disabled]="isSaving()">
+            💾 Save My Goals
+          </button>
+          <span class="page-number">Page 2</span>
+        </div>
+        }
+
+        <!-- Page 3: Learning Style -->
+        @if (currentPage() === 3) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>🧠 My Learning Style & Preferences</h2>
+            <p>How do you learn best?</p>
+          </div>
+
+          <div class="form-field">
+            <label for="learnsBestBy">I Learn Best By</label>
+            <select id="learnsBestBy" [(ngModel)]="learningStyle.learnsBestBy">
+              <option value="">Select your learning style</option>
+              <option value="visual">📺 Watching videos and demonstrations</option>
+              <option value="reading">📚 Reading and taking notes</option>
+              <option value="hands-on">🛠️ Hands-on activities and practice</option>
+              <option value="group">👥 Group discussions and collaboration</option>
+              <option value="independent">🧘 Working independently</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="bestTimeToStudy">Best Time to Study</label>
+            <select id="bestTimeToStudy" [(ngModel)]="learningStyle.bestTimeToStudy">
+              <option value="morning">🌅 Morning (8am-12pm)</option>
+              <option value="afternoon">☀️ Afternoon (12pm-5pm)</option>
+              <option value="evening">🌙 Evening (5pm-9pm)</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="focusConditions">I Focus Better When</label>
+            <textarea
+              id="focusConditions"
+              [(ngModel)]="learningStyle.focusConditions"
+              placeholder="Describe your ideal learning environment (quiet, music, with others, etc.)"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="helpfulTools">Tools That Help Me Learn</label>
+            <textarea
+              id="helpfulTools"
+              [(ngModel)]="learningStyle.helpfulTools"
+              placeholder="What tools or apps help you study? (OneNote, videos, flashcards, etc.)"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="distractions">What Distracts Me</label>
+            <textarea
+              id="distractions"
+              [(ngModel)]="learningStyle.distractions"
+              placeholder="What makes it hard for you to focus?"
+            ></textarea>
+          </div>
+
+          <button class="save-button" (click)="saveLearningStyle()" [disabled]="isSaving()">
+            💾 Save My Preferences
+          </button>
+          <span class="page-number">Page 3</span>
+        </div>
+        }
+
+        <!-- Page 4: MAP Score Tracker (Teacher-filled, read-only for student) -->
+        @if (currentPage() === 4) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>📊 MAP Score Tracker</h2>
+            <p><span class="teacher-note">📝 Filled by Teacher</span></p>
+          </div>
+
+          @for (score of portfolioBook().mapScores; track score.id) {
+          <div class="tracker-card">
+            <h3>{{ score.term }} {{ score.year }} MAP Score</h3>
+            <div class="score-display">{{ score.score ?? '---' }}</div>
+            @if (score.dateTaken) {
+            <p><strong>Date Taken:</strong> {{ score.dateTaken | date : 'MMMM d, yyyy' }}</p>
+            } @if (score.percentile) {
+            <p><strong>Percentile:</strong> {{ score.percentile }}th</p>
+            } @if (score.growth) {
+            <p><strong>Growth:</strong> +{{ score.growth }} points 📈</p>
+            } @if (score.goalScore && !score.score) {
+            <p><strong>Goal:</strong> {{ score.goalScore }}+</p>
+            }
+          </div>
+          }
+
+          <span class="page-number">Page 4</span>
+        </div>
+        }
+
+        <!-- Page 5: Exact Path Tracker (Teacher-filled, read-only for student) -->
+        @if (currentPage() === 5) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>🎮 Exact Path Progress Tracker</h2>
+            <p><span class="teacher-note">📝 Filled by Teacher</span></p>
+          </div>
+
+          <div class="tracker-card">
+            <h3>📖 Reading Progress</h3>
+            <p><strong>Current Level:</strong> {{ portfolioBook().exactPathProgress.reading.currentLevel }}</p>
+            <p><strong>Lessons Completed:</strong> {{ portfolioBook().exactPathProgress.reading.lessonsCompleted }}/{{ portfolioBook().exactPathProgress.reading.totalLessons }}</p>
+            <p><strong>Minutes This Week:</strong> {{ portfolioBook().exactPathProgress.reading.minutesThisWeek }} minutes</p>
+            <p><strong>Target Completion:</strong> {{ portfolioBook().exactPathProgress.reading.targetCompletion }}</p>
+          </div>
+
+          <div class="tracker-card">
+            <h3>📝 Vocabulary Skills</h3>
+            <p><strong>Current Level:</strong> {{ portfolioBook().exactPathProgress.vocabulary.currentLevel }}</p>
+            <p><strong>Words Mastered:</strong> {{ portfolioBook().exactPathProgress.vocabulary.wordsMastered }}</p>
+            <p><strong>Accuracy Rate:</strong> {{ portfolioBook().exactPathProgress.vocabulary.accuracyRate }}%</p>
+          </div>
+
+          <div class="tracker-card">
+            <h3>✏️ Grammar & Mechanics</h3>
+            <p><strong>Current Level:</strong> {{ portfolioBook().exactPathProgress.grammar.currentLevel }}</p>
+            <p><strong>Lessons Completed:</strong> {{ portfolioBook().exactPathProgress.grammar.lessonsCompleted }}/{{ portfolioBook().exactPathProgress.grammar.totalLessons }}</p>
+            <p><strong>Focus Areas:</strong> {{ portfolioBook().exactPathProgress.grammar.focusAreas.join(', ') }}</p>
+          </div>
+
+          <span class="page-number">Page 5</span>
+        </div>
+        }
+
+        <!-- Page 6: Assignment Tracker -->
+        @if (currentPage() === 6) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>📝 Assignment Tracker</h2>
+            <p>Keep track of your work</p>
+          </div>
+
+          <div class="form-field">
+            <label for="assignmentName">Assignment Name</label>
+            <input
+              id="assignmentName"
+              type="text"
+              [(ngModel)]="newAssignment.name"
+              placeholder="Enter assignment title"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="assignmentDueDate">Due Date</label>
+            <input
+              id="assignmentDueDate"
+              type="date"
+              [ngModel]="newAssignment.dueDate | date : 'yyyy-MM-dd'"
+              (ngModelChange)="onAssignmentDueDateChange($event)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="assignmentStatus">Status</label>
+            <select id="assignmentStatus" [(ngModel)]="newAssignment.status">
+              <option value="Not Started">📋 Not Started</option>
+              <option value="In Progress">⏳ In Progress</option>
+              <option value="Completed">✅ Completed</option>
+              <option value="Submitted">📤 Submitted</option>
+              <option value="Graded">⭐ Graded</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="assignmentNotes">My Notes</label>
+            <textarea
+              id="assignmentNotes"
+              [(ngModel)]="newAssignment.notes"
+              placeholder="Questions? Challenges? Things to remember?"
+            ></textarea>
+          </div>
+
+          <div class="tracker-card">
+            <h3>📋 Recent Assignments</h3>
+            @for (assignment of portfolioBook().assignments; track assignment.id) {
+            <p>
+              {{ getStatusIcon(assignment.status) }}
+              {{ assignment.name }} - {{ assignment.status }}
+              @if (assignment.grade) { ({{ assignment.grade }}) }
+              <span style="opacity: 0.7">({{ assignment.dueDate | date : 'MMM d' }})</span>
+            </p>
+            }
+          </div>
+
+          <button class="save-button" (click)="addAssignment()" [disabled]="isSaving()">
+            💾 Add Assignment
+          </button>
+          <span class="page-number">Page 6</span>
+        </div>
+        }
+
+        <!-- Page 7: Weekly Reflection -->
+        @if (currentPage() === 7) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>🤔 Weekly Reflection</h2>
+            <p>Filled Every Friday | Reflect on your learning journey</p>
+          </div>
+
+          <div class="reflection-prompt">
+            <strong>💡 Reflection Prompt:</strong> Think about this week's learning. What went well? What was challenging?
+          </div>
+
+          <div class="form-field">
+            <label for="reflectionWeekOf">Week of</label>
+            <input
+              id="reflectionWeekOf"
+              type="date"
+              [ngModel]="newReflection.weekOf | date : 'yyyy-MM-dd'"
+              (ngModelChange)="onReflectionWeekOfChange($event)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="whatLearned">What I Learned This Week</label>
+            <textarea
+              id="whatLearned"
+              [(ngModel)]="newReflection.whatLearned"
+              placeholder="What new skills or knowledge did you gain?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="biggestAchievement">My Biggest Achievement</label>
+            <textarea
+              id="biggestAchievement"
+              [(ngModel)]="newReflection.biggestAchievement"
+              placeholder="What are you most proud of this week?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="challengesFaced">Challenges I Faced</label>
+            <textarea
+              id="challengesFaced"
+              [(ngModel)]="newReflection.challengesFaced"
+              placeholder="What was difficult? How did you handle it?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="helpNeeded">Help I Need</label>
+            <textarea
+              id="helpNeeded"
+              [(ngModel)]="newReflection.helpNeeded"
+              placeholder="What do you need support with next week?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="mood">My Mood This Week</label>
+            <select id="mood" [(ngModel)]="newReflection.mood">
+              <option value="Excellent">😊 Excellent - I feel great!</option>
+              <option value="Good">🙂 Good - Things went well</option>
+              <option value="Okay">😐 Okay - It was fine</option>
+              <option value="Challenging">😟 Challenging - I struggled</option>
+              <option value="Difficult">😔 Difficult - I need help</option>
+            </select>
+          </div>
+
+          <button class="save-button" (click)="saveReflection()" [disabled]="isSaving()">
+            💾 Save This Week's Reflection
+          </button>
+          <span class="page-number">Page 7</span>
+        </div>
+        }
+
+        <!-- Page 8: Learning Journey -->
+        @if (currentPage() === 8) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>🚀 My Learning Journey</h2>
+            <p>Document your progress and growth</p>
+          </div>
+
+          <div class="form-field">
+            <label for="journeyDate">Date</label>
+            <input
+              id="journeyDate"
+              type="date"
+              [ngModel]="newJourneyEntry.date | date : 'yyyy-MM-dd'"
+              (ngModelChange)="onJourneyDateChange($event)"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="skillsWorking">Skills I'm Working On</label>
+            <textarea
+              id="skillsWorking"
+              [(ngModel)]="newJourneyEntry.skillsWorking"
+              placeholder="What skills are you focusing on improving right now?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="evidenceOfLearning">Evidence of My Learning</label>
+            <textarea
+              id="evidenceOfLearning"
+              [(ngModel)]="newJourneyEntry.evidenceOfLearning"
+              placeholder="What work shows your progress? (assignments, projects, test scores)"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="howGrown">How I've Grown</label>
+            <textarea
+              id="howGrown"
+              [(ngModel)]="newJourneyEntry.howGrown"
+              placeholder="Compare yourself now to the beginning of term. What's better?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="nextSteps">Next Steps</label>
+            <textarea
+              id="nextSteps"
+              [(ngModel)]="newJourneyEntry.nextSteps"
+              placeholder="What will you focus on next to keep improving?"
+            ></textarea>
+          </div>
+
+          <div class="tracker-card">
+            <h3>🏆 Journey Milestones</h3>
+            @for (milestone of portfolioBook().milestones; track milestone.id) {
+            <p>✨ {{ milestone.description }} ({{ milestone.date | date : 'MMM yyyy' }})</p>
+            }
+          </div>
+
+          <button class="save-button" (click)="saveJourneyEntry()" [disabled]="isSaving()">
+            💾 Save Learning Entry
+          </button>
+          <span class="page-number">Page 8</span>
+        </div>
+        }
+
+        <!-- Page 9: My Projects -->
+        @if (currentPage() === 9) {
+        <div class="page-content">
+          <div class="page-header">
+            <h2>🎨 My Projects</h2>
+            <p>Showcase your best work!</p>
+          </div>
+
+          <div class="form-field">
+            <label for="projectTitle">Project Title</label>
+            <input
+              id="projectTitle"
+              type="text"
+              [(ngModel)]="newProject.title"
+              placeholder="Name your project"
+            />
+          </div>
+
+          <div class="form-field">
+            <label for="projectType">Project Type</label>
+            <select id="projectType" [(ngModel)]="newProject.type">
+              <option value="Writing Project">📖 Writing Project</option>
+              <option value="Research Report">📝 Research Report</option>
+              <option value="Creative Project">🎨 Creative Project</option>
+              <option value="Group Project">👥 Group Project</option>
+              <option value="Digital Creation">💻 Digital Creation</option>
+              <option value="Presentation">🎭 Presentation</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label for="projectDescription">Project Description</label>
+            <textarea
+              id="projectDescription"
+              [(ngModel)]="newProject.description"
+              placeholder="What is your project about? What did you create?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="skillsUsed">Skills I Used</label>
+            <textarea
+              id="skillsUsed"
+              [(ngModel)]="newProject.skillsUsed"
+              placeholder="What skills did you practice in this project?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="projectLearned">What I Learned</label>
+            <textarea
+              id="projectLearned"
+              [(ngModel)]="newProject.whatLearned"
+              placeholder="What did you discover or learn from this project?"
+            ></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="projectFiles">Upload Project Files</label>
+            <input
+              id="projectFiles"
+              type="file"
+              multiple
+              (change)="onFileSelected($event)"
+              class="file-input"
+            />
+            <p class="file-hint">Accepted: Images, PDFs, Documents, Videos</p>
+          </div>
+
+          <div class="tracker-card">
+            <h3>📚 Completed Projects</h3>
+            @for (project of portfolioBook().projects; track project.id) {
+            <p>
+              {{ getProjectIcon(project.type) }} "{{ project.title }}"
+              ({{ project.completedDate | date : 'MMM yyyy' }})
+              @if (project.grade) { - Grade: {{ project.grade }} }
+            </p>
+            }
+          </div>
+
+          <button class="save-button" (click)="saveProject()" [disabled]="isSaving()">
+            💾 Save Project
+          </button>
+          <span class="page-number">Page 9</span>
+        </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Controls -->
+  <div class="book-navigation">
+    <button class="nav-button" [disabled]="currentPage() === 1" (click)="changePage(-1)">
+      ⬅️ Previous Page
+    </button>
+
+    <div class="page-indicator">{{ currentPage() }} / {{ totalPages }}</div>
+
+    <button class="nav-button" [disabled]="currentPage() === totalPages" (click)="changePage(1)">
+      Next Page ➡️
+    </button>
+  </div>
+
+  <!-- Progress Dashboard -->
+  <div class="progress-dashboard">
+    <h2>📊 My Progress Dashboard</h2>
+    <div class="progress-grid">
+      <div class="progress-card">
+        <h3>Portfolio Completion</h3>
+        <div class="value">{{ portfolioBook().progress.completionPercentage }}%</div>
+      </div>
+      <div class="progress-card">
+        <h3>Pages Completed</h3>
+        <div class="value">{{ portfolioBook().progress.pagesCompleted }}/{{ portfolioBook().progress.totalPages }}</div>
+      </div>
+      <div class="progress-card">
+        <h3>Reflections This Term</h3>
+        <div class="value">{{ portfolioBook().progress.reflectionsThisTerm }}</div>
+      </div>
+      <div class="progress-card">
+        <h3>Projects Uploaded</h3>
+        <div class="value">{{ portfolioBook().progress.projectsUploaded }}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table of Contents Sidebar -->
+  <nav class="toc-sidebar" aria-label="Book navigation">
+    <h3>📑 Book Pages</h3>
+    @for (page of bookPages; track page.id) {
+    <button
+      class="toc-item"
+      [class.active]="currentPage() === page.id"
+      (click)="goToPage(page.id)"
+      [attr.aria-current]="currentPage() === page.id ? 'page' : null"
+    >
+      <span class="page-icon">{{ page.icon }}</span>
+      <span>{{ page.title }}</span>
+    </button>
+    }
+  </nav>
+</div>

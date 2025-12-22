@@ -3,6 +3,7 @@ import { StudentLayoutComponent } from './layouts/student-layout.component';
 import { StudentHomeComponent } from './pages/student-home/student-home.component';
 import { StudentMissionsComponent } from './pages/student-missions/student-missions.component';
 import { MissionDetailComponent } from './pages/mission-detail/mission-detail.component';
+import { MissionActivityComponent } from './pages/mission-activity/mission-activity.component';
 import { StudentBadgesComponent } from './pages/student-badges/student-badges.component';
 import { ChallengeZoneComponent } from './pages/challenge-zone/challenge-zone.component';
 import { StudentProgressComponent } from './pages/student-progress/student-progress.component';
@@ -10,6 +11,7 @@ import { StudentNotebookComponent } from './pages/student-notebook/student-noteb
 import { StudentHelpComponent } from './pages/student-help/student-help.component';
 import { PortfolioHubComponent } from './pages/portfolio-hub/portfolio-hub.component';
 import { SubjectPortfolioComponent } from './pages/subject-portfolio/subject-portfolio.component';
+import { DigitalPortfolioBookComponent } from './pages/digital-portfolio-book/digital-portfolio-book.component';
 
 export const STUDENT_ROUTES: Routes = [
   {
@@ -21,9 +23,11 @@ export const STUDENT_ROUTES: Routes = [
       { path: 'hub', component: StudentHomeComponent },
       { path: 'missions', component: StudentMissionsComponent },
       { path: 'missions/:id', component: MissionDetailComponent },
+      { path: 'missions/:missionId/activity/:activityId', component: MissionActivityComponent },
       { path: 'badges', component: StudentBadgesComponent },
       { path: 'portfolio-hub', component: PortfolioHubComponent },
-      { path: 'portfolio/:subjectId', component: SubjectPortfolioComponent },
+      { path: 'portfolio/:subjectId', component: DigitalPortfolioBookComponent }, //SubjectPortfolioComponent },
+      { path: 'portfolio-book/:subjectId', component: DigitalPortfolioBookComponent },
       { path: 'challenges', component: ChallengeZoneComponent },
       { path: 'challenge-zone', component: ChallengeZoneComponent },
       { path: 'progress', component: StudentProgressComponent },

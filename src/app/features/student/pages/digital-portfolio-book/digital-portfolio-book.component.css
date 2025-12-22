@@ -1,0 +1,793 @@
+/* ============================================
+   Digital Portfolio Book - Premium Design System
+   Professional UI/UX with Glassmorphism & Modern Aesthetics
+   ============================================ */
+
+/* CSS Variables */
+:host {
+  --primary: #6366f1;
+  --primary-light: #818cf8;
+  --primary-dark: #4f46e5;
+  --secondary: #8b5cf6;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+
+  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --glass-bg: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  --text-primary: #1f2937;
+  --text-secondary: #6b7280;
+  --text-light: #9ca3af;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.2);
+
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ============================================
+   Main Container
+   ============================================ */
+.portfolio-book-container {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-gradient);
+  min-height: 100vh;
+  padding: 40px 20px;
+  max-width: 1500px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Animated background particles effect */
+.portfolio-book-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.08) 0%, transparent 40%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.book-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 50px;
+  position: relative;
+  z-index: 1;
+}
+
+.book-header h1 {
+  font-size: 3em;
+  font-weight: 800;
+  margin-bottom: 12px;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff 0%, #f0f0ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.book-header p {
+  font-size: 1.25em;
+  opacity: 0.95;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================
+   Book Container - 3D Effect
+   ============================================ */
+.book-wrapper {
+  perspective: 2500px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 50px;
+  position: relative;
+  z-index: 1;
+}
+
+.book {
+  width: 950px;
+  min-height: 650px;
+  position: relative;
+  transform-style: preserve-3d;
+  background: linear-gradient(145deg, #5d3a1f 0%, #8b5a2b 30%, #a0522d 50%, #8b5a2b 70%, #5d3a1f 100%);
+  border-radius: 12px 20px 20px 12px;
+  box-shadow: 
+    0 30px 80px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(139, 90, 43, 0.5),
+    inset 0 2px 0 rgba(255, 255, 255, 0.1);
+  display: flex;
+  transition: transform var(--transition-slow);
+}
+
+.book:hover {
+  transform: translateY(-8px) rotateX(2deg);
+}
+
+/* Book Spine - Realistic leather effect */
+.book-spine {
+  width: 55px;
+  min-height: 100%;
+  background: linear-gradient(90deg, 
+    #3d2212 0%, 
+    #5d3a1f 20%, 
+    #6b4423 50%,
+    #5d3a1f 80%,
+    #3d2212 100%
+  );
+  border-radius: 12px 0 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    inset -8px 0 20px rgba(0, 0, 0, 0.4),
+    inset 3px 0 8px rgba(255, 255, 255, 0.05);
+  position: relative;
+}
+
+/* Spine decorative lines */
+.book-spine::before,
+.book-spine::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 30px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent 0%, #d4a574 50%, transparent 100%);
+  border-radius: 2px;
+}
+
+.book-spine::before { top: 40px; }
+.book-spine::after { bottom: 40px; }
+
+.spine-text {
+  writing-mode: vertical-rl;
+  color: #d4a574;
+  font-weight: 700;
+  font-size: 1.1em;
+  letter-spacing: 4px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  text-transform: uppercase;
+}
+
+/* Pages area */
+.pages {
+  flex: 1;
+  background: linear-gradient(135deg, #fefefe 0%, #f9f9fb 100%);
+  border-radius: 0 16px 16px 0;
+  padding: 45px 50px;
+  overflow-y: auto;
+  box-shadow: 
+    inset 0 0 60px rgba(0, 0, 0, 0.03),
+    inset -3px 0 15px rgba(0, 0, 0, 0.05);
+  position: relative;
+  z-index: 5;
+}
+
+/* Page edge/margin effect */
+.pages::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20px;
+  bottom: 20px;
+  width: 3px;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(0, 0, 0, 0.1) 10%, 
+    rgba(0, 0, 0, 0.15) 50%, 
+    rgba(0, 0, 0, 0.1) 90%, 
+    transparent 100%
+  );
+}
+
+/* ============================================
+   Page Content & Animations
+   ============================================ */
+.page-content {
+  animation: pageFlipIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  padding-bottom: 60px;
+}
+
+@keyframes pageFlipIn {
+  0% {
+    opacity: 0;
+    transform: translateX(30px) rotateY(-10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) rotateY(0);
+  }
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 35px;
+  padding-bottom: 25px;
+  border-bottom: none;
+  position: relative;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 4px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 2px;
+}
+
+.page-header h2 {
+  color: var(--text-primary);
+  font-size: 2.2em;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: -0.02em;
+}
+
+.page-header p {
+  color: var(--text-secondary);
+  font-size: 1.1em;
+}
+
+.teacher-note {
+  color: var(--accent) !important;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: 20px;
+  margin-top: 8px;
+}
+
+.page-number {
+  position: absolute;
+  bottom: 20px;
+  right: 0;
+  font-size: 1em;
+  color: var(--text-light);
+  font-weight: 500;
+  padding: 6px 16px;
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 20px;
+}
+
+/* ============================================
+   Form Fields - Premium Design
+   ============================================ */
+.form-field {
+  margin-bottom: 24px;
+  position: relative;
+  z-index: 10;
+}
+
+.form-field label {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+  font-size: 1.05em;
+  letter-spacing: 0.01em;
+}
+
+.form-field input,
+.form-field textarea,
+.form-field select {
+  width: 100%;
+  padding: 14px 18px;
+  border: 2px solid #e5e7eb;
+  border-radius: var(--radius-md);
+  font-size: 1em;
+  font-family: inherit;
+  transition: all var(--transition-normal);
+  background: #fafafa;
+  color: var(--text-primary);
+}
+
+.form-field input:hover,
+.form-field textarea:hover,
+.form-field select:hover {
+  border-color: #d1d5db;
+  background: #fff;
+}
+
+.form-field input:focus,
+.form-field textarea:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+.form-field textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: var(--text-light);
+}
+
+/* File Input - Special Styling */
+.file-input {
+  padding: 20px !important;
+  border: 2px dashed var(--primary) !important;
+  background: rgba(99, 102, 241, 0.03) !important;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-normal) !important;
+}
+
+.file-input:hover {
+  background: rgba(99, 102, 241, 0.08) !important;
+  border-color: var(--primary-dark) !important;
+}
+
+.file-hint {
+  font-size: 0.9em;
+  color: var(--text-light);
+  margin-top: 8px;
+  text-align: center;
+}
+
+/* ============================================
+   Tracker Cards - Glassmorphism
+   ============================================ */
+.tracker-card {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-normal);
+}
+
+.tracker-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.tracker-card h3 {
+  color: var(--primary);
+  margin-bottom: 16px;
+  font-size: 1.2em;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracker-card p {
+  margin-bottom: 10px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+.tracker-card p strong {
+  color: var(--text-primary);
+}
+
+.score-display {
+  font-size: 3em;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  padding: 25px;
+  margin: 15px 0;
+  border-radius: var(--radius-lg);
+  background-color: white;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ============================================
+   Reflection Prompt - Highlighted
+   ============================================ */
+.reflection-prompt {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  padding: 20px 24px;
+  border-radius: var(--radius-lg);
+  border-left: 5px solid var(--accent);
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.reflection-prompt strong {
+  color: #b45309;
+  font-size: 1.1em;
+}
+
+/* ============================================
+   Navigation Controls
+   ============================================ */
+.book-navigation {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-top: 40px;
+  position: relative;
+  z-index: 1;
+}
+
+.nav-button {
+  background: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 50px;
+  font-size: 1.1em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-normal);
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 0.02em;
+}
+
+.nav-button:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  background: linear-gradient(135deg, #fff 0%, #f9f9ff 100%);
+}
+
+.nav-button:active:not(:disabled) {
+  transform: translateY(-2px) scale(1);
+}
+
+.nav-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.page-indicator {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 14px 36px;
+  border-radius: 50px;
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.15em;
+  box-shadow: var(--shadow-md);
+  letter-spacing: 0.05em;
+}
+
+/* ============================================
+   Save Button - Gradient Design
+   ============================================ */
+.save-button {
+  background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 14px 36px;
+  border-radius: 50px;
+  font-size: 1.05em;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 30px auto 0;
+  transition: all var(--transition-normal);
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+  letter-spacing: 0.02em;
+}
+
+.save-button:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+}
+
+.save-button:active {
+  transform: translateY(-1px) scale(1);
+}
+
+.save-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============================================
+   Progress Dashboard
+   ============================================ */
+.progress-dashboard {
+  background: rgba(255, 255, 255, 0.95);
+  padding: 40px;
+  border-radius: var(--radius-xl);
+  margin-top: 50px;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+  z-index: 1;
+  backdrop-filter: blur(20px);
+}
+
+.progress-dashboard h2 {
+  color: var(--text-primary);
+  margin-bottom: 30px;
+  text-align: center;
+  font-size: 1.8em;
+  font-weight: 700;
+}
+
+.progress-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 24px;
+}
+
+.progress-card {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  padding: 28px 24px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-card::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.progress-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 15px 40px rgba(99, 102, 241, 0.3);
+}
+
+.progress-card h3 {
+  font-size: 0.95em;
+  font-weight: 500;
+  margin-bottom: 12px;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.progress-card .value {
+  font-size: 3em;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* ============================================
+   Table of Contents Sidebar
+   ============================================ */
+.toc-sidebar {
+  position: fixed;
+  right: 25px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.95);
+  padding: 24px;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  max-width: 260px;
+  z-index: 100;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.toc-sidebar h3 {
+  color: var(--text-primary);
+  margin-bottom: 18px;
+  font-size: 1.15em;
+  font-weight: 700;
+  text-align: center;
+  padding-bottom: 12px;
+  border-bottom: 2px solid rgba(99, 102, 241, 0.15);
+}
+
+.toc-item {
+  width: 100%;
+  padding: 12px 14px;
+  margin: 4px 0;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.95em;
+  border: none;
+  background: transparent;
+  text-align: left;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.toc-item:hover {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--primary);
+  transform: translateX(4px);
+}
+
+.toc-item.active {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+}
+
+.page-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1em;
+}
+
+/* ============================================
+   Loading States
+   ============================================ */
+.loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  border-radius: var(--radius-lg);
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(99, 102, 241, 0.2);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 1400px) {
+  .toc-sidebar {
+    right: 15px;
+    padding: 18px;
+    max-width: 220px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .toc-sidebar {
+    display: none;
+  }
+  
+  .portfolio-book-container {
+    padding: 30px 15px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .book {
+    width: 100%;
+  }
+  
+  .book-header h1 {
+    font-size: 2.2em;
+  }
+  
+  .pages {
+    padding: 30px 35px;
+  }
+}
+
+@media (max-width: 768px) {
+  .book {
+    flex-direction: column;
+    min-height: auto;
+  }
+  
+  .book-spine {
+    width: 100%;
+    min-height: 50px;
+    border-radius: 12px 12px 0 0;
+    flex-direction: row;
+  }
+  
+  .spine-text {
+    writing-mode: horizontal-tb;
+  }
+  
+  .pages {
+    border-radius: 0 0 12px 12px;
+    padding: 25px 20px;
+  }
+  
+  .book-header h1 {
+    font-size: 1.8em;
+  }
+  
+  .page-header h2 {
+    font-size: 1.6em;
+  }
+  
+  .nav-button {
+    padding: 12px 20px;
+    font-size: 0.95em;
+  }
+  
+  .progress-dashboard {
+    padding: 25px 20px;
+  }
+  
+  .progress-card .value {
+    font-size: 2.2em;
+  }
+}
+
+@media (max-width: 480px) {
+  .book-navigation {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .nav-button {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -75,6 +75,7 @@ import { StudentMissionsService } from '../../services/student-missions.service'
                     [class.secondary]="activity.Completed"
                     [class.primary]="!activity.Completed"
                     type="button"
+                    [routerLink]="['/student/missions', mission()?.Id, 'activity', activity.Id]"
                   >
                     {{ activity.Completed ? 'Review' : 'Start Activity' }}
                   </button>

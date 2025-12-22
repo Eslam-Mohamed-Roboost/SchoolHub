@@ -1,10 +1,39 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { CPDModule, CPDProgress, TeacherStats } from '../models/cpd.model';
+import { BaseHttpService } from '../../../core/services/base-http.service';
+
+interface CpdModuleDto {
+  Id: string;
+  Title: string;
+  Duration: number;
+  Status: 'not-started' | 'in-progress' | 'completed';
+  Icon: string;
+  Color: string;
+  BgColor: string;
+  VideoUrl: string;
+  VideoProvider: 'youtube' | 'vimeo' | 'self-hosted';
+  GuideContent: string;
+  FormUrl: string;
+  EvidenceFiles: string[];
+  CompletedAt?: string | null;
+  StartedAt?: string | null;
+  LastAccessedAt?: string | null;
+}
+
+interface CpdProgressDto {
+  HoursCompleted: number;
+  TargetHours: number;
+  CompletedModules: number;
+  TotalModules: number;
+  LastActivityDate: string | null;
+  Streak: number;
+}
 
 @Injectable({
   providedIn: 'root',
 })
-export class CpdService {
+export class CpdService extends BaseHttpService {
+  // Start with local mock modules as initial data; backend will override when available
   private modules = signal<CPDModule[]>([
     {
       id: 'eduaide-ai',
@@ -216,28 +245,50 @@ export class CpdService {
     },
   ]);
 
-  // Computed progress
-  progress = computed<CPDProgress>(() => {
-    const completedModules = this.modules().filter((m) => m.status === 'completed');
-    const hoursCompleted = completedModules.reduce((sum, m) => sum + m.duration, 0) / 60;
+  private progress = signal<CPDProgress>(this.computeProgressFromModules());
 
-    return {
-      hoursCompleted: Math.round(hoursCompleted * 10) / 10,
-      targetHours: 10,
-      completedModules: completedModules.length,
-      totalModules: this.modules().length,
-      lastActivityDate: new Date('2024-12-01'),
-      streak: 5,
-    };
-  });
+  constructor() {
+    super();
+    // Load real data from backend when available
+    this.loadModules();
+    this.loadProgress();
+  }
 
-  // Teacher stats
-  stats = computed<TeacherStats>(() => ({
-    cpdHours: this.progress().hoursCompleted,
-    badgesEarned: 4,
-    activeStudents: 28,
-    currentStreak: this.progress().streak,
-  }));
+  // ============================================
+  // API calls
+  // ============================================
+
+  loadModules(): void {
+    this.get<CpdModuleDto[]>('/Teacher/Cpd/Modules').subscribe({
+      next: (dtos) => {
+        const mapped = dtos.map((m) => this.mapModuleDto(m));
+        this.modules.set(mapped);
+        this.progress.set(this.computeProgressFromModules());
+      },
+      error: (err) => {
+        console.error('Failed to load CPD modules:', err);
+      },
+    });
+  }
+
+  loadProgress(): void {
+    this.get<CpdProgressDto>('/Teacher/Cpd/Progress').subscribe({
+      next: (dto) => {
+        const progress: CPDProgress = {
+          hoursCompleted: dto.HoursCompleted,
+          targetHours: dto.TargetHours,
+          completedModules: dto.CompletedModules,
+          totalModules: dto.TotalModules,
+          lastActivityDate: dto.LastActivityDate ? new Date(dto.LastActivityDate) : new Date(),
+          streak: dto.Streak,
+        };
+        this.progress.set(progress);
+      },
+      error: (err) => {
+        console.error('Failed to load CPD progress:', err);
+      },
+    });
+  }
 
   getModules() {
     return this.modules();
@@ -251,8 +302,14 @@ export class CpdService {
     return this.progress();
   }
 
-  getStats() {
-    return this.stats();
+  getStats(): TeacherStats {
+    const p = this.progress();
+    return {
+      cpdHours: p.hoursCompleted,
+      badgesEarned: 0,
+      activeStudents: 0,
+      currentStreak: p.streak,
+    };
   }
 
   markModuleComplete(id: string): void {
@@ -267,6 +324,7 @@ export class CpdService {
           : m
       )
     );
+    this.progress.set(this.computeProgressFromModules());
   }
 
   markModuleInProgress(id: string): void {
@@ -282,6 +340,7 @@ export class CpdService {
           : m
       )
     );
+    this.progress.set(this.computeProgressFromModules());
   }
 
   uploadEvidence(moduleId: string, files: FileList): void {
@@ -297,5 +356,45 @@ export class CpdService {
           : m
       )
     );
+  }
+
+  // ============================================
+  // Helpers
+  // ============================================
+
+  private computeProgressFromModules(): CPDProgress {
+    const currentModules = this.modules();
+    const completedModules = currentModules.filter((m) => m.status === 'completed');
+    const hoursCompleted = completedModules.reduce((sum, m) => sum + m.duration, 0) / 60;
+
+    return {
+      hoursCompleted: Math.round(hoursCompleted * 10) / 10,
+      targetHours: 10,
+      completedModules: completedModules.length,
+      totalModules: currentModules.length,
+      // Fallback date; backend will override via loadProgress()
+      lastActivityDate: new Date(),
+      streak: 0,
+    };
+  }
+
+  private mapModuleDto(dto: CpdModuleDto): CPDModule {
+    return {
+      id: dto.Id,
+      title: dto.Title,
+      duration: dto.Duration,
+      status: dto.Status,
+      icon: dto.Icon,
+      color: dto.Color,
+      bgColor: dto.BgColor,
+      videoUrl: dto.VideoUrl,
+      videoProvider: dto.VideoProvider,
+      guideContent: dto.GuideContent,
+      formUrl: dto.FormUrl,
+      evidenceFiles: dto.EvidenceFiles || [],
+      completedAt: dto.CompletedAt ? new Date(dto.CompletedAt) : undefined,
+      startedAt: dto.StartedAt ? new Date(dto.StartedAt) : undefined,
+      lastAccessedAt: dto.LastAccessedAt ? new Date(dto.LastAccessedAt) : undefined,
+    };
   }
 }
