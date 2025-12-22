@@ -6,6 +6,8 @@ import { AdminAnalyticsComponent } from './pages/admin-analytics/admin-analytics
 import { AdminEvidenceComponent } from './pages/admin-evidence/admin-evidence.component';
 import { AdminCpdComponent } from './pages/admin-cpd/admin-cpd.component';
 import { AdminReportsComponent } from './pages/admin-reports/admin-reports.component';
+import { AdminBadgesComponent } from './pages/admin-badges/admin-badges.component';
+import { AdminMissionsComponent } from './pages/admin-missions/admin-missions.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -18,6 +20,8 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'analytics', component: AdminAnalyticsComponent },
       { path: 'evidence', component: AdminEvidenceComponent },
       { path: 'cpd', component: AdminCpdComponent },
+      { path: 'badges', component: AdminBadgesComponent },
+      { path: 'missions', component: AdminMissionsComponent },
       // { path: 'reports', component: AdminReportsComponent },
     ],
   },

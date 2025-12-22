@@ -57,7 +57,8 @@ export class UserService extends BaseHttpService {
 
   constructor() {
     super();
-    this.loadUsers();
+    // Don't load users here - let components control when to load
+    // Components will call loadUsers() via effects or lifecycle hooks
   }
 
   // ============================================
@@ -257,10 +258,14 @@ export class UserService extends BaseHttpService {
     this.loadUsers({ pageIndex: page });
   }
 
+  resetToFirstPage(): void {
+    this.currentPage.set(1);
+  }
+
   setPageSize(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
-    this.loadUsers({ pageSize: size, pageIndex: 1 });
+    // Don't call loadUsers() here - let component effects handle it when pageSize signal changes
   }
 
   // ============================================

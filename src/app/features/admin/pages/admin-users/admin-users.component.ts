@@ -65,12 +65,14 @@ export class AdminUsersComponent {
       notes: [''],
     });
 
-    // Effect to reload users when filters change (Server-side filtering)
+    // Effect to reload users when filters or page size change (Server-side filtering)
+    // Note: This effect does NOT watch currentPage to avoid double calls with goToPage()
     effect(
       () => {
         const query = this.searchQuery();
         const role = this.roleFilter();
         const status = this.statusFilter();
+        const pageSize = this.pageSize();
 
         // Map status to isActive boolean
         let isActive: boolean | undefined;
@@ -80,9 +82,10 @@ export class AdminUsersComponent {
         // Determine if query is email or general search
         const isEmail = query.includes('@');
 
+        // Use current page from service (filters already reset page to 1 via resetToFirstPage)
         this.userService.loadUsers({
-          pageIndex: 1, // Reset to first page on filter change
-          pageSize: this.pageSize(),
+          pageIndex: this.currentPage(),
+          pageSize: pageSize,
           search: isEmail ? undefined : query,
           email: isEmail ? query : undefined,
           role: role ? Number(role) : undefined,
@@ -96,14 +99,20 @@ export class AdminUsersComponent {
 
   // Search and filter methods
   onSearch(query: string) {
+    // Reset to page 1 when search changes (effect will handle the load)
+    this.userService.resetToFirstPage();
     this.searchQuery.set(query);
   }
 
   onRoleFilter(role: string) {
+    // Reset to page 1 when role filter changes (effect will handle the load)
+    this.userService.resetToFirstPage();
     this.roleFilter.set(role as ApplicationRole | '');
   }
 
   onStatusFilter(status: string) {
+    // Reset to page 1 when status filter changes (effect will handle the load)
+    this.userService.resetToFirstPage();
     this.statusFilter.set(status as UserStatus | '');
   }
 

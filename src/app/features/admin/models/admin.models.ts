@@ -29,9 +29,15 @@ export interface Badge {
   id: string;
   name: string;
   category: string;
+  categoryId: number;
   icon: string;
+  color: string;
   cpdHours?: number;
   description: string;
+  targetRole: number;
+  targetRoleName: string;
+  isActive: boolean;
+  earnedCount: number;
 }
 
 export interface BadgeSubmission {
@@ -126,8 +132,25 @@ export interface CpdTier {
 export interface Mission {
   id: string;
   name: string;
+  title: string;
+  description: string;
+  icon: string;
   order: number;
   enabled: boolean;
+  badgeId?: string;
+  duration?: string;
+  requirements?: string[];
+}
+
+export interface CreateMissionRequest {
+  Name: string;
+  Title: string;
+  Description: string;
+  Icon: string;
+  Order: number;
+  Enabled: boolean;
+  BadgeId?: string;
+  Duration?: string;
 }
 
 export interface EmailTemplates {

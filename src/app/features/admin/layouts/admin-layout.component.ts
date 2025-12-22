@@ -22,6 +22,8 @@ export class AdminLayoutComponent {
   adminNavLinks: NavLink[] = [
     { path: '/admin/dashboard', label: 'Home', exact: true },
     { path: '/admin/users', label: 'Users' },
+    { path: '/admin/badges', label: 'Badges' },
+    { path: '/admin/missions', label: 'Missions & Challenges' },
     { path: '/admin/analytics', label: 'Analytics' },
     { path: '/admin/evidence', label: 'Evidence Showcase' },
     { path: '/admin/cpd', label: 'CPD Tracking' },

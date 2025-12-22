@@ -3,12 +3,26 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { ROUTES } from '../../config/constants';
+import { ValidationErrorService } from '../services/validation-error.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
+  const validationErrorService = inject(ValidationErrorService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
+      // Check if this is a validation error
+      if (validationErrorService.isValidationError(error)) {
+        const validationException =
+          validationErrorService.createValidationException(error);
+        console.error('Validation Error:', {
+          status: error.status,
+          url: req.url,
+          validationErrors: validationException.validationErrors,
+        });
+        return throwError(() => validationException);
+      }
+
       let errorMessage = 'An unexpected error occurred';
 
       if (error.error instanceof ErrorEvent) {

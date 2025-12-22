@@ -1,0 +1,368 @@
+<div class="admin-badges-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Badge Management</h1>
+      <p class="page-subtitle">Create and manage badges for missions and achievements</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openAddBadgeModal()">
+        <span class="icon">➕</span>
+        Add Badge
+      </button>
+    </div>
+  </div>
+
+  <!-- Badges Table -->
+  <div class="table-container">
+    <table class="badges-table">
+      <thead>
+        <tr>
+          <th>Badge</th>
+          <th>Name</th>
+          <th>Category</th>
+          <th>Target Role</th>
+          <th>CPD Hours</th>
+          <th>Earned</th>
+          <th>Status</th>
+          <th>Description</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (badge of badges(); track badge.id) {
+          <tr>
+            <td>
+              <div class="badge-display">
+                <span class="badge-icon" [style.color]="badge.color || '#FFD700'">{{ badge.icon }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="badge-name">{{ badge.name }}</div>
+            </td>
+            <td>
+              <span class="category-badge">{{ badge.category }}</span>
+            </td>
+            <td>
+              <span class="role-badge">{{ badge.targetRoleName }}</span>
+            </td>
+            <td>
+              @if (badge.cpdHours) {
+                <span class="cpd-hours">{{ badge.cpdHours }}h</span>
+              } @else {
+                <span class="text-muted">-</span>
+              }
+            </td>
+            <td>
+              <span class="earned-count">{{ badge.earnedCount }}</span>
+            </td>
+            <td>
+              <span class="status-badge" [class.status-active]="badge.isActive" 
+                    [class.status-inactive]="!badge.isActive">
+                {{ badge.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td>
+              <div class="description-text">{{ badge.description }}</div>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-icon" title="Edit Badge" (click)="openEditBadgeModal(badge)">
+                  ✏️
+                </button>
+                <button class="btn-icon" title="Delete Badge" (click)="openDeleteConfirm(badge)">
+                  🗑️
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="no-data">
+              <p>No badges found</p>
+              <button class="btn btn-primary" (click)="openAddBadgeModal()">
+                Create Your First Badge
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add/Edit Badge Modal -->
+@if (showAddBadgeModal() || showEditBadgeModal()) {
+  <div class="modal-overlay" (click)="closeBadgeModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ showEditBadgeModal() ? 'Edit Badge' : 'Add New Badge' }}</h2>
+        <button class="modal-close" (click)="closeBadgeModal()">✕</button>
+      </div>
+
+      <form [formGroup]="badgeForm" (ngSubmit)="onSubmit()">
+        <div class="modal-body">
+          <!-- General Error Message -->
+          @if (generalError()) {
+            <div class="alert alert-danger mb-3">
+              {{ generalError() }}
+            </div>
+          }
+
+          <!-- Mission Selection -->
+          <div class="form-group">
+            <label for="missionId">Mission (Optional)</label>
+            <select 
+              id="missionId"
+              formControlName="missionId"
+              class="form-select"
+              [class.is-invalid]="missionError()"
+              (change)="onMissionSelect($any($event.target).value)">
+              <option value="">Select a mission (optional)</option>
+              @for (mission of missions(); track mission.id) {
+                <option [value]="mission.id">
+                  {{ mission.icon }} {{ mission.title }}
+                </option>
+              }
+            </select>
+            @if (missionError()) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                {{ missionError() }}
+              </div>
+            }
+            @if (selectedMission()) {
+              <div class="mission-preview mt-2">
+                <div class="mission-card">
+                  <span class="mission-icon">{{ selectedMission()!.icon }}</span>
+                  <div class="mission-info">
+                    <h4>{{ selectedMission()!.title }}</h4>
+                    <p>{{ selectedMission()!.description }}</p>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Badge Details -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="name">Badge Name *</label>
+              <input 
+                type="text"
+                id="name"
+                formControlName="name"
+                class="form-input"
+                [class.is-invalid]="nameError() || (badgeForm.get('name')?.invalid && badgeForm.get('name')?.touched)"
+                placeholder="e.g., Eduaide Explorer" />
+              @if (nameError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ nameError() }}
+                </div>
+              } @else if (badgeForm.get('name')?.invalid && badgeForm.get('name')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  @if (badgeForm.get('name')?.errors?.['required']) {
+                    Badge name is required
+                  } @else if (badgeForm.get('name')?.errors?.['minlength']) {
+                    Badge name must be at least 3 characters
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="category">Category *</label>
+              <select 
+                id="category"
+                formControlName="category"
+                class="form-select"
+                [class.is-invalid]="categoryError() || (badgeForm.get('category')?.invalid && badgeForm.get('category')?.touched)">
+                <option value="">Select category</option>
+                @for (cat of badgeCategories; track cat.id) {
+                  <option [value]="cat.id">{{ cat.name }}</option>
+                }
+              </select>
+              @if (categoryError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ categoryError() }}
+                </div>
+              } @else if (badgeForm.get('category')?.invalid && badgeForm.get('category')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Category is required
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description *</label>
+            <textarea 
+              id="description"
+              formControlName="description"
+              class="form-textarea"
+              rows="3"
+              [class.is-invalid]="descriptionError() || (badgeForm.get('description')?.invalid && badgeForm.get('description')?.touched)"
+              placeholder="Describe what this badge represents..."></textarea>
+            @if (descriptionError()) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                {{ descriptionError() }}
+              </div>
+            } @else if (badgeForm.get('description')?.invalid && badgeForm.get('description')?.touched) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                @if (badgeForm.get('description')?.errors?.['required']) {
+                  Description is required
+                } @else if (badgeForm.get('description')?.errors?.['minlength']) {
+                  Description must be at least 10 characters
+                }
+              </div>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="targetRole">Target Role *</label>
+              <select 
+                id="targetRole"
+                formControlName="targetRole"
+                class="form-select"
+                [class.is-invalid]="targetRoleError() || (badgeForm.get('targetRole')?.invalid && badgeForm.get('targetRole')?.touched)">
+                <option value="">Select target role</option>
+                @for (role of roles; track role) {
+                  <option [value]="role">{{ getRoleName(role) }}</option>
+                }
+              </select>
+              @if (targetRoleError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ targetRoleError() }}
+                </div>
+              } @else if (badgeForm.get('targetRole')?.invalid && badgeForm.get('targetRole')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Target role is required
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="cpdHours">CPD Hours (Optional)</label>
+              <input 
+                type="number"
+                id="cpdHours"
+                formControlName="cpdHours"
+                class="form-input"
+                [class.is-invalid]="cpdHoursError()"
+                min="0"
+                step="0.5"
+                placeholder="0" />
+              @if (cpdHoursError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ cpdHoursError() }}
+                </div>
+              }
+              <small class="form-text text-muted">Leave 0 if not applicable</small>
+            </div>
+          </div>
+
+          <!-- Badge Appearance -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="icon">Icon *</label>
+              <div class="icon-selector">
+                <div class="icon-preview">
+                  <span class="badge-icon-large">{{ badgeForm.get('icon')?.value || '🏆' }}</span>
+                </div>
+                <select 
+                  id="icon"
+                  formControlName="icon"
+                  class="form-select"
+                  [class.is-invalid]="iconError()">
+                  @for (icon of badgeIcons; track icon) {
+                    <option [value]="icon">{{ icon }}</option>
+                  }
+                </select>
+              </div>
+              @if (iconError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ iconError() }}
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="color">Color *</label>
+              <div class="color-selector">
+                <div class="color-preview" [style.background-color]="badgeForm.get('color')?.value || '#FFD700'"></div>
+                <select 
+                  id="color"
+                  formControlName="color"
+                  class="form-select"
+                  [class.is-invalid]="colorError()">
+                  @for (color of badgeColors; track color.value) {
+                    <option [value]="color.value">{{ color.name }}</option>
+                  }
+                </select>
+              </div>
+              @if (colorError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ colorError() }}
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Badge Preview -->
+          <div class="badge-preview-section">
+            <label>Preview</label>
+            <div class="badge-preview-card">
+              <div 
+                class="badge-preview"
+                [style.background-color]="badgeForm.get('color')?.value || '#FFD700'">
+                <span class="badge-icon">{{ badgeForm.get('icon')?.value || '🏆' }}</span>
+                <div class="badge-info">
+                  <h4>{{ badgeForm.get('name')?.value || 'Badge Name' }}</h4>
+                  <p>{{ badgeForm.get('description')?.value || 'Badge description will appear here' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeBadgeModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="badgeForm.invalid || isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            {{ showEditBadgeModal() ? 'Update Badge' : 'Create Badge' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirm()) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button class="modal-close" (click)="cancelDelete()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p>Are you sure you want to delete the badge <strong>{{ selectedBadge()?.name }}</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDelete()">
+          Cancel
+        </button>
+        <button class="btn btn-danger" (click)="confirmDelete()">
+          Delete Badge
+        </button>
+      </div>
+    </div>
+  </div>
+}

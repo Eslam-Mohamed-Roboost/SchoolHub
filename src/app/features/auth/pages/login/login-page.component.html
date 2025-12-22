@@ -13,31 +13,47 @@
     <!-- Login Form -->
     <form (ngSubmit)="handleLogin()">
       <!-- Email -->
-      <div class="form-floating mb-3">
-        <input 
-          type="email" 
-          class="form-control rounded-3" 
-          id="loginEmail" 
-          placeholder="name@example.com"
-          [(ngModel)]="email"
-          name="email"
-          required
-        >
-        <label for="loginEmail">Email address</label>
+      <div class="mb-3">
+        <div class="form-floating">
+          <input 
+            type="email" 
+            class="form-control rounded-3" 
+            [class.is-invalid]="emailError()"
+            id="loginEmail" 
+            placeholder="name@example.com"
+            [(ngModel)]="email"
+            name="email"
+            required
+          >
+          <label for="loginEmail">Email address</label>
+        </div>
+        @if (emailError()) {
+          <div class="invalid-feedback d-block small text-start mt-1">
+            {{ emailError() }}
+          </div>
+        }
       </div>
 
       <!-- Password -->
-      <div class="form-floating mb-4">
-        <input 
-          type="password" 
-          class="form-control rounded-3" 
-          id="loginPassword" 
-          placeholder="Password"
-          [(ngModel)]="password"
-          name="password"
-          required
-        >
-        <label for="loginPassword">Password</label>
+      <div class="mb-4">
+        <div class="form-floating">
+          <input 
+            type="password" 
+            class="form-control rounded-3" 
+            [class.is-invalid]="passwordError()"
+            id="loginPassword" 
+            placeholder="Password"
+            [(ngModel)]="password"
+            name="password"
+            required
+          >
+          <label for="loginPassword">Password</label>
+        </div>
+        @if (passwordError()) {
+          <div class="invalid-feedback d-block small text-start mt-1">
+            {{ passwordError() }}
+          </div>
+        }
       </div>
       
       <!-- Role Selection -->
@@ -86,11 +102,11 @@
       <!-- Submit Button -->
       <button 
         type="submit" 
-        class="btn btn-primary w-100 py-3 rounded-3 fw-bold fs-5 shadow-sm"
+        class="btn btn-primary w-100 py-3 rounded-3 fw-bold fs-5 shadow-sm login-submit-btn"
         [disabled]="isLoading()"
       >
         @if (isLoading()) {
-          <span class="spinner-border spinner-border-sm me-2"></span>
+          <span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>
         }
         Sign In
       </button>

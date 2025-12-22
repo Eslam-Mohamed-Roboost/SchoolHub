@@ -1,0 +1,558 @@
+<div class="admin-missions-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Missions & Challenges</h1>
+      <p class="page-subtitle">Manage learning missions and weekly challenges for students</p>
+    </div>
+    <div class="header-actions">
+      @if (activeTab() === 'missions') {
+        <button class="btn btn-primary" (click)="openAddMissionModal()">
+          <span class="icon">➕</span>
+          Add Mission
+        </button>
+      } @else {
+        <button class="btn btn-primary" (click)="openAddChallengeModal()">
+          <span class="icon">➕</span>
+          Add Challenge
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <div class="tabs">
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'missions'"
+        (click)="setActiveTab('missions')">
+        🎯 Missions
+      </button>
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'challenges'"
+        (click)="setActiveTab('challenges')">
+        🏆 Challenges
+      </button>
+    </div>
+  </div>
+
+  <!-- Missions Tab -->
+  @if (activeTab() === 'missions') {
+    <div class="table-container">
+      <table class="missions-table">
+        <thead>
+          <tr>
+            <th>Icon</th>
+            <th>Name</th>
+            <th>Title</th>
+            <th>Order</th>
+            <th>Status</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (mission of missions(); track mission.id) {
+            <tr>
+              <td>
+                <span class="mission-icon-large">{{ mission.icon }}</span>
+              </td>
+              <td>
+                <div class="mission-name">{{ mission.name }}</div>
+              </td>
+              <td>
+                <div class="mission-title">{{ mission.title }}</div>
+              </td>
+              <td>
+                <span class="order-badge">{{ mission.order }}</span>
+              </td>
+              <td>
+                <span class="status-badge" [class.status-active]="mission.enabled" 
+                      [class.status-inactive]="!mission.enabled">
+                  {{ mission.enabled ? 'Enabled' : 'Disabled' }}
+                </span>
+              </td>
+              <td>
+                <div class="description-text">{{ mission.description }}</div>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-icon" title="Edit Mission" (click)="openEditMissionModal(mission)">
+                    ✏️
+                  </button>
+                  <button class="btn-icon" title="Delete Mission" (click)="openDeleteMissionConfirm(mission)">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="7" class="no-data">
+                <p>No missions found</p>
+                <button class="btn btn-primary" (click)="openAddMissionModal()">
+                  Create Your First Mission
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Challenges Tab -->
+  @if (activeTab() === 'challenges') {
+    <div class="table-container">
+      <table class="challenges-table">
+        <thead>
+          <tr>
+            <th>Week</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Resources</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (challenge of challenges(); track challenge.id) {
+            <tr>
+              <td>
+                <span class="week-badge">Week {{ challenge.weekNumber }}</span>
+              </td>
+              <td>
+                <div class="challenge-title">{{ challenge.title }}</div>
+              </td>
+              <td>
+                <span class="status-badge" [class.status-published]="challenge.status === 'Published'"
+                      [class.status-draft]="challenge.status === 'Draft'"
+                      [class.status-scheduled]="challenge.status === 'Scheduled'">
+                  {{ challenge.status }}
+                </span>
+              </td>
+              <td>
+                <span class="resource-count">{{ challenge.resourceLinks.length }} links</span>
+              </td>
+              <td>
+                <div class="description-text">{{ challenge.description }}</div>
+              </td>
+              <td>
+                <div class="action-buttons">
+                  @if (challenge.status !== 'Published') {
+                    <button class="btn-icon" title="Publish Challenge" (click)="publishChallenge(challenge.id)">
+                      📢
+                    </button>
+                  }
+                  <button class="btn-icon" title="Edit Challenge" (click)="openEditChallengeModal(challenge)">
+                    ✏️
+                  </button>
+                  <button class="btn-icon" title="Delete Challenge" (click)="openDeleteChallengeConfirm(challenge)">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="no-data">
+                <p>No challenges found</p>
+                <button class="btn btn-primary" (click)="openAddChallengeModal()">
+                  Create Your First Challenge
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Add/Edit Mission Modal -->
+@if (showAddMissionModal() || showEditMissionModal()) {
+  <div class="modal-overlay" (click)="closeMissionModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ showEditMissionModal() ? 'Edit Mission' : 'Add New Mission' }}</h2>
+        <button class="modal-close" (click)="closeMissionModal()">✕</button>
+      </div>
+
+      <form [formGroup]="missionForm" (ngSubmit)="onSubmitMission()">
+        <div class="modal-body">
+          @if (generalError()) {
+            <div class="alert alert-danger mb-3">
+              {{ generalError() }}
+            </div>
+          }
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="missionName">Name *</label>
+              <input 
+                type="text"
+                id="missionName"
+                formControlName="name"
+                class="form-input"
+                [class.is-invalid]="missionNameError() || (missionForm.get('name')?.invalid && missionForm.get('name')?.touched)"
+                placeholder="e.g., Digital Citizenship" />
+              @if (missionNameError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ missionNameError() }}
+                </div>
+              } @else if (missionForm.get('name')?.invalid && missionForm.get('name')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Name is required (min 3 characters)
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="missionTitle">Title *</label>
+              <input 
+                type="text"
+                id="missionTitle"
+                formControlName="title"
+                class="form-input"
+                [class.is-invalid]="missionTitleError() || (missionForm.get('title')?.invalid && missionForm.get('title')?.touched)"
+                placeholder="e.g., Digital Citizenship Foundations" />
+              @if (missionTitleError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ missionTitleError() }}
+                </div>
+              } @else if (missionForm.get('title')?.invalid && missionForm.get('title')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Title is required (min 3 characters)
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="missionDescription">Description *</label>
+            <textarea 
+              id="missionDescription"
+              formControlName="description"
+              class="form-textarea"
+              rows="4"
+              [class.is-invalid]="missionDescriptionError() || (missionForm.get('description')?.invalid && missionForm.get('description')?.touched)"
+              placeholder="Describe the mission objectives and learning outcomes..."></textarea>
+            @if (missionDescriptionError()) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                {{ missionDescriptionError() }}
+              </div>
+            } @else if (missionForm.get('description')?.invalid && missionForm.get('description')?.touched) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                Description is required (min 10 characters)
+              </div>
+            }
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="missionIcon">Icon *</label>
+              <div class="icon-selector">
+                <div class="icon-preview">
+                  <span class="mission-icon-large">{{ missionForm.get('icon')?.value || '🎯' }}</span>
+                </div>
+                <select 
+                  id="missionIcon"
+                  formControlName="icon"
+                  class="form-select"
+                  [class.is-invalid]="missionIconError()">
+                  @for (icon of missionIcons; track icon) {
+                    <option [value]="icon">{{ icon }}</option>
+                  }
+                </select>
+              </div>
+              @if (missionIconError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ missionIconError() }}
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="missionOrder">Order *</label>
+              <input 
+                type="number"
+                id="missionOrder"
+                formControlName="order"
+                class="form-input"
+                [class.is-invalid]="missionOrderError() || (missionForm.get('order')?.invalid && missionForm.get('order')?.touched)"
+                min="1"
+                placeholder="1" />
+              @if (missionOrderError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ missionOrderError() }}
+                </div>
+              } @else if (missionForm.get('order')?.invalid && missionForm.get('order')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Order is required (min 1)
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="missionBadge">Associated Badge (Optional)</label>
+              <select 
+                id="missionBadge"
+                formControlName="badgeId"
+                class="form-select">
+                <option value="">No badge</option>
+                @for (badge of badges(); track badge.id) {
+                  <option [value]="badge.id">{{ badge.icon }} {{ badge.name }}</option>
+                }
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="missionDuration">Duration (Optional)</label>
+              <input 
+                type="text"
+                id="missionDuration"
+                formControlName="duration"
+                class="form-input"
+                placeholder="e.g., 2 weeks" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox"
+                formControlName="enabled"
+                class="form-checkbox" />
+              <span>Mission Enabled</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeMissionModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="missionForm.invalid || isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            {{ showEditMissionModal() ? 'Update Mission' : 'Create Mission' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Add/Edit Challenge Modal -->
+@if (showAddChallengeModal() || showEditChallengeModal()) {
+  <div class="modal-overlay" (click)="closeChallengeModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ showEditChallengeModal() ? 'Edit Challenge' : 'Add New Challenge' }}</h2>
+        <button class="modal-close" (click)="closeChallengeModal()">✕</button>
+      </div>
+
+      <form [formGroup]="challengeForm" (ngSubmit)="onSubmitChallenge()">
+        <div class="modal-body">
+          @if (generalError()) {
+            <div class="alert alert-danger mb-3">
+              {{ generalError() }}
+            </div>
+          }
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="challengeWeekNumber">Week Number *</label>
+              <input 
+                type="number"
+                id="challengeWeekNumber"
+                formControlName="weekNumber"
+                class="form-input"
+                [class.is-invalid]="challengeWeekNumberError() || (challengeForm.get('weekNumber')?.invalid && challengeForm.get('weekNumber')?.touched)"
+                min="1"
+                placeholder="1" />
+              @if (challengeWeekNumberError()) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  {{ challengeWeekNumberError() }}
+                </div>
+              } @else if (challengeForm.get('weekNumber')?.invalid && challengeForm.get('weekNumber')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Week number is required (min 1)
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label for="challengeStatus">Status *</label>
+              <select 
+                id="challengeStatus"
+                formControlName="status"
+                class="form-select">
+                @for (status of challengeStatuses; track status) {
+                  <option [value]="status">{{ status }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="challengeTitle">Title *</label>
+            <input 
+              type="text"
+              id="challengeTitle"
+              formControlName="title"
+              class="form-input"
+              [class.is-invalid]="challengeTitleError() || (challengeForm.get('title')?.invalid && challengeForm.get('title')?.touched)"
+              placeholder="e.g., AI Tools Exploration" />
+            @if (challengeTitleError()) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                {{ challengeTitleError() }}
+              </div>
+            } @else if (challengeForm.get('title')?.invalid && challengeForm.get('title')?.touched) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                Title is required (min 3 characters)
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="challengeDescription">Description *</label>
+            <textarea 
+              id="challengeDescription"
+              formControlName="description"
+              class="form-textarea"
+              rows="4"
+              [class.is-invalid]="challengeDescriptionError() || (challengeForm.get('description')?.invalid && challengeForm.get('description')?.touched)"
+              placeholder="Describe the challenge objectives and requirements..."></textarea>
+            @if (challengeDescriptionError()) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                {{ challengeDescriptionError() }}
+              </div>
+            } @else if (challengeForm.get('description')?.invalid && challengeForm.get('description')?.touched) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                Description is required (min 10 characters)
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="challengeTutorialVideo">Tutorial Video URL (Optional)</label>
+            <input 
+              type="url"
+              id="challengeTutorialVideo"
+              formControlName="tutorialVideo"
+              class="form-input"
+              placeholder="https://youtube.com/..." />
+          </div>
+
+          <div class="form-group">
+            <label for="challengeSubmissionForm">Submission Form Link (Optional)</label>
+            <input 
+              type="url"
+              id="challengeSubmissionForm"
+              formControlName="submissionFormLink"
+              class="form-input"
+              placeholder="https://forms.office.com/..." />
+          </div>
+
+          <!-- Resource Links -->
+          <div class="form-group">
+            <div class="form-group-header">
+              <label>Resource Links</label>
+              <button type="button" class="btn btn-text btn-sm" (click)="addResourceLink()">
+                + Add Link
+              </button>
+            </div>
+            <div class="resource-links-container">
+              @for (control of getResourceLinksArray().controls; track $index) {
+                <div class="resource-link-item">
+                  <input 
+                    type="url"
+                    [formControl]="getResourceLinkControl($index)"
+                    class="form-input"
+                    placeholder="https://example.com/resource" />
+                  <button 
+                    type="button"
+                    class="btn-icon-small"
+                    (click)="removeResourceLink($index)">
+                    🗑️
+                  </button>
+                </div>
+              } @empty {
+                <p class="text-muted small">No resource links added. Click "Add Link" to add resources.</p>
+              }
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="checkbox-label">
+              <input 
+                type="checkbox"
+                formControlName="autoNotify"
+                class="form-checkbox" />
+              <span>Auto Notify Students</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeChallengeModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="challengeForm.invalid || isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            {{ showEditChallengeModal() ? 'Update Challenge' : 'Create Challenge' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Mission Confirmation Modal -->
+@if (showDeleteMissionConfirm()) {
+  <div class="modal-overlay" (click)="cancelDeleteMission()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button class="modal-close" (click)="cancelDeleteMission()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the mission <strong>{{ selectedMission()?.title }}</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDeleteMission()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDeleteMission()">Delete Mission</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Delete Challenge Confirmation Modal -->
+@if (showDeleteChallengeConfirm()) {
+  <div class="modal-overlay" (click)="cancelDeleteChallenge()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button class="modal-close" (click)="cancelDeleteChallenge()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the challenge <strong>{{ selectedChallenge()?.title }}</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDeleteChallenge()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDeleteChallenge()">Delete Challenge</button>
+      </div>
+    </div>
+  </div>
+}
+

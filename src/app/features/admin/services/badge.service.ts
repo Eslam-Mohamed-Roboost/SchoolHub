@@ -123,12 +123,14 @@ export class BadgeService extends BaseHttpService {
   // ============================================
 
   loadBadges(): void {
-    this.get<ApiResponse<PaginatedResponse<BadgeDto>>>(
+    this.get<PaginatedResponse<BadgeDto>>(
       `${Admin_API_ENDPOINTS.Badges.GET_ALL}?page=1&pageSize=100`
     ).subscribe({
       next: (response) => {
-        if (response.IsSuccess && response.Data?.Items) {
-          this.badges.set(response.Data.Items.map((b) => this.mapBadgeDto(b)));
+        // Response is already extracted by BaseHttpService (Data.Items)
+        // response is the PaginatedResponse<BadgeDto> directly
+        if (response?.Items) {
+          this.badges.set(response.Items.map((b) => this.mapBadgeDto(b)));
         }
       },
       error: (err) => {
@@ -220,6 +222,80 @@ export class BadgeService extends BaseHttpService {
   // ============================================
   // ACTIONS - API CALLS
   // ============================================
+
+  createBadge(request: {
+    Name: string;
+    Description: string;
+    Icon: string;
+    Color: string;
+    Category: number;
+    TargetRole: number;
+    CpdHours?: number;
+    MissionId?: string;
+  }): Observable<{ success: boolean; message: string; badgeId?: string }> {
+    // The API returns: { Data: badgeId (number), IsSuccess: true, Message: "Badge created successfully" }
+    // BaseHttpService.transformResponse automatically extracts response.Data when IsSuccess is true
+    // So we receive the badgeId (number) directly in the next callback
+    return this.post<typeof request, number>(
+      Admin_API_ENDPOINTS.Badges.CREATE,
+      request
+    ).pipe(
+      map((badgeId: number) => {
+        // Reload badges to get the newly created one
+        this.loadBadges();
+        
+        return {
+          success: true,
+          message: 'Badge created successfully',
+          badgeId: String(badgeId),
+        };
+      })
+    );
+  }
+
+  updateBadge(
+    id: string,
+    request: {
+      Name: string;
+      Description: string;
+      Icon: string;
+      Color: string;
+      Category: number;
+      TargetRole: number;
+      CpdHours?: number;
+      MissionId?: string;
+      IsActive?: boolean;
+    }
+  ): Observable<{ success: boolean; message: string }> {
+    return this.put<typeof request, number>(
+      Admin_API_ENDPOINTS.Badges.UPDATE(id),
+      request
+    ).pipe(
+      map(() => {
+        // Reload badges to get the updated one
+        this.loadBadges();
+        
+        return {
+          success: true,
+          message: 'Badge updated successfully',
+        };
+      })
+    );
+  }
+
+  deleteBadge(id: string): Observable<{ success: boolean; message: string }> {
+    return this.delete<number>(Admin_API_ENDPOINTS.Badges.DELETE(id)).pipe(
+      map(() => {
+        // Remove from local state
+        this.badges.update((badges) => badges.filter((b) => b.id !== id));
+        
+        return {
+          success: true,
+          message: 'Badge deleted successfully',
+        };
+      })
+    );
+  }
 
   approveSubmission(id: string, reviewedBy: number, notes?: string): Observable<boolean> {
     return this.post<{ ReviewedBy: number; ReviewNotes?: string }, ApiResponse<boolean>>(
@@ -327,9 +403,15 @@ export class BadgeService extends BaseHttpService {
       id: String(dto.Id),
       name: dto.Name,
       category: dto.CategoryName,
+      categoryId: dto.Category,
       icon: dto.Icon ?? '🏆',
+      color: dto.Color ?? '#FFD700',
       cpdHours: dto.CpdHours ?? undefined,
       description: dto.Description ?? '',
+      targetRole: dto.TargetRole,
+      targetRoleName: dto.TargetRoleName,
+      isActive: dto.IsActive,
+      earnedCount: dto.EarnedCount,
     };
   }
 
@@ -361,46 +443,7 @@ export class BadgeService extends BaseHttpService {
 
   private generateMockBadges(): Badge[] {
     return [
-      {
-        id: 'badge-1',
-        name: 'Eduaide Explorer',
-        category: 'AI Tools',
-        icon: '🤖',
-        cpdHours: 2,
-        description: 'Master Eduaide AI tool',
-      },
-      {
-        id: 'badge-2',
-        name: 'Curipod Creator',
-        category: 'AI Tools',
-        icon: '🎨',
-        cpdHours: 2,
-        description: 'Create interactive lessons with Curipod',
-      },
-      {
-        id: 'badge-3',
-        name: 'Diffit Designer',
-        category: 'AI Tools',
-        icon: '📚',
-        cpdHours: 2,
-        description: 'Differentiate content with Diffit',
-      },
-      {
-        id: 'badge-4',
-        name: 'MagicSchool Wizard',
-        category: 'AI Tools',
-        icon: '✨',
-        cpdHours: 2,
-        description: 'Leverage MagicSchool AI',
-      },
-      {
-        id: 'badge-5',
-        name: 'Teams Expert',
-        category: 'Microsoft 365',
-        icon: '💼',
-        cpdHours: 3,
-        description: 'Advanced Microsoft Teams skills',
-      },
+    
     ];
   }
 

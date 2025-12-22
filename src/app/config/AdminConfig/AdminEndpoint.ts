@@ -108,6 +108,17 @@ export const Admin_API_ENDPOINTS = {
   },
 
   // ============================================
+  // MISSIONS
+  // ============================================
+  Missions: {
+    GET_ALL: '/Admin/Missions',
+    GET_BY_ID: (id: string) => `/Admin/Missions/${id}`,
+    CREATE: '/Admin/Missions',
+    UPDATE: (id: string) => `/Admin/Missions/${id}`,
+    DELETE: (id: string) => `/Admin/Missions/${id}`,
+  },
+
+  // ============================================
   // WEEKLY CHALLENGES
   // ============================================
   WeeklyChallenges: {

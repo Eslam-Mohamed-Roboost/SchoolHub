@@ -3,6 +3,8 @@ import { HttpClient, HttpHeaders, HttpParams, HttpContext } from '@angular/commo
 import { Observable, throwError } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../config/environment';
+import { ValidationErrorService } from './validation-error.service';
+import { ValidationErrorException } from '../models/validation-error.model';
 
 export interface HttpOptions {
   headers?: HttpHeaders | { [header: string]: string | string[] };
@@ -38,6 +40,7 @@ export interface RequestResult<T> {
 export abstract class BaseHttpService {
   protected readonly http = inject(HttpClient);
   protected readonly baseUrl = environment.apiUrl;
+  protected readonly validationErrorService = inject(ValidationErrorService);
 
   /**
    * Generic GET request
@@ -169,13 +172,16 @@ export abstract class BaseHttpService {
         if (!result.isSuccess) {
           throw new Error(result.message || 'API Error');
         }
-        data = result.data;
+        // When IsSuccess is true, return the data (could be object, array, number, string, etc.)
+        data = result.data as T;
       } else if ('IsSuccess' in response) {
-        // PascalCase
+        // PascalCase - Standard API response format
         if (!response.IsSuccess) {
           throw new Error(response.Message || 'API Error');
         }
-        data = response.Data;
+        // When IsSuccess is true, return the Data (could be object, array, number, string, etc.)
+        // Data can be any type: object, array, number (like badge ID), string, etc.
+        data = response.Data as T;
       } else {
         // Not a RequestResult, assume direct data
         data = response as T;
@@ -199,6 +205,13 @@ export abstract class BaseHttpService {
   ): Observable<never> {
     if (customHandler) {
       return customHandler(error);
+    }
+
+    // Check if this is a validation error
+    if (this.validationErrorService.isValidationError(error)) {
+      const validationException =
+        this.validationErrorService.createValidationException(error);
+      return throwError(() => validationException);
     }
 
     // Default error handling

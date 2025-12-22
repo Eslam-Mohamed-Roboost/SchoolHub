@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { ApplicationRole } from '../../../../core/enums/application-role.enum';
+import { ValidationErrorException } from '../../../../core/models/validation-error.model';
 
 @Component({
   selector: 'app-login-page',
@@ -17,6 +18,8 @@ export class LoginPageComponent {
   password = signal('');
   selectedRole = signal<'admin' | 'teacher' | 'student'>('admin');
   errorMessage = signal('');
+  emailError = signal('');
+  passwordError = signal('');
   isLoading = signal(false);
 
   constructor(private authService: AuthService, private router: Router) {}
@@ -24,6 +27,8 @@ export class LoginPageComponent {
   handleLogin() {
     this.isLoading.set(true);
     this.errorMessage.set('');
+    this.emailError.set('');
+    this.passwordError.set('');
 
     const role = this.selectedRole();
     const credentials = {
@@ -73,7 +78,31 @@ export class LoginPageComponent {
       error: (error) => {
         this.isLoading.set(false);
         console.error('Login error:', error);
-        this.errorMessage.set(error.message || 'Invalid credentials');
+
+        // Handle validation errors
+        if (error instanceof ValidationErrorException) {
+          const emailErrors = error.getErrorsForProperty('UserName');
+          const passwordErrors = error.getErrorsForProperty('Password');
+
+          this.emailError.set(emailErrors.join(', ') || '');
+          this.passwordError.set(passwordErrors.join(', ') || '');
+
+          // Set general error message if there are other errors
+          const otherErrors = error.validationErrors.filter(
+            (err) =>
+              err.PropertyName !== 'UserName' && err.PropertyName !== 'Password'
+          );
+          if (otherErrors.length > 0) {
+            this.errorMessage.set(
+              otherErrors.map((err) => err.ErrorMessage).join(', ')
+            );
+          } else if (!emailErrors.length && !passwordErrors.length) {
+            this.errorMessage.set(error.getAllMessages());
+          }
+        } else {
+          // Handle other types of errors
+          this.errorMessage.set(error.message || 'Invalid credentials');
+        }
       },
     });
   }
