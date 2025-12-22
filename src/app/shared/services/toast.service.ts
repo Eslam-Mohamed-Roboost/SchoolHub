@@ -69,6 +69,33 @@ export class ToastService {
     });
   }
 
+  // Convenience methods for simple messages
+  showMessage(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info', duration = 5000): void {
+    this.show({
+      id: this.generateId(),
+      type,
+      title: type === 'success' ? 'Success' : type === 'error' ? 'Error' : type === 'warning' ? 'Warning' : 'Info',
+      message,
+      duration
+    });
+  }
+
+  showSuccessMessage(message: string, duration = 5000): void {
+    this.showMessage(message, 'success', duration);
+  }
+
+  showErrorMessage(message: string, duration = 5000): void {
+    this.showMessage(message, 'error', duration);
+  }
+
+  showInfoMessage(message: string, duration = 5000): void {
+    this.showMessage(message, 'info', duration);
+  }
+
+  showWarningMessage(message: string, duration = 5000): void {
+    this.showMessage(message, 'warning', duration);
+  }
+
   private show(toast: ToastMessage): void {
     this.toasts.update(toasts => [...toasts, toast]);
 

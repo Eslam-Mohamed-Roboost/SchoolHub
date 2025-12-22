@@ -14,6 +14,7 @@ import { Mission, WeeklyChallenge, CreateMissionRequest } from '../../models/adm
 import { BadgeService } from '../../services/badge.service';
 import { ValidationErrorException } from '../../../../core/models/validation-error.model';
 import { ErrorHandlerUtil } from '../../../../core/utils/error-handler.util';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 type TabType = 'missions' | 'challenges';
 
@@ -28,6 +29,7 @@ export class AdminMissionsComponent implements OnInit {
   private missionChallengeService = inject(MissionChallengeService);
   private badgeService = inject(BadgeService);
   private fb = inject(FormBuilder);
+  private toastService = inject(ToastService);
 
   // State
   activeTab = signal<TabType>('missions');
@@ -170,11 +172,11 @@ export class AdminMissionsComponent implements OnInit {
       next: (result) => {
         this.showDeleteMissionConfirm.set(false);
         this.selectedMission.set(null);
-        alert(result.message || 'Mission deleted successfully!');
+        this.toastService.showSuccessMessage(result.message || 'Mission deleted successfully!');
       },
       error: (error) => {
         console.error('Failed to delete mission', error);
-        alert('Failed to delete mission. Please try again.');
+        this.toastService.showErrorMessage('Failed to delete mission. Please try again.');
       },
     });
   }
@@ -212,7 +214,7 @@ export class AdminMissionsComponent implements OnInit {
         this.isSubmitting.set(false);
         this.clearMissionErrors();
         this.closeMissionModal();
-        alert(result.message || 'Operation successful!');
+        this.toastService.showSuccessMessage(result.message || 'Operation successful!');
       },
       error: (error) => {
         this.isSubmitting.set(false);
@@ -295,11 +297,11 @@ export class AdminMissionsComponent implements OnInit {
       next: (result) => {
         this.showDeleteChallengeConfirm.set(false);
         this.selectedChallenge.set(null);
-        alert(result.message || 'Challenge deleted successfully!');
+        this.toastService.showSuccessMessage(result.message || 'Challenge deleted successfully!');
       },
       error: (error) => {
         console.error('Failed to delete challenge', error);
-        alert('Failed to delete challenge. Please try again.');
+        this.toastService.showErrorMessage('Failed to delete challenge. Please try again.');
       },
     });
   }
@@ -307,11 +309,11 @@ export class AdminMissionsComponent implements OnInit {
   publishChallenge(id: string): void {
     this.missionChallengeService.publishChallenge(id).subscribe({
       next: (result) => {
-        alert(result.message || 'Challenge published successfully!');
+        this.toastService.showSuccessMessage(result.message || 'Challenge published successfully!');
       },
       error: (error) => {
         console.error('Failed to publish challenge', error);
-        alert('Failed to publish challenge. Please try again.');
+        this.toastService.showErrorMessage('Failed to publish challenge. Please try again.');
       },
     });
   }
@@ -356,7 +358,7 @@ export class AdminMissionsComponent implements OnInit {
         this.isSubmitting.set(false);
         this.clearChallengeErrors();
         this.closeChallengeModal();
-        alert(result.message || 'Operation successful!');
+        this.toastService.showSuccessMessage(result.message || 'Operation successful!');
       },
       error: (error) => {
         this.isSubmitting.set(false);

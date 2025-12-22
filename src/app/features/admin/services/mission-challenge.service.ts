@@ -15,20 +15,20 @@ interface ApiResponse<T> {
 
 // API DTOs (matches backend)
 interface MissionDto {
-  Id: number;
+  Id: string | number;
   Name: string;
   Title: string;
   Description: string;
   Icon: string;
   Order: number;
   Enabled: boolean;
-  BadgeId?: number;
+  BadgeId?: string | number;
   Duration?: string;
   Requirements?: string[];
 }
 
 interface WeeklyChallengeDto {
-  Id: number;
+  Id: string | number;
   WeekNumber: number;
   Title: string;
   Description: string;
@@ -136,11 +136,11 @@ export class MissionChallengeService extends BaseHttpService {
   // ============================================
 
   createMission(request: CreateMissionRequest): Observable<{ success: boolean; message: string; missionId?: string }> {
-    return this.post<CreateMissionRequest, number>(
+    return this.post<CreateMissionRequest, string | number>(
       Admin_API_ENDPOINTS.Missions.CREATE,
       request
     ).pipe(
-      map((missionId: number) => {
+      map((missionId: string | number) => {
         this.loadMissions();
         return {
           success: true,
@@ -155,7 +155,7 @@ export class MissionChallengeService extends BaseHttpService {
     id: string,
     request: CreateMissionRequest
   ): Observable<{ success: boolean; message: string }> {
-    return this.put<CreateMissionRequest, number>(
+    return this.put<CreateMissionRequest, string | number>(
       Admin_API_ENDPOINTS.Missions.UPDATE(id),
       request
     ).pipe(
@@ -170,7 +170,7 @@ export class MissionChallengeService extends BaseHttpService {
   }
 
   deleteMission(id: string): Observable<{ success: boolean; message: string }> {
-    return this.delete<number>(Admin_API_ENDPOINTS.Missions.DELETE(id)).pipe(
+    return this.delete<string | number>(Admin_API_ENDPOINTS.Missions.DELETE(id)).pipe(
       map(() => {
         this.missions.update((missions) => missions.filter((m) => m.id !== id));
         return {
@@ -195,11 +195,11 @@ export class MissionChallengeService extends BaseHttpService {
     Status: string;
     AutoNotify: boolean;
   }): Observable<{ success: boolean; message: string; challengeId?: string }> {
-    return this.post<typeof request, number>(
+    return this.post<typeof request, string | number>(
       Admin_API_ENDPOINTS.WeeklyChallenges.CREATE,
       request
     ).pipe(
-      map((challengeId: number) => {
+      map((challengeId: string | number) => {
         this.loadChallenges();
         return {
           success: true,
@@ -223,7 +223,7 @@ export class MissionChallengeService extends BaseHttpService {
       AutoNotify: boolean;
     }
   ): Observable<{ success: boolean; message: string }> {
-    return this.put<typeof request, number>(
+    return this.put<typeof request, string | number>(
       Admin_API_ENDPOINTS.WeeklyChallenges.UPDATE(id),
       request
     ).pipe(
@@ -238,7 +238,7 @@ export class MissionChallengeService extends BaseHttpService {
   }
 
   deleteChallenge(id: string): Observable<{ success: boolean; message: string }> {
-    return this.delete<number>(Admin_API_ENDPOINTS.WeeklyChallenges.DELETE(id)).pipe(
+    return this.delete<string | number>(Admin_API_ENDPOINTS.WeeklyChallenges.DELETE(id)).pipe(
       map(() => {
         this.challenges.update((challenges) => challenges.filter((c) => c.id !== id));
         return {
@@ -250,7 +250,7 @@ export class MissionChallengeService extends BaseHttpService {
   }
 
   publishChallenge(id: string): Observable<{ success: boolean; message: string }> {
-    return this.post<{}, number>(
+    return this.post<{}, string | number>(
       Admin_API_ENDPOINTS.WeeklyChallenges.PUBLISH(id),
       {}
     ).pipe(

@@ -12,6 +12,7 @@ import { Badge } from '../../models/admin.models';
 import { ApplicationRole } from '../../../../core/enums/application-role.enum';
 import { ValidationErrorException } from '../../../../core/models/validation-error.model';
 import { ErrorHandlerUtil } from '../../../../core/utils/error-handler.util';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 interface Mission {
   id: string;
@@ -42,6 +43,7 @@ interface CreateBadgeRequest {
 export class AdminBadgesComponent implements OnInit {
   private badgeService = inject(BadgeService);
   private fb = inject(FormBuilder);
+  private toastService = inject(ToastService);
 
   // State
   badges = this.badgeService.getBadges();
@@ -226,11 +228,11 @@ export class AdminBadgesComponent implements OnInit {
       next: (result) => {
         this.showDeleteConfirm.set(false);
         this.selectedBadge.set(null);
-        alert(result.message || 'Badge deleted successfully!');
+        this.toastService.showSuccessMessage(result.message || 'Badge deleted successfully!');
       },
       error: (error) => {
         console.error('Failed to delete badge', error);
-        alert('Failed to delete badge. Please try again.');
+        this.toastService.showErrorMessage('Failed to delete badge. Please try again.');
       },
     });
   }
@@ -276,7 +278,7 @@ export class AdminBadgesComponent implements OnInit {
         this.isSubmitting.set(false);
         this.clearErrors();
         this.closeBadgeModal();
-        alert(result.message || 'Operation successful!');
+        this.toastService.showSuccessMessage(result.message || 'Operation successful!');
       },
       error: (error) => {
         this.isSubmitting.set(false);

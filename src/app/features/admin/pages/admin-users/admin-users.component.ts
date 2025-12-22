@@ -10,6 +10,7 @@ import {
 import { UserService } from '../../services/user.service';
 import { User, UserStatus, CreateUserRequest } from '../../models/admin.models';
 import { ApplicationRole } from '../../../../core/enums/application-role.enum';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-admin-users',
@@ -20,6 +21,7 @@ import { ApplicationRole } from '../../../../core/enums/application-role.enum';
 export class AdminUsersComponent {
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
+  private toastService = inject(ToastService);
 
   // State
   users = this.userService.getUsers();
@@ -269,7 +271,7 @@ export class AdminUsersComponent {
             // Check if it's actually a blob and not an error response
             if (blob.type === 'application/json') {
               console.error('Received JSON instead of CSV file - API may not be implemented');
-              alert(
+              this.toastService.showWarningMessage(
                 'Export API endpoint is not yet implemented on the backend. Please contact the administrator.'
               );
               return;
@@ -282,12 +284,12 @@ export class AdminUsersComponent {
             window.URL.revokeObjectURL(url);
           } else {
             console.error('Received empty blob');
-            alert('Export failed - received empty file. Please try again.');
+            this.toastService.showErrorMessage('Export failed - received empty file. Please try again.');
           }
         },
         error: (err) => {
           console.error('Failed to export users:', err);
-          alert(
+          this.toastService.showErrorMessage(
             `Failed to generate export: ${
               err.message || 'Unknown error'
             }. The API endpoint may not be implemented yet.`
