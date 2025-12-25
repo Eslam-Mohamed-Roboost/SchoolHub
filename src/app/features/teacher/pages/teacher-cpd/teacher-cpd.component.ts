@@ -16,17 +16,17 @@ import { CpdService } from '../../services/cpd.service';
           <div class="col-md-6">
             <app-progress-card
               title="CPD Hours"
-              [current]="progress.hoursCompleted"
-              [target]="progress.targetHours"
+              [current]="progressData?.hoursCompleted || 0"
+              [target]="progressData?.targetHours || 0"
               unit="hours"
               color="#6366f1"
-              [subtitle]="'Last activity: ' + formatDate(progress.lastActivityDate)"
+              [subtitle]="progressData?.lastActivityDate ? 'Last activity: ' + formatDate(progressData.lastActivityDate) : 'No activity yet'"
             />
           </div>
           <div class="col-md-6">
             <app-progress-card
               title="Badges Earned"
-              [current]="stats.badgesEarned"
+              [current]="statsData?.badgesEarned || 0"
               [target]="10"
               unit="badges"
               color="#f59e0b"
@@ -36,7 +36,7 @@ import { CpdService } from '../../services/cpd.service';
           <div class="col-md-6">
             <app-progress-card
               title="Active Students"
-              [current]="stats.activeStudents"
+              [current]="statsData?.activeStudents || 0"
               [target]="30"
               unit="students"
               color="#10b981"
@@ -46,7 +46,7 @@ import { CpdService } from '../../services/cpd.service';
           <div class="col-md-6">
             <app-progress-card
               title="Current Streak"
-              [current]="progress.streak"
+              [current]="progressData?.streak || 0"
               [target]="30"
               unit="days"
               color="#ef4444"
@@ -224,6 +224,14 @@ export class TeacherCpdComponent {
   private cpdService = inject(CpdService);
   progress = this.cpdService.getProgress();
   stats = this.cpdService.getStats();
+
+  get progressData() {
+    return this.progress();
+  }
+
+  get statsData() {
+    return this.stats();
+  }
 
   formatDate(date: Date): string {
     return new Date(date).toLocaleDateString('en-US', {

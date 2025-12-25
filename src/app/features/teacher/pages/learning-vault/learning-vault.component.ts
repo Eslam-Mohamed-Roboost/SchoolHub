@@ -56,23 +56,23 @@ import { CpdService } from '../../services/cpd.service';
                       class="progress-bar bg-white"
                       role="progressbar"
                       [style.width.%]="progressPercentage"
-                      [attr.aria-valuenow]="progress.hoursCompleted"
+                      [attr.aria-valuenow]="progressData?.hoursCompleted || 0"
                       [attr.aria-valuemin]="0"
-                      [attr.aria-valuemax]="progress.targetHours"
+                      [attr.aria-valuemax]="progressData?.targetHours || 0"
                     ></div>
                   </div>
                   <div class="d-flex gap-4 small">
                     <span
-                      ><i class="fas fa-clock me-1"></i>{{ progress.hoursCompleted }} /
-                      {{ progress.targetHours }} hours</span
+                      ><i class="fas fa-clock me-1"></i>{{ progressData?.hoursCompleted || 0 }} /
+                      {{ progressData?.targetHours || 0 }} hours</span
                     >
                     <span
-                      ><i class="fas fa-check-circle me-1"></i>{{ progress.completedModules }} /
-                      {{ progress.totalModules }} modules</span
+                      ><i class="fas fa-check-circle me-1"></i>{{ progressData?.completedModules || 0 }} /
+                      {{ progressData?.totalModules || 0 }} modules</span
                     >
                     <span
                       ><i class="fas fa-calendar me-1"></i>Last activity:
-                      {{ formatDate(progress.lastActivityDate) }}</span
+                      {{ progressData?.lastActivityDate ? formatDate(progressData.lastActivityDate) : 'Never' }}</span
                     >
                   </div>
                 </div>
@@ -87,7 +87,7 @@ import { CpdService } from '../../services/cpd.service';
 
         <!-- Training Modules Grid -->
         <div class="row g-4 mb-5">
-          @for (module of modules; track module.id) {
+          @for (module of modulesList; track module.id) {
           <div class="col-md-3 col-sm-6">
             <a
               [routerLink]="['/teacher/learning-vault/module', module.id]"
@@ -257,6 +257,14 @@ export class LearningVaultComponent {
     const prog = this.progress();
     if (!prog) return 0;
     return Math.round((prog.hoursCompleted / prog.targetHours) * 100);
+  }
+
+  get progressData() {
+    return this.progress();
+  }
+
+  get modulesList() {
+    return this.modules();
   }
 
   formatDate(date: Date): string {

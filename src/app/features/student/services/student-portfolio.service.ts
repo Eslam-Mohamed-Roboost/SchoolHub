@@ -169,7 +169,7 @@ export class StudentPortfolioService extends BaseHttpService {
   loadAvailableBadges(): void {
     // Note: This might be better fetched from a dedicated badges endpoint
     // For now, keeping the mock initialization
-    this.availableBadges.set(this.initializeBadges());
+    this.availableBadges.set([]);
   }
 
   getPortfolioOverview(): PortfolioOverview {

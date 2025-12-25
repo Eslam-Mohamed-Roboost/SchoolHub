@@ -11,6 +11,7 @@ export interface CPDStats {
   totalHours: number;
   badgesEarned: number;
   currentLevel: string;
+  activeStudents?: number; // Optional for backward compatibility
 }
 
 @Injectable({
