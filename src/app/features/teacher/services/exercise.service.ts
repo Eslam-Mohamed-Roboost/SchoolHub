@@ -23,11 +23,11 @@ export class ExerciseService extends BaseHttpService {
   private exercises = signal<Exercise[]>([]);
   private submissions = signal<ExerciseSubmission[]>([]);
 
-  getExercises() {
+  getExercisesSignal() {
     return this.exercises.asReadonly();
   }
 
-  getSubmissions() {
+  getSubmissionsSignal() {
     return this.submissions.asReadonly();
   }
 

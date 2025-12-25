@@ -14,8 +14,9 @@ import { Class, CreateClassRequest, UpdateClassRequest } from '../../models/clas
 import { ApplicationRole } from '../../../../core/enums/application-role.enum';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { TeacherAssignmentInfo, ClassSubjectAssignment } from '../../models/teacher-assignment.model';
-import { BaseHttpService } from '../../../../core/services/base-http.service';
+import { HttpClient } from '@angular/common/http';
 import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoint';
+import { environment } from '../../../../config/environment';
 
 interface Teacher {
   id: string;
@@ -33,7 +34,7 @@ export class AdminClassesComponent implements OnInit {
   private classService = inject(ClassService);
   private userService = inject(UserService);
   private teacherAssignmentService = inject(TeacherAssignmentService);
-  private httpService = inject(BaseHttpService);
+  private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   private toastService = inject(ToastService);
 
@@ -114,6 +115,8 @@ export class AdminClassesComponent implements OnInit {
       teacherId: cls.teacherId ? String(cls.teacherId) : '',
     });
     this.showEditClassModal.set(true);
+    this.loadSubjects();
+    this.loadClassTeacherAssignments();
   }
 
   closeClassModal(): void {
@@ -218,13 +221,21 @@ export class AdminClassesComponent implements OnInit {
   }
 
   loadSubjects(): void {
-    this.httpService.get<any>(Admin_API_ENDPOINTS.Subjects.GET_ALL).subscribe({
+    const url = `${environment.apiUrl}/${Admin_API_ENDPOINTS.Subjects.GET_ALL}`.replace(/\/+/g, '/').replace(':/', '://');
+    this.http.get<any>(url).subscribe({
       next: (response) => {
         let subjectsData: any[] = [];
-        if (Array.isArray(response)) {
-          subjectsData = response;
-        } else if (response?.Data && Array.isArray(response.Data)) {
-          subjectsData = response.Data;
+        // Handle API response wrapper
+        if (response && typeof response === 'object') {
+          if ('IsSuccess' in response && response.IsSuccess && response.Data) {
+            subjectsData = Array.isArray(response.Data) ? response.Data : [];
+          } else if ('isSuccess' in response && response.isSuccess && response.data) {
+            subjectsData = Array.isArray(response.data) ? response.data : [];
+          } else if (Array.isArray(response)) {
+            subjectsData = response;
+          } else if (response?.Data && Array.isArray(response.Data)) {
+            subjectsData = response.Data;
+          }
         }
 
         this.subjects.set(
@@ -301,16 +312,14 @@ export class AdminClassesComponent implements OnInit {
     });
   }
 
-  openEditClassModal(cls: Class): void {
-    this.selectedClass.set(cls);
-    this.classForm.patchValue({
-      name: cls.name,
-      grade: cls.grade,
-      teacherId: cls.teacherId ? String(cls.teacherId) : '',
-    });
-    this.showEditClassModal.set(true);
-    this.loadSubjects();
-    this.loadClassTeacherAssignments();
+  onTeacherChangeForAssignment(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.newClassAssignment.update(a => ({...a, teacherId: target.value}));
+  }
+
+  onSubjectChangeForAssignment(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.newClassAssignment.update(a => ({...a, subjectId: target.value}));
   }
 }
 

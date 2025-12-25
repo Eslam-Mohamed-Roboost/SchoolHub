@@ -3,8 +3,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
-import { BaseHttpService } from '../../../../core/services/base-http.service';
+import { HttpClient } from '@angular/common/http';
 import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoint';
+import { environment } from '../../../../config/environment';
 
 @Component({
   selector: 'app-subject-portal',
@@ -120,7 +121,7 @@ import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoin
                 <i class="fas fa-folder-open text-primary me-2"></i>Student Portfolios
               </h5>
               <p class="text-muted small mb-0">
-                {{ students.length }} student{{ students.length !== 1 ? 's' : '' }}
+                {{ students().length }} student{{ students().length !== 1 ? 's' : '' }}
                 @if (selectedSubjectId()) {
                   in {{ subjectName() }}
                 } @else {
@@ -197,23 +198,17 @@ import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoin
   `,
   styleUrls: ['../../teacher.css'],
 })
-interface Subject {
-  Id: string;
-  Name: string;
-  Icon?: string;
-}
-
 export class SubjectPortalComponent implements OnInit {
   private portfolioService = inject(PortfolioService);
   private route = inject(ActivatedRoute);
-  private httpService = inject(BaseHttpService);
+  private http = inject(HttpClient);
 
   activeTab = signal('lesson-plans');
   subjectName = signal('All Students');
   subjectId = '';
   selectedSubjectId = signal<string | null>(null);
   students = signal<any[]>([]);
-  subjects = signal<Subject[]>([]);
+  subjects = signal<Array<{ Id: string; Name: string; Icon?: string }>>([]);
 
   tabs = [
     { id: 'lesson-plans', label: 'Lesson Plans' },
@@ -244,13 +239,21 @@ export class SubjectPortalComponent implements OnInit {
   }
 
   loadSubjects(): void {
-    this.httpService.get<any>(Admin_API_ENDPOINTS.Subjects.GET_ALL).subscribe({
+    const url = `${environment.apiUrl}/${Admin_API_ENDPOINTS.Subjects.GET_ALL}`.replace(/\/+/g, '/').replace(':/', '://');
+    this.http.get<any>(url).subscribe({
       next: (response) => {
         let subjectsData: any[] = [];
-        if (Array.isArray(response)) {
-          subjectsData = response;
-        } else if (response?.Data && Array.isArray(response.Data)) {
-          subjectsData = response.Data;
+        // Handle API response wrapper
+        if (response && typeof response === 'object') {
+          if ('IsSuccess' in response && response.IsSuccess && response.Data) {
+            subjectsData = Array.isArray(response.Data) ? response.Data : [];
+          } else if ('isSuccess' in response && response.isSuccess && response.data) {
+            subjectsData = Array.isArray(response.data) ? response.data : [];
+          } else if (Array.isArray(response)) {
+            subjectsData = response;
+          } else if (response?.Data && Array.isArray(response.Data)) {
+            subjectsData = response.Data;
+          }
         }
 
         this.subjects.set(

@@ -22,7 +22,7 @@ interface ApiResponse<T> {
 export class GradeService extends BaseHttpService {
   private grades = signal<Grade[]>([]);
 
-  getGrades() {
+  getGradesSignal() {
     return this.grades.asReadonly();
   }
 

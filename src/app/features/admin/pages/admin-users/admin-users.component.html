@@ -450,7 +450,7 @@
             #classSelect>
             <option value="">Select class</option>
             @for (cls of classes(); track cls.id) {
-              <option [value]="cls.id" [selected]="(selectedUser()?.ClassId || selectedUser()?.classId) === (cls.id?.toString() || '')">
+              <option [value]="cls.id" [selected]="(selectedUser()?.ClassId || selectedUser()?.classId) === (cls.id.toString() || '')">
                 {{ cls.name }} (Grade {{ cls.grade }})
               </option>
             }
@@ -547,7 +547,7 @@
                 <select 
                   class="form-select"
                   [value]="newAssignment().classId"
-                  (change)="newAssignment.update(a => ({...a, classId: $any($event.target).value}))">
+                  (change)="onClassChangeForAssignment($event)">
                   <option value="">Select class</option>
                   @for (cls of classes(); track cls.id) {
                     <option [value]="cls.id">
@@ -561,7 +561,7 @@
                 <select 
                   class="form-select"
                   [value]="newAssignment().subjectId"
-                  (change)="newAssignment.update(a => ({...a, subjectId: $any($event.target).value}))">
+                  (change)="onSubjectChange($event)">
                   <option value="">Select subject</option>
                   @for (subject of subjects(); track subject.Id) {
                     <option [value]="subject.Id">
@@ -615,7 +615,7 @@
                         <td>{{ assignment.ClassName }}</td>
                         <td>{{ assignment.Grade }}</td>
                         <td>{{ assignment.SubjectName }}</td>
-                        <td>{{ formatDate(new Date(assignment.AssignedAt)) }}</td>
+                        <td>{{ formatDate(assignment.AssignedAt) }}</td>
                         <td>
                           <button 
                             class="btn btn-sm btn-danger"

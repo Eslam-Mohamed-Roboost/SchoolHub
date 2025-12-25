@@ -143,7 +143,7 @@
                       <select 
                         class="form-select form-select-sm"
                         [value]="newClassAssignment().teacherId"
-                        (change)="newClassAssignment.update(a => ({...a, teacherId: $any($event.target).value}))">
+                        (change)="onTeacherChangeForAssignment($event)">
                         <option value="">Select teacher</option>
                         @for (teacher of teachers(); track teacher.id) {
                           <option [value]="teacher.id">
@@ -157,7 +157,7 @@
                       <select 
                         class="form-select form-select-sm"
                         [value]="newClassAssignment().subjectId"
-                        (change)="newClassAssignment.update(a => ({...a, subjectId: $any($event.target).value}))">
+                        (change)="onSubjectChangeForAssignment($event)">
                         <option value="">Select subject</option>
                         @for (subject of subjects(); track subject.Id) {
                           <option [value]="subject.Id">

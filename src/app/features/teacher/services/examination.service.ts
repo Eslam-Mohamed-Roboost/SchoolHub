@@ -23,11 +23,11 @@ export class ExaminationService extends BaseHttpService {
   private examinations = signal<Examination[]>([]);
   private attempts = signal<ExaminationAttempt[]>([]);
 
-  getExaminations() {
+  getExaminationsSignal() {
     return this.examinations.asReadonly();
   }
 
-  getAttempts() {
+  getAttemptsSignal() {
     return this.attempts.asReadonly();
   }
 

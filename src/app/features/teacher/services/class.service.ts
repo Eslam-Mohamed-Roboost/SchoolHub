@@ -17,11 +17,11 @@ export class ClassService extends BaseHttpService {
   private classes = signal<TeacherClass[]>([]);
   private classStudents = signal<ClassStudent[]>([]);
 
-  getClasses() {
+  getClassesSignal() {
     return this.classes.asReadonly();
   }
 
-  getClassStudents() {
+  getClassStudentsSignal() {
     return this.classStudents.asReadonly();
   }
 

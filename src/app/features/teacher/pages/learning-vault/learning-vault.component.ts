@@ -254,7 +254,9 @@ export class LearningVaultComponent {
   progress = this.cpdService.getProgress();
 
   get progressPercentage(): number {
-    return Math.round((this.progress.hoursCompleted / this.progress.targetHours) * 100);
+    const prog = this.progress();
+    if (!prog) return 0;
+    return Math.round((prog.hoursCompleted / prog.targetHours) * 100);
   }
 
   formatDate(date: Date): string {

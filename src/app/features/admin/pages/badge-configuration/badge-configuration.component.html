@@ -1,0 +1,250 @@
+<div class="config-container">
+  <header class="page-header">
+    <div class="header-content">
+      <h1>Badge & Hours Configuration</h1>
+      <p>Manage badges and configure learning hours for activities</p>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button 
+      class="tab"
+      [class.active]="activeTab() === 'badges'"
+      (click)="setActiveTab('badges')">
+      🏆 Badges
+    </button>
+    <button 
+      class="tab"
+      [class.active]="activeTab() === 'hours'"
+      (click)="setActiveTab('hours')">
+      ⏱️ Hours Configuration
+    </button>
+  </div>
+
+  <!-- Badges Tab -->
+  @if (activeTab() === 'badges') {
+    <div class="tab-content">
+      <div class="actions-bar">
+        <button class="btn-primary" (click)="openCreateBadgeModal()">
+          ➕ Create New Badge
+        </button>
+        <button class="btn-secondary" (click)="getBadgeStatistics()">
+          📊 View Statistics
+        </button>
+      </div>
+
+      @if (isLoading()) {
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <p>Loading badges...</p>
+        </div>
+      } @else {
+        <div class="badges-grid">
+          @for (badge of badges(); track badge.id) {
+            <div class="badge-card">
+              <div class="badge-header">
+                <div class="badge-icon" [style.background-color]="badge.color">
+                  {{ badge.icon }}
+                </div>
+                <div class="badge-info">
+                  <h3>{{ badge.name }}</h3>
+                  <span class="badge-role">{{ badge.targetRole }}</span>
+                </div>
+              </div>
+
+              <p class="badge-description">{{ badge.description }}</p>
+
+              <div class="badge-meta">
+                <span class="meta-item">
+                  {{ badge.autoAward ? '✅ Auto-award' : '👤 Manual' }}
+                </span>
+                @if (badge.cpdHours) {
+                  <span class="meta-item">
+                    ⏱️ {{ badge.cpdHours }}h CPD
+                  </span>
+                }
+              </div>
+
+              <div class="badge-criteria">
+                <strong>Criteria:</strong> {{ badge.criteria || 'Not specified' }}
+              </div>
+
+              <div class="badge-actions">
+                <button class="btn-edit" (click)="openEditBadgeModal(badge)">
+                  ✏️ Edit
+                </button>
+                <button class="btn-delete" (click)="deleteBadge(badge.id)">
+                  🗑️ Delete
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Hours Configuration Tab -->
+  @if (activeTab() === 'hours') {
+    <div class="tab-content">
+      <div class="hours-config-section">
+        <h2>Activity Hours Configuration</h2>
+        <p class="section-description">
+          Configure how many learning hours are awarded for completing different activities
+        </p>
+
+        <div class="config-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Activity Type</th>
+                <th>Activity Name</th>
+                <th>Difficulty</th>
+                <th>Hours Awarded</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (config of hoursConfig(); track config.activityName) {
+                <tr>
+                  <td>
+                    <span class="activity-type-badge" [class]="config.activityType.toLowerCase()">
+                      {{ config.activityType }}
+                    </span>
+                  </td>
+                  <td>{{ config.activityName }}</td>
+                  <td>{{ config.difficulty || '-' }}</td>
+                  <td>
+                    <input 
+                      type="number" 
+                      step="0.5" 
+                      min="0"
+                      [(ngModel)]="config.hoursAwarded"
+                      class="hours-input"
+                      (change)="updateHoursConfig(config)">
+                  </td>
+                  <td>
+                    <button class="btn-save-small" (click)="updateHoursConfig(config)">
+                      💾 Save
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <div class="hours-guidelines">
+          <h3>Recommended Guidelines</h3>
+          <ul>
+            <li><strong>Missions (Basic):</strong> 1.5 - 2 hours</li>
+            <li><strong>Missions (Advanced):</strong> 2 - 3 hours</li>
+            <li><strong>Easy Challenges:</strong> 0.5 - 1 hour</li>
+            <li><strong>Medium Challenges:</strong> 1 - 1.5 hours</li>
+            <li><strong>Hard Challenges:</strong> 1.5 - 2 hours</li>
+            <li><strong>CPD Modules:</strong> Based on module duration</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Badge Edit/Create Modal -->
+@if (showBadgeModal() && editingBadge()) {
+  <div class="modal-overlay" (click)="closeBadgeModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingBadge()!.id ? 'Edit Badge' : 'Create New Badge' }}</h2>
+        <button class="modal-close" (click)="closeBadgeModal()">×</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Badge Name</label>
+          <input 
+            type="text" 
+            [(ngModel)]="editingBadge()!.name"
+            class="form-input"
+            placeholder="e.g., Digital Citizen">
+        </div>
+
+        <div class="form-group">
+          <label>Description</label>
+          <textarea 
+            [(ngModel)]="editingBadge()!.description"
+            class="form-textarea"
+            rows="3"
+            placeholder="Describe what this badge represents..."></textarea>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Icon (Emoji)</label>
+            <input 
+              type="text" 
+              [(ngModel)]="editingBadge()!.icon"
+              class="form-input"
+              placeholder="🏆">
+          </div>
+
+          <div class="form-group">
+            <label>Color</label>
+            <input 
+              type="color" 
+              [(ngModel)]="editingBadge()!.color"
+              class="form-input-color">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Target Role</label>
+          <select [(ngModel)]="editingBadge()!.targetRole" class="form-select">
+            <option value="Student">Student</option>
+            <option value="Teacher">Teacher</option>
+            <option value="Both">Both</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="editingBadge()!.autoAward">
+            Auto-award when criteria met
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label>Criteria</label>
+          <input 
+            type="text" 
+            [(ngModel)]="editingBadge()!.criteria"
+            class="form-input"
+            placeholder="e.g., Complete Mission 1">
+        </div>
+
+        @if (editingBadge()!.targetRole === 'Teacher' || editingBadge()!.targetRole === 'Both') {
+          <div class="form-group">
+            <label>CPD Hours</label>
+            <input 
+              type="number" 
+              step="0.5"
+              [(ngModel)]="editingBadge()!.cpdHours"
+              class="form-input"
+              placeholder="0">
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeBadgeModal()">Cancel</button>
+        <button class="btn-primary" (click)="saveBadge()">
+          {{ editingBadge()!.id ? 'Update' : 'Create' }} Badge
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

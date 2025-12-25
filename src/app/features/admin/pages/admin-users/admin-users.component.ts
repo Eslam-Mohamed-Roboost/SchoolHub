@@ -17,6 +17,8 @@ import { ToastService } from '../../../../shared/services/toast.service';
 import { TeacherAssignmentInfo, ClassSubjectAssignment } from '../../models/teacher-assignment.model';
 import { BaseHttpService } from '../../../../core/services/base-http.service';
 import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoint';
+import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../../config/environment';
 
 @Component({
   selector: 'app-admin-users',
@@ -28,7 +30,7 @@ export class AdminUsersComponent implements OnInit {
   private userService = inject(UserService);
   private classService = inject(ClassService);
   private teacherAssignmentService = inject(TeacherAssignmentService);
-  private httpService = inject(BaseHttpService);
+  private http = inject(HttpClient);
   private fb = inject(FormBuilder);
   private toastService = inject(ToastService);
 
@@ -441,7 +443,8 @@ export class AdminUsersComponent implements OnInit {
   }
 
   // Helper methods
-  formatDate(date: Date): string {
+  formatDate(date: Date | string): string {
+    if (!date) return '';
     return new Date(date).toLocaleDateString();
   }
 
@@ -584,14 +587,32 @@ export class AdminUsersComponent implements OnInit {
     });
   }
 
+  onSubjectChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.newAssignment.update(a => ({...a, subjectId: target.value}));
+  }
+
+  onClassChangeForAssignment(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.newAssignment.update(a => ({...a, classId: target.value}));
+  }
+
   loadSubjects(): void {
-    this.httpService.get<any>(Admin_API_ENDPOINTS.Subjects.GET_ALL).subscribe({
+    const url = `${environment.apiUrl}/${Admin_API_ENDPOINTS.Subjects.GET_ALL}`.replace(/\/+/g, '/').replace(':/', '://');
+    this.http.get<any>(url).subscribe({
       next: (response) => {
         let subjectsData: any[] = [];
-        if (Array.isArray(response)) {
-          subjectsData = response;
-        } else if (response?.Data && Array.isArray(response.Data)) {
-          subjectsData = response.Data;
+        // Handle API response wrapper
+        if (response && typeof response === 'object') {
+          if ('IsSuccess' in response && response.IsSuccess && response.Data) {
+            subjectsData = Array.isArray(response.Data) ? response.Data : [];
+          } else if ('isSuccess' in response && response.isSuccess && response.data) {
+            subjectsData = Array.isArray(response.data) ? response.data : [];
+          } else if (Array.isArray(response)) {
+            subjectsData = response;
+          } else if (response?.Data && Array.isArray(response.Data)) {
+            subjectsData = response.Data;
+          }
         }
 
         this.subjects.set(
