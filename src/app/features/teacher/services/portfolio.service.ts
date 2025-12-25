@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { BaseHttpService } from '../../../core/services/base-http.service';
 import { Student, Portfolio, Submission, Comment, Badge } from '../models/portfolio.model';
+import { Teacher_API_ENDPOINTS } from '../../../config/TeacherConfig/TeacherEndpoint';
 
 interface StudentDto {
   Id: string;
@@ -18,6 +19,49 @@ interface StudentDto {
     FileName?: string;
     FileSize?: string;
   };
+}
+
+interface StudentPortfolioDto {
+  StudentId: number;
+  StudentName: string;
+  Email: string;
+  ClassId: number;
+  ClassName: string;
+  TotalFiles: number;
+  PendingFiles: number;
+  ReviewedFiles: number;
+  NeedsRevisionFiles: number;
+  LastSubmissionDate?: string;
+  PortfolioStatus: string;
+}
+
+interface StudentPortfolioDetailDto {
+  StudentId: number;
+  StudentName: string;
+  SubjectId: number;
+  SubjectName: string;
+  Files: TeacherPortfolioFileDto[];
+}
+
+interface TeacherPortfolioFileDto {
+  Id: number;
+  FileName: string;
+  FileType: string;
+  FileSize: number;
+  DownloadUrl: string;
+  UploadedAt: string;
+  Status: string;
+  ReviewedBy?: number;
+  ReviewerName?: string;
+  ReviewedAt?: string;
+  RevisionNotes?: string;
+}
+
+interface ApiResponse<T> {
+  Data: T;
+  IsSuccess: boolean;
+  Message: string;
+  ErrorCode: string;
 }
 
 interface PortfolioDto {
@@ -182,6 +226,8 @@ export class PortfolioService extends BaseHttpService {
     },
   ]);
 
+  private currentPortfolio = signal<Portfolio | null>(null);
+
   private students = signal<Student[]>([
     {
       id: 'student-1',
@@ -248,21 +294,67 @@ export class PortfolioService extends BaseHttpService {
   // API calls
   // ============================================
 
-  getStudents(subjectId: string): Student[] {
-    this.get<StudentDto[]>(`/Teacher/Portfolio/Students?subjectId=${subjectId}`).subscribe({
-      next: (dtos) => {
-        const mapped = dtos.map((s) => this.mapStudentDto(s));
+  getStudents(subjectId?: string, classId?: string): Student[] {
+    const subjectIdNum = subjectId ? parseInt(subjectId) : undefined;
+    const classIdNum = classId ? parseInt(classId) : undefined;
+    
+    let url = Teacher_API_ENDPOINTS.Portfolio.MY_STUDENTS;
+    const params: string[] = [];
+    if (subjectIdNum) {
+      params.push(`subjectId=${subjectIdNum}`);
+    }
+    if (classIdNum) {
+      params.push(`classId=${classIdNum}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+
+    this.get<ApiResponse<StudentPortfolioDto[]>>(url).subscribe({
+      next: (response) => {
+        const data = response.Data || [];
+        const mapped = data.map((s) => this.mapStudentPortfolioDto(s));
         this.students.set(mapped);
       },
       error: (err) => {
-        console.error('Failed to load students for subject', subjectId, err);
+        console.error('Failed to load students', { subjectId, classId }, err);
+        // Fallback to mock data for development
+        this.students.set(this.getMockStudentsData());
       },
     });
 
     return this.students();
   }
 
+  /**
+   * Load all students (no filters)
+   */
+  loadAllStudents(): void {
+    this.getStudents();
+  }
+
+  loadStudentPortfolio(studentId: string, subjectId: string): void {
+    const studentIdNum = parseInt(studentId);
+    const subjectIdNum = parseInt(subjectId);
+
+    this.get<ApiResponse<StudentPortfolioDetailDto>>(
+      Teacher_API_ENDPOINTS.Portfolio.STUDENT_DETAIL(studentIdNum, subjectIdNum)
+    ).subscribe({
+      next: (response) => {
+        if (response.Data) {
+          const portfolio = this.mapStudentPortfolioDetailDto(response.Data);
+          this.currentPortfolio.set(portfolio);
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load student portfolio', err);
+        this.currentPortfolio.set(null);
+      },
+    });
+  }
+
   getStudentPortfolio(studentId: string, subjectId: string): Portfolio | null {
+    this.loadStudentPortfolio(studentId, subjectId);
     this.get<PortfolioDto>(`/Teacher/Portfolio/${studentId}/${subjectId}`).subscribe({
       next: (dto) => {
         const portfolio = this.mapPortfolioDto(dto);
@@ -481,6 +573,101 @@ export class PortfolioService extends BaseHttpService {
       fileName: dto.FileName,
       fileSize: dto.FileSize,
     };
+  }
+
+  private mapStudentPortfolioDto(dto: StudentPortfolioDto): Student {
+    return {
+      id: dto.StudentId.toString(),
+      name: dto.StudentName,
+      email: dto.Email || '',
+      avatar: '',
+      portfolioStatus: this.mapPortfolioStatus(dto.PortfolioStatus),
+      latestSubmission: dto.LastSubmissionDate
+        ? {
+            id: 'latest',
+            title: 'Latest Submission',
+            content: '',
+            submittedAt: new Date(dto.LastSubmissionDate),
+            type: 'file-upload',
+          }
+        : undefined,
+      // Include class information
+      classId: dto.ClassId?.toString(),
+      className: dto.ClassName,
+    };
+  }
+
+  private mapStudentPortfolioDetailDto(dto: StudentPortfolioDetailDto): Portfolio {
+    return {
+      id: `portfolio-${dto.StudentId}-${dto.SubjectId}`,
+      studentId: dto.StudentId.toString(),
+      studentName: dto.StudentName,
+      subjectId: dto.SubjectId.toString(),
+      subjectName: dto.SubjectName,
+      submissions: dto.Files.map((f) => ({
+        id: f.Id.toString(),
+        title: f.FileName,
+        content: '',
+        submittedAt: new Date(f.UploadedAt),
+        type: 'file-upload',
+        fileUrl: f.DownloadUrl,
+        fileName: f.FileName,
+        fileSize: this.formatFileSize(f.FileSize),
+      })),
+      feedback: [],
+      badges: [],
+      likes: 0,
+      isLiked: false,
+      lastUpdated: dto.Files.length > 0 ? new Date(dto.Files[0].UploadedAt) : new Date(),
+    };
+  }
+
+  private mapPortfolioStatus(status: string): 'pending' | 'reviewed' | 'needs-revision' {
+    if (status.toLowerCase().includes('reviewed')) return 'reviewed';
+    if (status.toLowerCase().includes('revision')) return 'needs-revision';
+    return 'pending';
+  }
+
+  private formatFileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  }
+
+  private getMockStudentsData(): Student[] {
+    return [
+      {
+        id: 'student-1',
+        name: 'Ahmed Al-Mansouri',
+        email: 'ahmed.m@school.edu',
+        avatar: '',
+        portfolioStatus: 'reviewed',
+        latestSubmission: {
+          id: 'sub-1',
+          title: 'Algebra Problem Set Week 5',
+          content: '',
+          submittedAt: new Date('2024-12-01T10:30:00'),
+          type: 'onenote',
+        },
+      },
+      {
+        id: 'student-2',
+        name: 'Fatima Al-Kuwari',
+        email: 'fatima.k@school.edu',
+        portfolioStatus: 'pending',
+        latestSubmission: {
+          id: 'sub-2',
+          title: 'Geometry Assignment - Triangles',
+          content: '',
+          submittedAt: new Date('2024-11-30T16:45:00'),
+          type: 'file-upload',
+        },
+      },
+    ];
+  }
+
+  getCurrentPortfolio() {
+    return this.currentPortfolio.asReadonly();
   }
 }
 

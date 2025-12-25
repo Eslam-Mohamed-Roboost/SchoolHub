@@ -1,12 +1,15 @@
-import { Component, signal, inject, OnInit } from '@angular/core';
+import { Component, signal, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
+import { BaseHttpService } from '../../../../core/services/base-http.service';
+import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoint';
 
 @Component({
   selector: 'app-subject-portal',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="subject-portal">
       <div class="bg-white border-bottom py-3 mb-4 border-b border-gray-200">
@@ -24,8 +27,24 @@ import { PortfolioService } from '../../services/portfolio.service';
             <div>
               <h4 class="fw-bold mb-1 text-xl font-bold">Student Portfolio Hub</h4>
               <p class="mb-0 text-muted small">
-                Reviewing portfolios for <strong>{{ subjectName() }}</strong>
+                @if (selectedSubjectId()) {
+                  Reviewing portfolios for <strong>{{ subjectName() }}</strong>
+                } @else {
+                  Viewing all students
+                }
               </p>
+            </div>
+            <div class="ms-auto">
+              <select 
+                class="form-select form-select-sm" 
+                style="width: auto;"
+                [(ngModel)]="selectedSubjectId"
+                (ngModelChange)="onSubjectFilterChange()">
+                <option [value]="null">All Students</option>
+                @for (subject of subjects(); track subject.Id) {
+                  <option [value]="subject.Id">{{ subject.Name }}</option>
+                }
+              </select>
             </div>
           </div>
         </div>
@@ -100,7 +119,14 @@ import { PortfolioService } from '../../services/portfolio.service';
               <h5 class="fw-bold mb-0">
                 <i class="fas fa-folder-open text-primary me-2"></i>Student Portfolios
               </h5>
-              <p class="text-muted small mb-0">{{ students.length }} students in this class</p>
+              <p class="text-muted small mb-0">
+                {{ students.length }} student{{ students.length !== 1 ? 's' : '' }}
+                @if (selectedSubjectId()) {
+                  in {{ subjectName() }}
+                } @else {
+                  across all subjects
+                }
+              </p>
             </div>
             <div class="d-flex gap-2">
               <span class="badge bg-success">{{ getStatusCount('reviewed') }} Reviewed</span>
@@ -113,7 +139,7 @@ import { PortfolioService } from '../../services/portfolio.service';
             </div>
           </div>
           <div class="list-group list-group-flush">
-            @for (student of students; track student.id) {
+            @for (student of students(); track student.id) {
             <a
               [routerLink]="['/teacher/portfolio', student.id, subjectId]"
               class="list-group-item list-group-item-action py-3"
@@ -128,6 +154,9 @@ import { PortfolioService } from '../../services/portfolio.service';
                   </div>
                   <div>
                     <h6 class="mb-1 fw-bold">{{ student.name }}</h6>
+                    <small class="text-muted d-block mb-1">
+                      <i class="fas fa-users me-1"></i>{{ student.className || 'No class assigned' }}
+                    </small>
                     @if (student.latestSubmission) {
                     <small class="text-muted">
                       <i class="fas fa-file-alt me-1"></i>
@@ -168,14 +197,23 @@ import { PortfolioService } from '../../services/portfolio.service';
   `,
   styleUrls: ['../../teacher.css'],
 })
+interface Subject {
+  Id: string;
+  Name: string;
+  Icon?: string;
+}
+
 export class SubjectPortalComponent implements OnInit {
   private portfolioService = inject(PortfolioService);
   private route = inject(ActivatedRoute);
+  private httpService = inject(BaseHttpService);
 
   activeTab = signal('lesson-plans');
-  subjectName = signal('Mathematics');
+  subjectName = signal('All Students');
   subjectId = '';
-  students: any[] = [];
+  selectedSubjectId = signal<string | null>(null);
+  students = signal<any[]>([]);
+  subjects = signal<Subject[]>([]);
 
   tabs = [
     { id: 'lesson-plans', label: 'Lesson Plans' },
@@ -184,10 +222,75 @@ export class SubjectPortalComponent implements OnInit {
     { id: 'student-work', label: 'Student Work' },
   ];
 
+  constructor() {
+    // Load students when subject filter changes
+    effect(() => {
+      const subjectId = this.selectedSubjectId();
+      this.loadStudents(subjectId || undefined);
+    });
+  }
+
   ngOnInit(): void {
-    this.subjectId = this.route.snapshot.params['id'] || 'math';
-    this.subjectName.set(this.getSubjectName(this.subjectId));
-    this.students = this.portfolioService.getStudents(this.subjectId);
+    this.subjectId = this.route.snapshot.params['id'] || '';
+    if (this.subjectId) {
+      // If subject ID provided in route, use it
+      this.selectedSubjectId.set(this.subjectId);
+    } else {
+      // Otherwise, show all students
+      this.selectedSubjectId.set(null);
+    }
+    this.loadSubjects();
+    this.loadStudents(this.selectedSubjectId() || undefined);
+  }
+
+  loadSubjects(): void {
+    this.httpService.get<any>(Admin_API_ENDPOINTS.Subjects.GET_ALL).subscribe({
+      next: (response) => {
+        let subjectsData: any[] = [];
+        if (Array.isArray(response)) {
+          subjectsData = response;
+        } else if (response?.Data && Array.isArray(response.Data)) {
+          subjectsData = response.Data;
+        }
+
+        this.subjects.set(
+          subjectsData.map((s) => ({
+            Id: String(s.Id || s.id || ''),
+            Name: s.Name || s.name || '',
+            Icon: s.Icon || s.icon,
+          }))
+        );
+      },
+      error: (err) => {
+        console.error('Failed to load subjects', err);
+        this.subjects.set([]);
+      },
+    });
+  }
+
+  loadStudents(subjectId?: string): void {
+    if (subjectId) {
+      this.subjectName.set(
+        this.subjects().find((s) => s.Id === subjectId)?.Name || 'Subject'
+      );
+    } else {
+      this.subjectName.set('All Students');
+    }
+
+    const students = this.portfolioService.getStudents(subjectId);
+    this.students.set(students);
+  }
+
+  onSubjectFilterChange(): void {
+    const subjectId = this.selectedSubjectId();
+    if (subjectId) {
+      this.subjectName.set(
+        this.subjects().find((s) => s.Id === subjectId)?.Name || 'Subject'
+      );
+    } else {
+      this.subjectName.set('All Students');
+    }
+    this.loadStudents(subjectId || undefined);
   }
 
   private getSubjectName(id: string): string {
@@ -227,6 +330,6 @@ export class SubjectPortalComponent implements OnInit {
   }
 
   getStatusCount(status: string): number {
-    return this.students.filter((s) => s.portfolioStatus === status).length;
+    return this.students().filter((s) => s.portfolioStatus === status).length;
   }
 }

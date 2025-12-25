@@ -187,6 +187,11 @@
 
 .users-table tbody tr:hover {
   background: #f9fafb;
+  transition: background 0.2s ease;
+}
+
+.users-table tbody tr {
+  transition: background 0.2s ease;
 }
 
 .user-cell {
@@ -260,6 +265,25 @@
   color: var(--primary, #4f46e5);
 }
 
+.class-name {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  display: inline-block;
+  font-weight: 500;
+}
+
+.class-name.has-class {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.class-name.no-class {
+  background: #f3f4f6;
+  color: #6b7280;
+  font-style: italic;
+}
+
 /* Action Buttons */
 .action-buttons {
   display: flex;
@@ -276,8 +300,27 @@
   transition: background 0.2s;
 }
 
-.btn-icon:hover {
+.btn-icon:hover:not(:disabled) {
   background: #f3f4f6;
+}
+
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .no-data {
@@ -460,6 +503,43 @@
 
 .form-textarea {
   resize: vertical;
+}
+
+.form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.form-section:last-of-type {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.section-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.info-label {
+  font-weight: 600;
+  color: var(--text-secondary, #666);
+}
+
+.info-value {
+  color: var(--text-primary, #1a1a1a);
 }
 
 .error-text {

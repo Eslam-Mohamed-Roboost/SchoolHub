@@ -5,6 +5,8 @@ export interface Student {
   email: string;
   latestSubmission?: Submission;
   portfolioStatus: 'pending' | 'reviewed' | 'needs-revision';
+  classId?: string;
+  className?: string;
 }
 
 export interface Portfolio {

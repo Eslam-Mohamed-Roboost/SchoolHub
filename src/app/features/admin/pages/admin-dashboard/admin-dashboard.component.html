@@ -1,322 +1,142 @@
-@if (isLoading()) {
-<div class="loading-container">
-  <div class="loading-spinner"></div>
+@if (isEnhancedLoading()) {
+<div class="loading-container" role="status" aria-live="polite">
+  <div class="loading-spinner" aria-label="Loading dashboard"></div>
   <p class="loading-text">Loading dashboard data...</p>
 </div>
 } @else {
-<div class="admin-dashboard">
-  <div class="dashboard-header">
+<div class="admin-dashboard-enhanced">
+  <!-- Page Title Section -->
+  <header class="dashboard-header">
     <div class="welcome-section">
-      <h1 class="dashboard-title">Welcome back, Rahmah!</h1>
-      <p class="dashboard-subtitle">{{ currentDate() | date : 'fullDate' }}</p>
+      <h1 class="dashboard-title" id="dashboard-title">Admin Command Center</h1>
+      <p class="dashboard-subtitle" aria-label="Current date">{{ currentDate() | date : 'fullDate' }}</p>
     </div>
-  </div>
+  </header>
 
-  <!-- Quick Stats Cards -->
-  <div class="stats-grid">
-    @for (card of statsCards(); track card.title) {
-    <div class="stats-card">
-      <div class="stats-card-header">
-        <span class="stats-icon">{{ card.icon }}</span>
-        <h3 class="stats-title">{{ card.title }}</h3>
-      </div>
-      <div class="stats-value">{{ card.value }}</div>
-      @if (card.breakdown) {
-      <div class="stats-breakdown">{{ card.breakdown }}</div>
-      } @if (card.comparison) {
-      <div class="stats-comparison" [class.trend-up]="card.trend === 'up'">
-        {{ card.comparison }}
+  <!-- AI Insights Banner (Component A) -->
+  @if (aiInsights().length > 0) {
+  <section class="ai-insights-banner" aria-labelledby="ai-insights-title" role="region">
+    <h2 class="banner-title" id="ai-insights-title">
+      <span class="banner-icon" aria-hidden="true">🤖</span>
+      AI-POWERED INSIGHTS TODAY
+    </h2>
+    <div class="insight-items" role="list">
+      @for (insight of aiInsights(); track $index) {
+      <div class="insight-item" [attr.data-type]="insight.type" role="listitem" 
+           [attr.aria-label]="insight.message">
+        <span class="insight-icon" aria-hidden="true">{{ insight.icon }}</span>
+        <span class="insight-message">{{ insight.message }}</span>
       </div>
       }
     </div>
+  </section>
+  }
+
+  <!-- Four Main Metric Cards Grid -->
+  <section class="metric-cards-grid" aria-label="Dashboard metrics">
+    <!-- Component B: Student Achievement Card -->
+    @if (studentAchievementCard(); as card) {
+    <article class="metric-card" [attr.data-color]="card.iconColor" 
+             role="region" [attr.aria-labelledby]="'card-title-student'">
+      <div class="card-header">
+        <div class="card-icon" [attr.data-color]="card.iconColor" aria-hidden="true">
+          {{ card.icon }}
+        </div>
+        <div class="card-title-section">
+          <h3 class="card-title" id="card-title-student">{{ card.title }}</h3>
+          <div class="card-main-value" aria-label="Total students: {{ card.mainValue }}">{{ card.mainValue }}</div>
+          <p class="card-subtitle">{{ card.subtitle }}</p>
+        </div>
+      </div>
+      <div class="card-details" role="list" aria-label="Student achievement details">
+        @for (detail of card.details; track $index) {
+        <div class="detail-item" role="listitem">
+          <span class="detail-check" aria-hidden="true">✓</span>
+          <span class="detail-label">{{ detail.label }}:</span>
+          <strong class="detail-value">{{ detail.value }}</strong>
+        </div>
+        }
+      </div>
+    </article>
     }
-  </div>
 
-  <!-- Quick Actions Panel -->
-  <!-- <div class="quick-actions-section">
-    <h2 class="section-title">Quick Actions</h2>
-    <div class="quick-actions-grid">
-      @for (action of quickActions; track action.label) {
-      <button
-        class="quick-action-btn"
-        [routerLink]="action.route"
-        (click)="action.action && handleQuickAction(action.action)"
-        [attr.title]="action.description"
-      >
-        <span class="action-icon">{{ action.icon }}</span>
-        <span class="action-label">{{ action.label }}</span>
-      </button>
+    <!-- Component C: Teacher CPD Card -->
+    @if (teacherCPDCard(); as card) {
+    <article class="metric-card" [attr.data-color]="card.iconColor" 
+             role="region" [attr.aria-labelledby]="'card-title-teacher'">
+      <div class="card-header">
+        <div class="card-icon" [attr.data-color]="card.iconColor" aria-hidden="true">
+          {{ card.icon }}
+        </div>
+        <div class="card-title-section">
+          <h3 class="card-title" id="card-title-teacher">{{ card.title }}</h3>
+          <div class="card-main-value" aria-label="Active teachers: {{ card.mainValue }}">{{ card.mainValue }}</div>
+          <p class="card-subtitle">{{ card.subtitle }}</p>
+        </div>
+      </div>
+      <div class="card-details" role="list" aria-label="Teacher CPD details">
+        @for (detail of card.details; track $index) {
+        <div class="detail-item" role="listitem">
+          <span class="detail-check" aria-hidden="true">✓</span>
+          <span class="detail-label">{{ detail.label }}:</span>
+          <strong class="detail-value">{{ detail.value }}</strong>
+        </div>
+        }
+      </div>
+    </article>
+    }
+
+    <!-- Component D: ADEK Compliance Card -->
+    @if (adekComplianceCard(); as card) {
+    <article class="metric-card" [attr.data-color]="card.iconColor" 
+             role="region" [attr.aria-labelledby]="'card-title-adek'">
+      <div class="card-header">
+        <div class="card-icon" [attr.data-color]="card.iconColor" aria-hidden="true">
+          {{ card.icon }}
+        </div>
+        <div class="card-title-section">
+          <h3 class="card-title" id="card-title-adek">{{ card.title }}</h3>
+          <div class="card-main-value" aria-label="Total evidence items: {{ card.mainValue }}">{{ card.mainValue }}</div>
+          <p class="card-subtitle">{{ card.subtitle }}</p>
+        </div>
+      </div>
+      <div class="card-details" role="list" aria-label="ADEK compliance details">
+        @for (detail of card.details; track $index) {
+        <div class="detail-item" role="listitem">
+          <span class="detail-check" aria-hidden="true">✓</span>
+          <span class="detail-label">{{ detail.label }}:</span>
+          <strong class="detail-value">{{ detail.value }}</strong>
+        </div>
+        }
+      </div>
+    </article>
+    }
+
+    <!-- Component E: Platform Engagement Card -->
+    @if (platformEngagementCard(); as card) {
+    <article class="metric-card" [attr.data-color]="card.iconColor" 
+             role="region" [attr.aria-labelledby]="'card-title-engagement'">
+      <div class="card-header">
+        <div class="card-icon" [attr.data-color]="card.iconColor" aria-hidden="true">
+          {{ card.icon }}
+        </div>
+        <div class="card-title-section">
+          <h3 class="card-title" id="card-title-engagement">{{ card.title }}</h3>
+          <div class="card-main-value" aria-label="Daily active users: {{ card.mainValue }}">{{ card.mainValue }}</div>
+          <p class="card-subtitle">{{ card.subtitle }}</p>
+        </div>
+      </div>
+      <div class="card-details" role="list" aria-label="Platform engagement details">
+        @for (detail of card.details; track $index) {
+        <div class="detail-item" role="listitem">
+          <span class="detail-check" aria-hidden="true">✓</span>
+          <span class="detail-label">{{ detail.label }}:</span>
+          <strong class="detail-value">{{ detail.value }}</strong>
+        </div>
+        }
+      </div>
+    </article>
       }
-    </div>
-  </div> -->
-
-  <!-- SECTION 2: Portfolio Hub Monitor -->
-  <div class="portfolio-monitor-section">
-    <div class="section-header">
-      <h2 class="section-title">📚 Student Portfolio Hub Monitor</h2>
-      <a routerLink="/student/portfolio-hub" class="view-link">View All Portfolios →</a>
-    </div>
-
-    <!-- Portfolio Completion by Class -->
-    <div class="portfolio-completion-grid">
-      @for (classStats of portfolioStats()?.ByClass ?? []; track classStats.ClassName) {
-      <div class="completion-card">
-        <div class="completion-header">
-          <h4>{{ classStats.ClassName }}</h4>
-          <span class="completion-rate">{{ classStats.CompletionRate }}%</span>
-        </div>
-        <div class="progress-bar-container">
-          <div class="progress-bar" [style.width.%]="classStats.CompletionRate"></div>
-        </div>
-        <div class="completion-meta">
-          {{ classStats.ActivePortfolios }}/{{ classStats.TotalStudents }} students
-        </div>
-      </div>
-      }
-    </div>
-
-    <!-- Recent Portfolio Updates -->
-    <!-- <div class="recent-updates">
-      <h3>Recent Portfolio Activity</h3>
-      <div class="updates-list">
-        @for (update of portfolioStats()?.RecentUpdates ?? []; track update.StudentId) {
-        <div class="update-item">
-          <span class="update-icon">
-            @if (update.UpdateType === 'upload') { 📤 } @if (update.UpdateType === 'reflection') {
-            ✍️ } @if (update.UpdateType === 'feedback') { 💬 }
-          </span>
-          <div class="update-info">
-            <div class="update-text">
-              <strong>{{ update.StudentName }}</strong>
-              ({{ update.ClassName }}) {{ update.UpdateType }} {{ update.ItemCount }} item(s) in
-              {{ update.Subject }}
-            </div>
-            <div class="update-time">{{ formatTimeAgo(update.Timestamp) }}</div>
-          </div>
-        </div>
-        }
-      </div>
-    </div> -->
-  </div>
-
-  <!-- SECTION 3: Teacher Subject Analytics -->
-  <div class="teacher-analytics-section">
-    <div class="section-header">
-      <h2 class="section-title">👩‍🏫 Teacher Subject Analytics</h2>
-      <div class="subject-filter-dropdown">
-        <label for="subject-filter">Filter by Subject:</label>
-        <select
-          id="subject-filter"
-          [value]="selectedSubject()"
-          (change)="selectSubject($any($event.target).value)"
-          class="subject-select"
-        >
-          @for (subject of availableSubjects(); track subject) {
-          <option [value]="subject">{{ subject }}</option>
-          }
-        </select>
-      </div>
-    </div>
-
-    <!-- Subject Analytics Cards -->
-    <div class="analytics-cards-grid">
-      <div class="analytics-card">
-        <div class="card-icon">👥</div>
-        <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics()?.teacherCount ?? 0 }}</div>
-          <div class="card-label">Teachers</div>
-        </div>
-      </div>
-      <div class="analytics-card">
-        <div class="card-icon">🎓</div>
-        <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics()?.studentCount ?? 0 }}</div>
-          <div class="card-label">Students</div>
-        </div>
-      </div>
-      <div class="analytics-card">
-        <div class="card-icon">📁</div>
-        <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics()?.portfolioCompletionRate ?? 0 }}%</div>
-          <div class="card-label">Portfolio Completion</div>
-        </div>
-      </div>
-      <div class="analytics-card">
-        <div class="card-icon">🏆</div>
-        <div class="card-content">
-          <div class="card-value">{{ subjectAnalytics()?.cpdBadgeCompletionRate ?? 0 }}%</div>
-          <div class="card-label">CPD Completion</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Top Teachers Table -->
-    <div class="top-teachers-table">
-      <h3>Top Performing Teachers</h3>
-      <table class="teachers-table">
-        <thead>
-          <tr>
-            <th>Teacher</th>
-            <th>Subject(s)</th>
-            <th>CPD Badges</th>
-            <th>Student Engagement</th>
-            <th>Portfolio Reviews</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (teacher of subjectAnalytics()?.topTeachers ?? []; track teacher.teacherName) {
-          <tr>
-            <td>{{ teacher.teacherName }}</td>
-            <td>{{ teacher.subject }}</td>
-            <td>
-              <span class="badge-pill">{{ teacher.cpdBadges }}</span>
-            </td>
-            <td>
-              <span class="engagement-bar" [style.width.%]="teacher.studentEngagement"
-                >{{ teacher.studentEngagement }}%</span
-              >
-            </td>
-            <td>{{ teacher.portfolioReviews }}</td>
-          </tr>
-          }
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- SECTION 4: Evidence Collection Center -->
-  <!-- <div class="evidence-collection-section">
-    <div class="section-header">
-      <h2 class="section-title">📋 Evidence Collection & ADEK Reports</h2>
-    </div>
-
-    <div class="evidence-stats-grid">
-      <div class="evidence-stat-card">
-        <div class="stat-icon">📦</div>
-        <div class="stat-details">
-          <div class="stat-value">{{ evidenceStats()?.totalEvidenceItems ?? 0 }}</div>
-          <div class="stat-label">Total Evidence Items</div>
-        </div>
-      </div>
-      <div class="evidence-stat-card">
-        <div class="stat-icon">📅</div>
-        <div class="stat-details">
-          <div class="stat-value">{{ evidenceStats()?.thisMonth ?? 0 }}</div>
-          <div class="stat-label">Collected This Month</div>
-        </div>
-      </div>
-      <div class="evidence-stat-card">
-        <div class="stat-icon">⏳</div>
-        <div class="stat-details">
-          <div class="stat-value">{{ evidenceStats()?.pendingReview ?? 0 }}</div>
-          <div class="stat-label">Pending Review</div>
-        </div>
-      </div>
-    </div>
-
-     <div class="export-builder">
-      <h3>ADEK Report Builder</h3>
-      <div class="export-info">
-        <div class="export-breakdown">
-          <div class="breakdown-item">
-            <span class="breakdown-label">Student Portfolios:</span>
-            <span class="breakdown-value">{{ evidenceStats()?.byType?.portfolios ?? 0 }}</span>
-          </div>
-          <div class="breakdown-item">
-            <span class="breakdown-label">Teacher CPD:</span>
-            <span class="breakdown-value">{{ evidenceStats()?.byType?.cpd ?? 0 }}</span>
-          </div>
-          <div class="breakdown-item">
-            <span class="breakdown-label">Badge Submissions:</span>
-            <span class="breakdown-value">{{ evidenceStats()?.byType?.badges ?? 0 }}</span>
-          </div>
-        </div>
-        <button class="export-btn" (click)="downloadEvidence()">
-          <span class="btn-icon">⬇️</span>
-          Download Evidence Package ({{ selectedSubject() }})
-        </button>
-      </div>
-      <p class="export-note">
-        📌 Export includes last 30 days of evidence for selected subject area
-      </p>
-    </div>
-  </div> -->
-
-  <div class="dashboard-content">
-    <!-- Activity Feed Section -->
-    <div class="activity-section">
-      <div class="section-header">
-        <h2 class="section-title">Recent Activity</h2>
-        <button class="refresh-btn" title="Refresh">
-          <span class="icon">🔄</span>
-        </button>
-      </div>
-
-      <div class="activity-filters">
-        @for (filter of activityFilters; track filter) {
-        <button
-          class="filter-btn"
-          [class.active]="selectedActivityFilter() === filter"
-          (click)="filterActivities(filter)"
-        >
-          {{ filter }}
-        </button>
-        }
-      </div>
-
-      <div class="activity-feed">
-        @for (activity of filteredActivities(); track activity.id) {
-        <div class="activity-item" [class]="getActivityTypeClass(activity.type)">
-          <div class="activity-avatar">
-            <img [src]="activity.userAvatar" [alt]="activity.userName" />
-          </div>
-          <div class="activity-content">
-            <div class="activity-user">
-              <span class="user-name">{{ activity.userName }}</span>
-              <span class="activity-action">{{ activity.action }}</span>
-            </div>
-            <div class="activity-time">{{ formatTimeAgo(activity.timestamp) }}</div>
-          </div>
-        </div>
-        } @empty {
-        <div class="no-activities">
-          <p>No activities found</p>
-        </div>
-        }
-      </div>
-
-      <a routerLink="/admin/logs" class="view-all-link">View All Activity →</a>
-    </div>
-
-    <!-- Pending Approvals Widget -->
-    <div class="approvals-section">
-      <div class="section-header">
-        <h2 class="section-title">Pending Approvals</h2>
-        @if (pendingApprovals().length > 0) {
-        <span class="badge-count">{{ pendingApprovals().length }}</span>
-        }
-      </div>
-
-      @if (pendingApprovals().length > 0) {
-      <div class="pending-approvals">
-        @for (submission of pendingApprovals().slice(0, 3); track submission.id) {
-        <div class="approval-preview">
-          <div class="approval-icon">{{ submission.badgeIcon }}</div>
-          <div class="approval-info">
-            <div class="approval-badge">{{ submission.badgeName }}</div>
-            <div class="approval-user">{{ submission.userName }}</div>
-          </div>
-        </div>
-        }
-      </div>
-      <a routerLink="/admin/evidence" class="review-btn"> Review Now </a>
-      } @else {
-      <div class="no-approvals">
-        <p>✅ All caught up!</p>
-        <p class="text-muted">No pending badge approvals</p>
-      </div>
-      }
-    </div>
-  </div>
+  </section>
 </div>
 }

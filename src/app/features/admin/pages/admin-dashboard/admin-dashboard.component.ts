@@ -1,4 +1,4 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { DashboardService } from '../../services/dashboard.service';
@@ -10,9 +10,10 @@ import { StatsCard, ActivityLog } from '../../models/admin.models';
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule],
   templateUrl: './admin-dashboard.component.html',
   styleUrl: './admin-dashboard.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminDashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
@@ -24,6 +25,7 @@ export class AdminDashboardComponent implements OnInit {
   ngOnInit(): void {
     // Initialize all services - ensures data loads on page refresh
     this.dashboardService.init();
+    this.dashboardService.initEnhanced(); // Load enhanced dashboard data
     this.badgeService.init();
     this.activityService.init();
     this.portfolioAnalytics.init();
@@ -32,8 +34,16 @@ export class AdminDashboardComponent implements OnInit {
 
   // Loading state - true until data is loaded
   isLoading = computed(() => this.dashboardService.getIsLoading()());
+  isEnhancedLoading = computed(() => this.dashboardService.getIsEnhancedLoading()());
 
   currentDate = computed(() => new Date());
+
+  // Enhanced Dashboard Metric Cards
+  studentAchievementCard = this.dashboardService.studentAchievementCard;
+  teacherCPDCard = this.dashboardService.teacherCPDCard;
+  adekComplianceCard = this.dashboardService.adekComplianceCard;
+  platformEngagementCard = this.dashboardService.platformEngagementCard;
+  aiInsights = this.dashboardService.aiInsights;
 
   // Portfolio Analytics Data
   portfolioStats = computed(() => this.portfolioAnalytics.getPortfolioCompletionStats());

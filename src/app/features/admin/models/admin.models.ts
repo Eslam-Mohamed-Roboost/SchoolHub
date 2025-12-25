@@ -1,17 +1,30 @@
 import { ApplicationRole } from '../../../core/enums/application-role.enum';
 
 export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: ApplicationRole;
+  Id: string; // Backend: long -> Frontend: string
+  Name: string;
+  Email: string;
+  Role: ApplicationRole;
   Status: string;
+  ClassId?: string; // Backend: long? -> Frontend: string
+  ClassName?: string;
+  BadgeCount: number;
+  LastLogin?: Date;
+  JoinDate?: Date;
+  Notes?: string;
+  Avatar?: string;
+  // Legacy camelCase properties for backward compatibility
+  id?: string;
+  name?: string;
+  email?: string;
+  role?: ApplicationRole;
+  classId?: string;
+  className?: string;
   class?: string;
-  badgeCount: number;
-  lastLogin: Date;
-  joinDate: Date;
-  notes?: string;
   avatar?: string;
+  lastLogin?: Date;
+  badgeCount?: number;
+  joinDate?: Date;
 }
 
 export interface CreateUserRequest {
@@ -21,6 +34,9 @@ export interface CreateUserRequest {
   Password: string;
   PhoneNumber: string;
   RoleID: ApplicationRole;
+  ClassID?: string; // Backend: long? -> Frontend: string
+  ClassIds?: string[]; // Backend: long[] -> Frontend: string[]
+  SubjectIds?: string[]; // Backend: long[] -> Frontend: string[]
 }
 
 export type UserStatus = 'Active' | 'Inactive';

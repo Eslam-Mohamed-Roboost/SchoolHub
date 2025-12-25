@@ -7,8 +7,38 @@ export const Admin_API_ENDPOINTS = {
   // DASHBOARD
   // ============================================
   AdminKpi: '/Admin/AdminKpi',
-  Dashboard: '/Admin/Dashboard',
-  DashboardStats: '/Admin/Dashboard/Stats',
+  Dashboard: {
+    BASIC: '/Admin/Dashboard',
+    ENHANCED: '/Admin/Dashboard/Enhanced',
+    STATS: '/Admin/Dashboard/Stats',
+  },
+
+  // ============================================
+  // CLASSES
+  // ============================================
+  Classes: {
+    GET_ALL: '/Admin/Classes',
+    GET_BY_ID: (id: number) => `/Admin/Classes/${id}`,
+    DROPDOWN: '/Admin/Classes/Dropdown',
+    CREATE: '/Admin/Classes',
+    UPDATE: (id: number) => `/Admin/Classes/${id}`,
+    DELETE: (id: number) => `/Admin/Classes/${id}`,
+  },
+
+  // ============================================
+  // TEACHERS
+  // ============================================
+  Teachers: {
+    ASSIGN: (teacherId: string) => `/Admin/Teachers/${teacherId}/Assign`,
+    ASSIGNMENTS: (teacherId: string) => `/Admin/Teachers/${teacherId}/Assignments`,
+  },
+
+  // ============================================
+  // SUBJECTS
+  // ============================================
+  Subjects: {
+    GET_ALL: '/Admin/Subjects',
+  },
 
   // ============================================
   // USER MANAGEMENT
@@ -16,6 +46,7 @@ export const Admin_API_ENDPOINTS = {
   Users: {
     GET_ALL: '/Admin/Users',
     UPDATE_STATUS: '/Admin/Users/Status',
+    UPDATE: (id: string) => `/Admin/Users/${id}`,
   },
 
   // ============================================

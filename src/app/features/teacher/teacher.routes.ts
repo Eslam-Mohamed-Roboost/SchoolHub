@@ -8,6 +8,8 @@ import { SubjectPortalComponent } from './pages/subject-portal/subject-portal.co
 import { CpdModuleDetailComponent } from './pages/learning-vault/cpd-module-detail/cpd-module-detail.component';
 import { TeachersLoungeComponent } from './pages/teachers-lounge/teachers-lounge.component';
 import { PortfolioDetailComponent } from './pages/portfolio-detail/portfolio-detail.component';
+import { MyClassesComponent } from './pages/my-classes/my-classes.component';
+import { ClassStudentsComponent } from './pages/class-students/class-students.component';
 
 export const TEACHER_ROUTES: Routes = [
   {
@@ -23,6 +25,8 @@ export const TEACHER_ROUTES: Routes = [
       { path: 'student-portfolio-hub', component: SubjectPortalComponent },
       { path: 'teachers-lounge', component: TeachersLoungeComponent },
       { path: 'portfolio/:studentId/:subjectId', component: PortfolioDetailComponent },
+      { path: 'my-classes', component: MyClassesComponent },
+      { path: 'class/:id/students', component: ClassStudentsComponent },
       // Keep home route for backward compatibility
       { path: 'home', component: TeacherDashboardComponent },
     ],

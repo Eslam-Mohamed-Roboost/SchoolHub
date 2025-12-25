@@ -4,18 +4,22 @@ import { User, UserStatus, CreateUserRequest } from '../models/admin.models';
 import { ApplicationRole } from '../../../core/enums/application-role.enum';
 import { BaseHttpService } from '../../../core/services/base-http.service';
 import { User_API_ENDPOINTS } from '../../../config/UserConfig/UserEndpoints';
+import { Admin_API_ENDPOINTS } from '../../../config/AdminConfig/AdminEndpoint';
 
 // API Response interfaces
 interface UserApiResponse {
-  ID: number;
+  Id: string; // Backend sends as string (LongAsStringConverter)
   Name: string;
   Email: string;
-  Role: number;
+  Role: number | string; // Can be number (enum) or string (e.g., "student")
+  RoleName?: string; // Optional role name from backend
   Status: string;
-  CreatedAt: string;
-  PhoneNumber: string;
+  CreatedAt?: string;
+  PhoneNumber?: string;
   BadgeCount: number;
-  LastLogin: Date;
+  LastLogin?: Date | string | null;
+  ClassId?: string; // Backend sends as string (LongAsStringConverter)
+  ClassName?: string;
 }
 
 interface PaginatedResponse<T> {
@@ -73,6 +77,7 @@ export class UserService extends BaseHttpService {
     role?: number;
     status?: string;
     isActive?: boolean;
+    classId?: number;
   }): void {
     this.isLoading.set(true);
 
@@ -83,6 +88,7 @@ export class UserService extends BaseHttpService {
     if (params?.email) queryParams.push(`email=${encodeURIComponent(params.email)}`);
     if (params?.role) queryParams.push(`role=${params.role}`);
     if (params?.isActive !== undefined) queryParams.push(`IsActve=${params.isActive}`);
+    if (params?.classId) queryParams.push(`classId=${params.classId}`);
 
     // Legacy status mapping if needed, or remove if replaced by isActive
     if (params?.status && params.isActive === undefined) {
@@ -146,12 +152,13 @@ export class UserService extends BaseHttpService {
       const lowerQuery = query.toLowerCase();
       filtered = filtered.filter(
         (u) =>
-          u.name.toLowerCase().includes(lowerQuery) || u.email.toLowerCase().includes(lowerQuery)
+          (u.Name || u.name || '').toLowerCase().includes(lowerQuery) || 
+          (u.Email || u.email || '').toLowerCase().includes(lowerQuery)
       );
     }
 
     if (role !== undefined) {
-      filtered = filtered.filter((u) => u.role === role);
+      filtered = filtered.filter((u) => (u.Role || u.role) === role);
     }
 
     if (status) {
@@ -186,19 +193,44 @@ export class UserService extends BaseHttpService {
   }
 
   updateUser(id: string, userData: Partial<User>): Observable<User> {
-    const apiRequest = {
-      Name: userData.name,
-      Email: userData.email,
-      RoleID: userData.role,
-      IsActive: userData.Status === 'Active',
-      PhoneNumber: '',
+    // Validate id
+    if (!id || id === 'undefined' || id === 'null') {
+      throw new Error('Invalid user ID provided for update');
+    }
+
+    // Map frontend properties to backend PascalCase format
+    // Backend expects: Name, Email, Role, IsActive, PhoneNumber, ClassID (long? -> string)
+    const apiRequest: any = {
+      Name: userData.Name || userData.name,
+      Email: userData.Email || userData.email,
+      Role: userData.Role || userData.role,
+      IsActive: (userData.Status || userData.Status) === 'Active',
+      PhoneNumber: (userData.Notes || (userData as any).notes || '') as string,
     };
 
+    // Always include ClassID if it's present in userData (even if null to remove assignment)
+    // Backend expects long? but we send as string or null
+    if ('ClassId' in userData || 'classId' in userData) {
+      const classId = userData.ClassId !== undefined ? userData.ClassId : userData.classId;
+      if (classId !== undefined && classId !== null && classId !== '') {
+        apiRequest.ClassID = String(classId); // Convert to string for backend long type
+      } else {
+        // Send null to explicitly remove class assignment
+        apiRequest.ClassID = null;
+      }
+    }
+
+    // Use Admin endpoint for user updates
     return this.put<typeof apiRequest, UserApiResponse>(
-      User_API_ENDPOINTS.UPDATE(id),
+      Admin_API_ENDPOINTS.Users.UPDATE(id),
       apiRequest
     ).pipe(
-      map((response) => this.mapApiResponseToUser(response)),
+      map((response) => {
+        // Reload users to get updated data
+        this.loadUsers();
+        // Return updated user from current list
+        return this.users().find(u => u.id === id) || this.mapApiResponseToUser(response as any);
+      }),
       tap((updatedUser) => {
         this.users.update((users) => users.map((u) => (u.id === id ? updatedUser : u)));
       })
@@ -289,15 +321,70 @@ export class UserService extends BaseHttpService {
   // ============================================
 
   private mapApiResponseToUser(response: UserApiResponse): User {
+    // Map backend PascalCase to frontend (matching backend property names)
+    // All long types are already strings from backend (LongAsStringConverter)
+    const id = response.Id || '';
+    const name = response.Name || '';
+    const email = response.Email || '';
+    
+    // Convert Role to ApplicationRole enum
+    // Role can come as number (4) or string ("student", "4")
+    let role: ApplicationRole;
+    if (typeof response.Role === 'number') {
+      role = response.Role as ApplicationRole;
+    } else if (typeof response.Role === 'string') {
+      // Convert string role to enum
+      const roleStr = response.Role.toLowerCase();
+      if (roleStr === 'admin' || roleStr === '1') {
+        role = ApplicationRole.Admin;
+      } else if (roleStr === 'teacher' || roleStr === '3') {
+        role = ApplicationRole.Teacher;
+      } else if (roleStr === 'student' || roleStr === '4') {
+        role = ApplicationRole.Student;
+      } else {
+        // Try to parse as number
+        const roleNum = parseInt(response.Role, 10);
+        role = isNaN(roleNum) ? ApplicationRole.Student : roleNum as ApplicationRole;
+      }
+    } else {
+      role = ApplicationRole.Student; // Default fallback
+    }
+    
+    // Handle LastLogin - can be Date, string, or null
+    let lastLogin: Date | undefined;
+    if (response.LastLogin) {
+      if (response.LastLogin instanceof Date) {
+        lastLogin = response.LastLogin;
+      } else if (typeof response.LastLogin === 'string') {
+        lastLogin = new Date(response.LastLogin);
+      }
+    }
+    
+    // Handle CreatedAt/JoinDate
+    let joinDate: Date | undefined;
+    if (response.CreatedAt) {
+      joinDate = new Date(response.CreatedAt);
+    }
+    
     return {
-      id: String(response.ID),
-      name: response.Name,
-      email: response.Email,
-      role: response.Role as ApplicationRole,
+      Id: id,
+      Name: name,
+      Email: email,
+      Role: role,
       Status: response.Status as UserStatus,
-      badgeCount: response.BadgeCount,
-      lastLogin: new Date(response.LastLogin),
-      joinDate: new Date(response.CreatedAt),
+      BadgeCount: response.BadgeCount || 0,
+      LastLogin: lastLogin,
+      JoinDate: joinDate,
+      ClassId: response.ClassId, // Already string from backend
+      ClassName: response.ClassName,
+      // Legacy camelCase for backward compatibility
+      id: id,
+      name: name,
+      email: email,
+      role: role,
+      classId: response.ClassId,
+      className: response.ClassName,
+      class: response.ClassName,
     };
   }
 
@@ -323,14 +410,18 @@ export class UserService extends BaseHttpService {
           : 'Admin';
 
       users.push({
-        id: String(i),
-        name: `${roleLabel} ${i}`,
-        email: `${roleLabel.toLowerCase()}${i}@school.ae`,
-        role: role,
+        Id: String(i),
+        Name: `${roleLabel} ${i}`,
+        Email: `${roleLabel.toLowerCase()}${i}@school.ae`,
+        Role: role,
         Status: Math.random() > 0.1 ? 'Active' : 'Inactive',
-        badgeCount: Math.floor(Math.random() * 10),
-        lastLogin: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-        joinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+        BadgeCount: Math.floor(Math.random() * 10),
+        LastLogin: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+        JoinDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
+        ClassId: undefined,
+        ClassName: '',
+        Notes: '',
+        Avatar: '',
       });
     }
 

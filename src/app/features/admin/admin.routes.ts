@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { AdminLayoutComponent } from './layouts/admin-layout.component';
 import { AdminDashboardComponent } from './pages/admin-dashboard/admin-dashboard.component';
 import { AdminUsersComponent } from './pages/admin-users/admin-users.component';
+import { AdminClassesComponent } from './pages/admin-classes/admin-classes.component';
 import { AdminAnalyticsComponent } from './pages/admin-analytics/admin-analytics.component';
 import { AdminEvidenceComponent } from './pages/admin-evidence/admin-evidence.component';
 import { AdminCpdComponent } from './pages/admin-cpd/admin-cpd.component';
@@ -17,6 +18,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
       { path: 'dashboard', component: AdminDashboardComponent },
       { path: 'users', component: AdminUsersComponent },
+      { path: 'classes', component: AdminClassesComponent },
       { path: 'analytics', component: AdminAnalyticsComponent },
       { path: 'evidence', component: AdminEvidenceComponent },
       { path: 'cpd', component: AdminCpdComponent },

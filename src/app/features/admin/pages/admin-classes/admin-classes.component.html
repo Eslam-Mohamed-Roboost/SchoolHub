@@ -1,0 +1,243 @@
+<div class="admin-classes-page">
+  <!-- Header Section -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Class Management</h1>
+      <p class="page-subtitle">Manage classes, assign teachers, and track student enrollment</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-primary" (click)="openAddClassModal()">
+        <span class="icon">➕</span>
+        Create Class
+      </button>
+    </div>
+  </div>
+
+  <!-- Classes Table -->
+  <div class="table-container">
+    <table class="classes-table">
+      <thead>
+        <tr>
+          <th>Class Name</th>
+          <th>Grade</th>
+          <th>Teacher</th>
+          <th>Students</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @if (isLoading()) {
+          <tr>
+            <td colspan="6" class="loading-state">
+              <span class="spinner"></span>
+              Loading classes...
+            </td>
+          </tr>
+        } @else {
+          @for (cls of classes(); track cls.id) {
+            <tr>
+              <td>
+                <div class="class-name-cell">
+                  <span class="class-name">{{ cls.name }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="grade-badge">Grade {{ cls.grade }}</span>
+              </td>
+              <td>
+                <span class="teacher-name">{{ getTeacherName(cls.teacherId) }}</span>
+              </td>
+              <td>
+                <span class="student-count">{{ cls.studentCount }} students</span>
+              </td>
+              <td>{{ formatDate(cls.createdAt) }}</td>
+              <td>
+                <div class="action-buttons">
+                  <button class="btn-icon" title="Edit Class" (click)="openEditClassModal(cls)">
+                    ✏️
+                  </button>
+                  <button class="btn-icon" title="Delete Class" (click)="openDeleteConfirm(cls)">
+                    🗑️
+                  </button>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="no-data">
+                <p>No classes found. Create your first class to get started.</p>
+              </td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add/Edit Class Modal -->
+@if (showAddClassModal() || showEditClassModal()) {
+  <div class="modal-overlay" (click)="closeClassModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ showEditClassModal() ? 'Edit Class' : 'Create New Class' }}</h2>
+        <button class="modal-close" (click)="closeClassModal()">✕</button>
+      </div>
+
+      <form [formGroup]="classForm" (ngSubmit)="saveClass()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="name">Class Name *</label>
+            <input
+              type="text"
+              id="name"
+              formControlName="name"
+              class="form-input"
+              placeholder="e.g., 6A, 7B, Science Lab"
+            />
+            @if (classForm.get('name')?.invalid && classForm.get('name')?.touched) {
+              <span class="error-text">Class name is required (min. 2 characters)</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="grade">Grade *</label>
+            <select id="grade" formControlName="grade" class="form-select">
+              <option value="">Select grade</option>
+              @for (grade of grades; track grade) {
+                <option [value]="grade">Grade {{ grade }}</option>
+              }
+            </select>
+            @if (classForm.get('grade')?.invalid && classForm.get('grade')?.touched) {
+              <span class="error-text">Please select a grade</span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="teacherId">Class Teacher (Optional)</label>
+            <select id="teacherId" formControlName="teacherId" class="form-select">
+              <option value="">No teacher assigned</option>
+              @for (teacher of teachers(); track teacher.id) {
+                <option [value]="teacher.id">
+                  {{ teacher.name }} ({{ teacher.email }})
+                </option>
+              }
+            </select>
+            <small class="text-muted">Assign a teacher to this class. You can change this later.</small>
+          </div>
+
+          @if (showEditClassModal()) {
+            <div class="form-section mt-4">
+              <h4 class="section-title">Teacher-Subject Assignments</h4>
+              <p class="text-muted small mb-3">
+                Assign teachers to specific subjects for this class. Teachers will only see students from classes and subjects they are assigned to.
+              </p>
+
+              <!-- Add New Assignment -->
+              <div class="card mb-3">
+                <div class="card-body">
+                  <div class="row g-3">
+                    <div class="col-md-6">
+                      <label class="form-label">Teacher</label>
+                      <select 
+                        class="form-select form-select-sm"
+                        [value]="newClassAssignment().teacherId"
+                        (change)="newClassAssignment.update(a => ({...a, teacherId: $any($event.target).value}))">
+                        <option value="">Select teacher</option>
+                        @for (teacher of teachers(); track teacher.id) {
+                          <option [value]="teacher.id">
+                            {{ teacher.name }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Subject</label>
+                      <select 
+                        class="form-select form-select-sm"
+                        [value]="newClassAssignment().subjectId"
+                        (change)="newClassAssignment.update(a => ({...a, subjectId: $any($event.target).value}))">
+                        <option value="">Select subject</option>
+                        @for (subject of subjects(); track subject.Id) {
+                          <option [value]="subject.Id">
+                            {{ subject.Name }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+                  </div>
+                  <div class="mt-2">
+                    <button 
+                      class="btn btn-sm btn-primary"
+                      (click)="addClassTeacherAssignment()"
+                      [disabled]="isLoadingClassAssignments() || !newClassAssignment().teacherId || !newClassAssignment().subjectId">
+                      <span class="icon">➕</span>
+                      Add Assignment
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Current Assignments for this Class -->
+              @if (isLoadingClassAssignments()) {
+                <div class="text-center py-2">
+                  <div class="spinner-border spinner-border-sm" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                  </div>
+                </div>
+              } @else {
+                <div class="alert alert-info">
+                  <small>
+                    <strong>Note:</strong> To view and manage all teacher assignments for this class, 
+                    edit individual teachers from the Users page.
+                  </small>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeClassModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="classForm.invalid">
+            {{ showEditClassModal() ? 'Update Class' : 'Create Class' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal -->
+@if (showDeleteConfirm()) {
+  <div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button class="modal-close" (click)="cancelDelete()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          Are you sure you want to delete <strong>{{ selectedClass()?.name }}</strong>?
+        </p>
+        @if (selectedClass() && selectedClass()!.studentCount > 0) {
+          <p class="warning-text">
+            ⚠️ This class has {{ selectedClass()!.studentCount }} student(s). Deleting this class
+            will remove all student assignments.
+          </p>
+        }
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDelete()">Delete Class</button>
+      </div>
+    </div>
+  </div>
+}
+
