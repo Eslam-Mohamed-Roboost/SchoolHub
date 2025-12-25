@@ -17,6 +17,8 @@ export const Teacher_API_ENDPOINTS = {
     START_MODULE: (id: number) => `/Teacher/Cpd/Modules/${id}/Start`,
     COMPLETE_MODULE: (id: number) => `/Teacher/Cpd/Modules/${id}/Complete`,
     PROGRESS: '/Teacher/Cpd/Progress',
+    HOURS: '/Teacher/CPD/Hours',
+    HOURS_SUMMARY: '/Teacher/CPD/Hours/Summary',
   },
 
   // ============================================

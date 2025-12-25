@@ -9,6 +9,7 @@ import { AdminCpdComponent } from './pages/admin-cpd/admin-cpd.component';
 import { AdminReportsComponent } from './pages/admin-reports/admin-reports.component';
 import { AdminBadgesComponent } from './pages/admin-badges/admin-badges.component';
 import { AdminMissionsComponent } from './pages/admin-missions/admin-missions.component';
+import { BadgeConfigurationComponent } from './pages/badge-configuration/badge-configuration.component';
 
 export const ADMIN_ROUTES: Routes = [
   {
@@ -23,6 +24,7 @@ export const ADMIN_ROUTES: Routes = [
       { path: 'evidence', component: AdminEvidenceComponent },
       { path: 'cpd', component: AdminCpdComponent },
       { path: 'badges', component: AdminBadgesComponent },
+      { path: 'badges/configure', component: BadgeConfigurationComponent },
       { path: 'missions', component: AdminMissionsComponent },
       // { path: 'reports', component: AdminReportsComponent },
     ],

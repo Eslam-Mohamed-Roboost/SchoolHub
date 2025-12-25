@@ -1,5 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { BaseHttpService } from '../../../core/services/base-http.service';
+import { Teacher_API_ENDPOINTS } from '../../../config/TeacherConfig/TeacherEndpoint';
 import { CpdHoursSummary } from '../../student/models/learning-hours.model';
 import { CPDModule, CPDProgress } from '../models/cpd.model';
 import { Observable } from 'rxjs';
@@ -44,9 +45,18 @@ export class CpdService extends BaseHttpService {
 
   loadModules(): void {
     this.isLoading.set(true);
-    // TODO: Replace with actual API endpoint when available
-    this.modules.set(this.getMockModules());
-    this.isLoading.set(false);
+    this.get<CPDModule[]>(Teacher_API_ENDPOINTS.CPD.MODULES).subscribe({
+      next: (modules) => {
+        this.modules.set(modules);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Failed to load CPD modules:', err);
+        // Fallback to mock data on error for development
+        this.modules.set(this.getMockModules());
+        this.isLoading.set(false);
+      }
+    });
   }
 
   getModule(moduleId: string): CPDModule | undefined {
@@ -156,7 +166,7 @@ export class CpdService extends BaseHttpService {
   // ============================================
 
   getCpdHoursSummary(): Observable<CpdHoursSummary> {
-    return this.get<CpdHoursSummary>('/Teacher/CPD/Hours');
+    return this.get<CpdHoursSummary>(Teacher_API_ENDPOINTS.CPD.HOURS);
   }
 
   loadCpdHours(): void {

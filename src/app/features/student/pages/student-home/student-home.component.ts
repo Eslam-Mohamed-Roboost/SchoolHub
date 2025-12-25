@@ -2,6 +2,7 @@ import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.component';
+import { LearningHoursWidgetComponent } from '../../components/learning-hours-widget/learning-hours-widget.component';
 import { StudentPortfolioService } from '../../services/student-portfolio.service';
 import { StudentDashboardService } from '../../services/student-dashboard.service';
 import { StudentActivityService } from '../../services/student-activity.service';
@@ -9,7 +10,7 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
 
 @Component({
   selector: 'app-student-home',
-  imports: [CommonModule, RouterLink, StatCardComponent],
+  imports: [CommonModule, RouterLink, StatCardComponent, LearningHoursWidgetComponent],
   template: `
     <div class="student-home container mx-auto px-4 py-6">
       <!-- Welcome Header -->
@@ -166,6 +167,13 @@ import { PortfolioFile } from '../../models/student-portfolio.model';
               }
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- Learning Hours Widget -->
+      <div class="row g-4 mt-4">
+        <div class="col-12">
+          <app-learning-hours-widget></app-learning-hours-widget>
         </div>
       </div>
 

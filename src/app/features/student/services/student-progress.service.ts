@@ -37,7 +37,7 @@ export class StudentProgressService extends BaseHttpService {
   }
 
   getLearningHours(startDate?: Date, endDate?: Date): Observable<LearningHoursSummary> {
-    let url = `${Student_API_ENDPOINTS.Progress.GET}/LearningHours`;
+    let url = Student_API_ENDPOINTS.Progress.LEARNING_HOURS;
     const params: string[] = [];
     
     if (startDate) {

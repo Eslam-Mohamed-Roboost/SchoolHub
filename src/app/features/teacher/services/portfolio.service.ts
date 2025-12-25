@@ -318,8 +318,7 @@ export class PortfolioService extends BaseHttpService {
       },
       error: (err) => {
         console.error('Failed to load students', { subjectId, classId }, err);
-        // Fallback to mock data for development
-        this.students.set(this.getMockStudentsData());
+        this.students.set([]);
       },
     });
 
@@ -634,37 +633,7 @@ export class PortfolioService extends BaseHttpService {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  private getMockStudentsData(): Student[] {
-    return [
-      {
-        id: 'student-1',
-        name: 'Ahmed Al-Mansouri',
-        email: 'ahmed.m@school.edu',
-        avatar: '',
-        portfolioStatus: 'reviewed',
-        latestSubmission: {
-          id: 'sub-1',
-          title: 'Algebra Problem Set Week 5',
-          content: '',
-          submittedAt: new Date('2024-12-01T10:30:00'),
-          type: 'onenote',
-        },
-      },
-      {
-        id: 'student-2',
-        name: 'Fatima Al-Kuwari',
-        email: 'fatima.k@school.edu',
-        portfolioStatus: 'pending',
-        latestSubmission: {
-          id: 'sub-2',
-          title: 'Geometry Assignment - Triangles',
-          content: '',
-          submittedAt: new Date('2024-11-30T16:45:00'),
-          type: 'file-upload',
-        },
-      },
-    ];
-  }
+  // Mock data methods removed - all data now loaded from API only
 
   getCurrentPortfolio() {
     return this.currentPortfolio.asReadonly();

@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectionStrategy, computed, inject } from '@a
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { StatCardComponent } from '../../../../shared/ui/stat-card/stat-card.component';
+import { CpdHoursWidgetComponent } from '../../components/cpd-hours-widget/cpd-hours-widget.component';
 import { TeacherDashboardService } from '../../services/teacher-dashboard.service';
 
 interface Subject {
@@ -16,7 +17,7 @@ interface Subject {
 @Component({
   selector: 'app-teacher-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, StatCardComponent],
+  imports: [CommonModule, RouterLink, StatCardComponent, CpdHoursWidgetComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="teacher-dashboard">
@@ -89,6 +90,11 @@ interface Subject {
             </div>
           </div>
         }
+      </div>
+
+      <!-- CPD Hours Widget -->
+      <div class="container mb-5">
+        <app-cpd-hours-widget></app-cpd-hours-widget>
       </div>
 
       <div class="container mb-5">

@@ -123,8 +123,23 @@ export class StudentPortfolioService extends BaseHttpService {
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Failed to load portfolio overview, using mock data:', err);
-        this.portfolios.set(this.initializePortfolios());
+        console.error('Failed to load portfolio overview:', err);
+        // Initialize empty portfolios for each subject
+        this.portfolios.set(this.subjects.map(subject => ({
+          subjectId: subject.id,
+          subjectName: subject.name,
+          subjectIcon: subject.icon,
+          files: [],
+          feedback: [],
+          reflections: [],
+          badges: [],
+          stats: {
+            filesCount: 0,
+            latestUploadDate: null,
+            feedbackCount: 0,
+            badgesCount: 0,
+          },
+        })));
         this.isLoading.set(false);
       },
     });
@@ -416,88 +431,5 @@ export class StudentPortfolioService extends BaseHttpService {
     return thumbnails[fileType] || thumbnails['pdf'];
   }
 
-  private initializePortfolios(): SubjectPortfolio[] {
-    return this.subjects.map((subject) => ({
-      subjectId: subject.id,
-      subjectName: subject.name,
-      subjectIcon: subject.icon,
-      files: this.getMockFiles(subject.id),
-      feedback: this.getMockFeedback(subject.id),
-      reflections: [],
-      badges: [],
-      stats: {
-        filesCount: 0,
-        latestUploadDate: null,
-        feedbackCount: 0,
-        badgesCount: 0,
-      },
-    }));
-  }
-
-  private getMockFiles(subjectId: string): PortfolioFile[] {
-    if (subjectId === 'math') {
-      return [
-        {
-          id: 'file-math-1',
-          fileName: 'Algebra Homework Week 5.pdf',
-          fileType: 'pdf',
-          fileSize: 1024000,
-          uploadDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-          subjectId,
-          thumbnailUrl: 'assets/thumbnails/pdf-icon.png',
-          previewUrl: '',
-          downloadUrl: '',
-        },
-      ];
-    }
-    return [];
-  }
-
-  private getMockFeedback(subjectId: string): TeacherFeedback[] {
-    if (subjectId === 'math') {
-      return [
-        {
-          id: 'feedback-math-1',
-          teacherName: 'Ms. Sarah Johnson',
-          date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
-          comment:
-            'Great work on the algebra problems! Your understanding of quadratic equations is improving. Keep practicing!',
-          relatedFileId: 'file-math-1',
-        },
-      ];
-    }
-    return [];
-  }
-
-  private initializeBadges(): PortfolioBadge[] {
-    return [
-      {
-        id: 'first-upload',
-        name: 'First Upload',
-        description: 'Upload your first portfolio file',
-        icon: 'fas fa-upload',
-        color: '#22c55e',
-        earnedDate: new Date(),
-        category: 'portfolio',
-      },
-      {
-        id: 'prolific-creator',
-        name: 'Prolific Creator',
-        description: 'Upload 10 files to your portfolio',
-        icon: 'fas fa-star',
-        color: '#f59e0b',
-        earnedDate: new Date(),
-        category: 'portfolio',
-      },
-      {
-        id: 'reflection-master',
-        name: 'Reflection Master',
-        description: 'Complete all reflection prompts',
-        icon: 'fas fa-pen-fancy',
-        color: '#8b5cf6',
-        earnedDate: new Date(),
-        category: 'portfolio',
-      },
-    ];
-  }
+  // Mock data methods removed - all data now loaded from API only
 }

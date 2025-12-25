@@ -61,6 +61,8 @@ export const Student_API_ENDPOINTS = {
   // ============================================
   Progress: {
     GET: '/Student/Progress',
+    LEARNING_HOURS: '/Student/Progress/LearningHours',
+    LEARNING_HOURS_SUMMARY: '/Student/Progress/LearningHours/Summary',
   },
 
   // ============================================
