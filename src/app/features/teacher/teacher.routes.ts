@@ -10,6 +10,9 @@ import { TeachersLoungeComponent } from './pages/teachers-lounge/teachers-lounge
 import { PortfolioDetailComponent } from './pages/portfolio-detail/portfolio-detail.component';
 import { MyClassesComponent } from './pages/my-classes/my-classes.component';
 import { ClassStudentsComponent } from './pages/class-students/class-students.component';
+import { StudentGradesComponent } from './pages/student-grades/student-grades.component';
+import { CreateExerciseComponent } from './pages/create-exercise/create-exercise.component';
+import { CreateExamComponent } from './pages/create-exam/create-exam.component';
 
 export const TEACHER_ROUTES: Routes = [
   {
@@ -22,11 +25,15 @@ export const TEACHER_ROUTES: Routes = [
       { path: 'learning-vault', component: LearningVaultComponent },
       { path: 'learning-vault/module/:id', component: CpdModuleDetailComponent },
       { path: 'cpd', component: TeacherCpdComponent },
+      { path: 'student-portfolio-hub/:id', component: SubjectPortalComponent },
       { path: 'student-portfolio-hub', component: SubjectPortalComponent },
       { path: 'teachers-lounge', component: TeachersLoungeComponent },
       { path: 'portfolio/:studentId/:subjectId', component: PortfolioDetailComponent },
       { path: 'my-classes', component: MyClassesComponent },
       { path: 'class/:id/students', component: ClassStudentsComponent },
+      { path: 'grades', component: StudentGradesComponent },
+      { path: 'exercises/create', component: CreateExerciseComponent },
+      { path: 'exams/create', component: CreateExamComponent },
       // Keep home route for backward compatibility
       { path: 'home', component: TeacherDashboardComponent },
     ],

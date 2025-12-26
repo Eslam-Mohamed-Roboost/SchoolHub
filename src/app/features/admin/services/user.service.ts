@@ -77,7 +77,7 @@ export class UserService extends BaseHttpService {
     role?: number;
     status?: string;
     isActive?: boolean;
-    classId?: number;
+    classId?: string;
   }): void {
     this.isLoading.set(true);
 
@@ -233,6 +233,38 @@ export class UserService extends BaseHttpService {
       }),
       tap((updatedUser) => {
         this.users.update((users) => users.map((u) => (u.id === id ? updatedUser : u)));
+      })
+    );
+  }
+
+  changePassword(id: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+    // Validate id
+    if (!id || id === 'undefined' || id === 'null') {
+      throw new Error('Invalid user ID provided for password change');
+    }
+
+    // Validate password
+    if (!newPassword || newPassword.length < 6) {
+      throw new Error('Password must be at least 6 characters long');
+    }
+
+    // BaseHttpService.put() extracts Data when IsSuccess is true, so response will be boolean (true)
+    // If IsSuccess is false, transformResponse throws an error, which we catch
+    return this.put<{ NewPassword: string }, boolean>(
+      Admin_API_ENDPOINTS.Users.CHANGE_PASSWORD(id),
+      { NewPassword: newPassword }
+    ).pipe(
+      map(() => ({
+        success: true,
+        message: 'Password changed successfully',
+      })),
+      catchError((error) => {
+        // Handle error response - error might contain the full response structure
+        const errorMessage = error.error?.Message || error.error?.message || error.message || 'Failed to change password';
+        return of({
+          success: false,
+          message: errorMessage,
+        });
       })
     );
   }

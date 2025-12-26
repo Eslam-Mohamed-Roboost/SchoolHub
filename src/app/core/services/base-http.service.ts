@@ -77,6 +77,29 @@ export abstract class BaseHttpService {
   }
 
   /**
+   * POST request with FormData (for file uploads)
+   */
+  protected postFormData<TResponse = any>(
+    endpoint: string,
+    formData: FormData,
+    options?: HttpOptions,
+    config?: ApiConfig<FormData, TResponse>
+  ): Observable<TResponse> {
+    const url = this.buildUrl(endpoint);
+    
+    // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
+    const uploadOptions: HttpOptions = {
+      ...options,
+      headers: options?.headers || {},
+    };
+
+    return this.http.post<RequestResult<TResponse> | TResponse>(url, formData, uploadOptions).pipe(
+      map((response) => this.transformResponse<TResponse>(response, config?.responseTransformer)),
+      catchError((error) => this.handleError(error, config?.errorHandler))
+    );
+  }
+
+  /**
    * Generic PUT request
    */
   protected put<TRequest = any, TResponse = any>(

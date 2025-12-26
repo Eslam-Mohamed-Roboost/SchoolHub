@@ -25,20 +25,42 @@ export class ClassService extends BaseHttpService {
 
     this.get<ApiResponse<Class[]> | Class[]>(Admin_API_ENDPOINTS.Classes.GET_ALL).subscribe({
       next: (response: ApiResponse<Class[]> | Class[]) => {
-        console.log('Classes loaded:', response);
+        console.log('Classes API Response (raw):', response);
+        console.log('Response type:', typeof response);
+        console.log('Is Array:', Array.isArray(response));
 
+        let mappedClasses: Class[] = [];
+
+        // BaseHttpService.transformResponse already extracts Data, so response should be Class[] or ApiResponse<Class[]>
         if (Array.isArray(response)) {
-          this.classes.set(response);
-        } else if ('Data' in response && response.IsSuccess && response.Data) {
-          const mappedClasses = response.Data.map((c: any) => this.mapApiResponseToClass(c));
-          this.classes.set(mappedClasses);
-        } else if ('Data' in response && response.Data) {
-          const mappedClasses = response.Data.map((c: any) => this.mapApiResponseToClass(c));
-          this.classes.set(mappedClasses);
+          // Response is already an array (BaseHttpService extracted Data)
+          console.log('Response is array, mapping classes...');
+          mappedClasses = response.map((c: any) => {
+            console.log('Mapping class:', c);
+            return this.mapApiResponseToClass(c);
+          });
+        } else if (response && typeof response === 'object') {
+          // Response is still wrapped in ApiResponse
+          if ('Data' in response && response.Data) {
+            const data = response.Data;
+            if (Array.isArray(data)) {
+              console.log('Response has Data array, mapping classes...');
+              mappedClasses = data.map((c: any) => {
+                console.log('Mapping class:', c);
+                return this.mapApiResponseToClass(c);
+              });
+            } else {
+              console.warn('Response.Data is not an array:', data);
+            }
+          } else {
+            console.warn('Response does not have Data property:', response);
+          }
         } else {
-          console.warn('Unexpected response format for classes');
-          this.classes.set([]);
+          console.warn('Unexpected response format for classes:', response);
         }
+
+        console.log('Mapped classes:', mappedClasses);
+        this.classes.set(mappedClasses);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -49,7 +71,7 @@ export class ClassService extends BaseHttpService {
     });
   }
 
-  getClassById(id: number): Observable<Class> {
+  getClassById(id: string): Observable<Class> {
     return this.get<ApiResponse<ClassApiResponse> | ClassApiResponse>(
       Admin_API_ENDPOINTS.Classes.GET_BY_ID(id)
     ).pipe(map((response) => this.mapApiResponseToClass(response)));
@@ -68,7 +90,7 @@ export class ClassService extends BaseHttpService {
     );
   }
 
-  updateClass(id: number, request: UpdateClassRequest): Observable<boolean> {
+  updateClass(id: string, request: UpdateClassRequest): Observable<boolean> {
     return this.put<UpdateClassRequest, ApiResponse<boolean> | boolean>(
       Admin_API_ENDPOINTS.Classes.UPDATE(id),
       request
@@ -81,7 +103,7 @@ export class ClassService extends BaseHttpService {
     );
   }
 
-  deleteClass(id: number): Observable<boolean> {
+  deleteClass(id: string): Observable<boolean> {
     return this.delete<ApiResponse<boolean> | boolean>(Admin_API_ENDPOINTS.Classes.DELETE(id)).pipe(
       map((response) => {
         if (typeof response === 'boolean') return response;
@@ -108,16 +130,22 @@ export class ClassService extends BaseHttpService {
         }
 
         // Map to Class format for consistency
-        return dropdownData.map((d) => ({
-          id: d.Id,
-          name: d.Name,
-          grade: d.Grade,
-          teacherId: undefined,
-          teacherName: undefined,
-          studentCount: 0,
-          subjectIds: [],
-          createdAt: new Date(),
-        }));
+        const mappedClasses = dropdownData.map((d) => {
+          const mapped = {
+            id: String(d.Id || ''),
+            name: d.Name || 'Unnamed Class',
+            grade: Number(d.Grade || 0),
+            teacherId: undefined,
+            teacherName: undefined,
+            studentCount: 0,
+            subjectIds: [],
+            createdAt: new Date(),
+          };
+          console.log('Mapping class dropdown item:', d, '->', mapped);
+          return mapped;
+        });
+        console.log('Mapped classes for dropdown:', mappedClasses);
+        return mappedClasses;
       })
     );
   }
@@ -133,15 +161,28 @@ export class ClassService extends BaseHttpService {
       response = response.Data;
     }
 
+    // Convert SubjectIds from string[] to number[] (backend sends strings due to LongListAsStringConverter)
+    const subjectIds = response.SubjectIds || response.subjectIds || [];
+    const subjectIdsAsNumbers = Array.isArray(subjectIds)
+      ? subjectIds.map((id: any) => {
+          // Handle both string and number types
+          if (typeof id === 'string') {
+            const num = Number(id);
+            return isNaN(num) ? 0 : num;
+          }
+          return typeof id === 'number' ? id : 0;
+        })
+      : [];
+
     return {
-      id: response.Id || response.id,
-      name: response.Name || response.name,
-      grade: response.Grade || response.grade,
-      teacherId: response.TeacherId || response.teacherId,
-      teacherName: response.TeacherName || response.teacherName,
-      studentCount: response.StudentCount || response.studentCount || 0,
-      subjectIds: response.SubjectIds || response.subjectIds || [],
-      createdAt: new Date(response.CreatedAt || response.createdAt),
+      id: String(response.Id || response.id || ''),
+      name: response.Name || response.name || '',
+      grade: Number(response.Grade || response.grade || 0),
+      teacherId: response.TeacherId || response.teacherId ? Number(response.TeacherId || response.teacherId) : undefined,
+      teacherName: response.TeacherName || response.teacherName || undefined,
+      studentCount: Number(response.StudentCount || response.studentCount || 0),
+      subjectIds: subjectIdsAsNumbers,
+      createdAt: new Date(response.CreatedAt || response.createdAt || Date.now()),
     };
   }
 }
@@ -155,8 +196,8 @@ interface ApiResponse<T> {
 }
 
 // Dropdown DTO interface
-interface ClassDropdownDto {
-  Id: number;
+export interface ClassDropdownDto {
+  Id: string;
   Name: string;
   Grade: number;
   DisplayName?: string;

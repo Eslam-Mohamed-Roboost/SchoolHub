@@ -15,7 +15,21 @@ import { MissionActivityDto } from '../../models/student-api.models';
       </div>
 
       <div class="video-container">
-        @if (videoUrl()) {
+        @if (isDirectVideoFile()) {
+          <!-- HTML5 Video Player for direct video files -->
+          <video
+            [src]="getDirectVideoUrl()"
+            controls
+            (loadedmetadata)="onVideoLoad()"
+            (play)="onVideoPlay()"
+            (ended)="onVideoEnded()"
+            title="Activity Video"
+            class="video-player"
+          >
+            Your browser does not support the video tag.
+          </video>
+        } @else if (videoUrl()) {
+          <!-- Embedded iframe for external videos (YouTube, Vimeo, etc.) -->
           <iframe
             [src]="videoUrl()"
             frameborder="0"
@@ -71,12 +85,18 @@ import { MissionActivityDto } from '../../models/student-api.models';
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
-    .video-container iframe {
+    .video-container iframe,
+    .video-container video {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
+    }
+
+    .video-player {
+      object-fit: contain;
+      background: #000;
     }
 
     .video-placeholder {
@@ -123,8 +143,13 @@ export class VideoActivityComponent {
   
   private sanitizer = inject(DomSanitizer);
   watched = signal(false);
+  videoPlayed = signal(false);
 
   videoUrl = signal<SafeResourceUrl | null>(null);
+  directVideoUrl = signal<string | null>(null);
+
+  // Common video file extensions
+  private readonly videoExtensions = ['.mp4', '.webm', '.ogg', '.mov', '.avi', '.mkv', '.m4v'];
 
   constructor() {
     // Watch for activity changes to extract video URL
@@ -136,12 +161,39 @@ export class VideoActivityComponent {
     });
   }
 
-  private extractVideoUrl(content: string): void {
-    // Extract YouTube or other video URLs from content
-    // Support formats: full URL, embed URL, or video ID
-    let url = content.trim();
+  /**
+   * Check if the URL is a direct video file (not external embed)
+   */
+  isDirectVideoFile(): boolean {
+    return this.directVideoUrl() !== null;
+  }
 
-    // If it's a YouTube URL, convert to embed format
+  /**
+   * Get the direct video URL for HTML5 video player
+   */
+  getDirectVideoUrl(): string {
+    return this.directVideoUrl() || '';
+  }
+
+  private extractVideoUrl(content: string): void {
+    // Reset signals
+    this.videoUrl.set(null);
+    this.directVideoUrl.set(null);
+
+    let url = content.trim();
+    if (!url) return;
+
+    // Check if it's a direct video file (ends with video extension)
+    const lowerUrl = url.toLowerCase();
+    const isDirectVideo = this.videoExtensions.some(ext => lowerUrl.endsWith(ext));
+
+    if (isDirectVideo) {
+      // It's a direct video file - use HTML5 video player
+      this.directVideoUrl.set(url);
+      return;
+    }
+
+    // Check if it's a YouTube URL
     if (url.includes('youtube.com/watch')) {
       const videoId = new URL(url).searchParams.get('v');
       if (videoId) {
@@ -152,19 +204,37 @@ export class VideoActivityComponent {
       if (videoId) {
         url = `https://www.youtube.com/embed/${videoId}`;
       }
+    } else if (url.includes('vimeo.com/')) {
+      // Support Vimeo URLs
+      const videoId = url.split('vimeo.com/')[1]?.split('?')[0];
+      if (videoId) {
+        url = `https://player.vimeo.com/video/${videoId}`;
+      }
     }
 
-    // Sanitize and set the URL
-    if (url) {
+    // For external embeds, sanitize and set the URL
+    if (url && !isDirectVideo) {
       this.videoUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(url) as SafeResourceUrl);
     }
   }
 
   onVideoLoad(): void {
-    // Mark as watched when video iframe loads
+    // Mark as watched when video loads (for both iframe and HTML5 video)
     setTimeout(() => {
       this.watched.set(true);
     }, 1000);
+  }
+
+  onVideoPlay(): void {
+    // Track when video starts playing
+    this.videoPlayed.set(true);
+    this.watched.set(true);
+  }
+
+  onVideoEnded(): void {
+    // Video completed - ensure watched is set
+    this.watched.set(true);
+    this.videoPlayed.set(true);
   }
 }
 

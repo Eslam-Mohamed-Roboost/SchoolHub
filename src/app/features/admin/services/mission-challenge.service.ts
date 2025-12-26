@@ -1,6 +1,6 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { Observable, map } from 'rxjs';
-import { Mission, CreateMissionRequest, WeeklyChallenge } from '../models/admin.models';
+import { Mission, CreateMissionRequest, WeeklyChallenge, MissionResource, CreateMissionResourceRequest, UpdateMissionResourceRequest } from '../models/admin.models';
 import { BaseHttpService } from '../../../core/services/base-http.service';
 import { Admin_API_ENDPOINTS } from '../../../config/AdminConfig/AdminEndpoint';
 
@@ -16,15 +16,16 @@ interface ApiResponse<T> {
 // API DTOs (matches backend)
 interface MissionDto {
   Id: string | number;
-  Name: string;
+  Number: number;
   Title: string;
-  Description: string;
-  Icon: string;
+  Description?: string;
+  Icon?: string;
+  EstimatedMinutes: number;
+  BadgeId: string | number;
+  BadgeName?: string;
   Order: number;
-  Enabled: boolean;
-  BadgeId?: string | number;
-  Duration?: string;
-  Requirements?: string[];
+  IsEnabled: boolean;
+  CreatedAt: string;
 }
 
 interface WeeklyChallengeDto {
@@ -38,6 +39,17 @@ interface WeeklyChallengeDto {
   PublishDate?: string;
   Status: string;
   AutoNotify: boolean;
+}
+
+interface MissionResourceDto {
+  Id: string | number;
+  MissionId: string | number;
+  Type: string;
+  Title: string;
+  Url: string;
+  Description?: string;
+  Order: number;
+  IsRequired: boolean;
 }
 
 interface PaginatedResponse<T> {
@@ -54,6 +66,7 @@ interface PaginatedResponse<T> {
 export class MissionChallengeService extends BaseHttpService {
   private missions = signal<Mission[]>([]);
   private challenges = signal<WeeklyChallenge[]>([]);
+  private missionResources = signal<Map<string, MissionResource[]>>(new Map());
   private isLoading = signal(false);
 
   constructor() {
@@ -265,21 +278,136 @@ export class MissionChallengeService extends BaseHttpService {
   }
 
   // ============================================
+  // RESOURCE MANAGEMENT
+  // ============================================
+
+  loadMissionResources(missionId: string): void {
+    this.get<MissionResourceDto[]>(Admin_API_ENDPOINTS.Missions.GET_RESOURCES(missionId)).subscribe({
+      next: (resources) => {
+        if (resources) {
+          this.missionResources.update((map) => {
+            const newMap = new Map(map);
+            newMap.set(missionId, resources.map((r) => this.mapResourceDto(r)));
+            return newMap;
+          });
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load mission resources:', err);
+      },
+    });
+  }
+
+  getMissionResources(missionId: string): MissionResource[] {
+    return this.missionResources().get(missionId) || [];
+  }
+
+  createResource(missionId: string, request: CreateMissionResourceRequest): Observable<{ success: boolean; message: string; resourceId?: string }> {
+    return this.post<CreateMissionResourceRequest, string | number>(
+      Admin_API_ENDPOINTS.Missions.CREATE_RESOURCE(missionId),
+      request
+    ).pipe(
+      map((resourceId: string | number) => {
+        this.loadMissionResources(missionId);
+        return {
+          success: true,
+          message: 'Resource created successfully',
+          resourceId: String(resourceId),
+        };
+      })
+    );
+  }
+
+  uploadResource(missionId: string, request: { Type: string; Title: string; File: File; Description?: string; Order: number; IsRequired: boolean }): Observable<{ success: boolean; message: string; resourceId?: string }> {
+    const formData = new FormData();
+    formData.append('MissionId', missionId);
+    formData.append('Type', request.Type);
+    formData.append('Title', request.Title);
+    formData.append('File', request.File);
+    if (request.Description) {
+      formData.append('Description', request.Description);
+    }
+    formData.append('Order', request.Order.toString());
+    formData.append('IsRequired', request.IsRequired.toString());
+
+    return this.postFormData<string | number>(
+      Admin_API_ENDPOINTS.Missions.UPLOAD_RESOURCE(missionId),
+      formData
+    ).pipe(
+      map((resourceId: string | number) => {
+        this.loadMissionResources(missionId);
+        return {
+          success: true,
+          message: 'Resource uploaded successfully',
+          resourceId: String(resourceId),
+        };
+      })
+    );
+  }
+
+  updateResource(resourceId: string, request: UpdateMissionResourceRequest, missionId?: string): Observable<{ success: boolean; message: string }> {
+    return this.put<UpdateMissionResourceRequest, boolean>(
+      Admin_API_ENDPOINTS.Missions.UPDATE_RESOURCE(resourceId),
+      request
+    ).pipe(
+      map(() => {
+        // Reload resources if missionId is provided
+        if (missionId) {
+          this.loadMissionResources(missionId);
+        }
+        return {
+          success: true,
+          message: 'Resource updated successfully',
+        };
+      })
+    );
+  }
+
+  deleteResource(resourceId: string, missionId: string): Observable<{ success: boolean; message: string }> {
+    return this.delete<boolean>(Admin_API_ENDPOINTS.Missions.DELETE_RESOURCE(resourceId)).pipe(
+      map(() => {
+        this.missionResources.update((map) => {
+          const newMap = new Map(map);
+          const resources = newMap.get(missionId) || [];
+          newMap.set(missionId, resources.filter((r) => r.id !== resourceId));
+          return newMap;
+        });
+        return {
+          success: true,
+          message: 'Resource deleted successfully',
+        };
+      })
+    );
+  }
+
+  // ============================================
   // MAPPERS
   // ============================================
+
+  private mapResourceDto(dto: MissionResourceDto): MissionResource {
+    return {
+      id: String(dto.Id),
+      missionId: String(dto.MissionId),
+      type: dto.Type as 'video' | 'article' | 'interactive' | 'pdf',
+      title: dto.Title,
+      url: dto.Url,
+      description: dto.Description,
+      order: dto.Order,
+      isRequired: dto.IsRequired,
+    };
+  }
 
   private mapMissionDto(dto: MissionDto): Mission {
     return {
       id: String(dto.Id),
-      name: dto.Name,
       title: dto.Title,
       description: dto.Description || '',
       icon: dto.Icon || '🎯',
       order: dto.Order,
-      enabled: dto.Enabled,
+      enabled: dto.IsEnabled,
       badgeId: dto.BadgeId ? String(dto.BadgeId) : undefined,
-      duration: dto.Duration,
-      requirements: dto.Requirements,
+      duration: dto.EstimatedMinutes ? String(dto.EstimatedMinutes) : undefined,
+      requirements: [],
     };
   }
 

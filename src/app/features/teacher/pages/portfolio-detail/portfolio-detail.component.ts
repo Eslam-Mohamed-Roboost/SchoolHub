@@ -1,15 +1,17 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { PortfolioService } from '../../services/portfolio.service';
 import { Portfolio, Badge } from '../../models/portfolio.model';
+import { ToastService } from '../../../../shared/services/toast.service';
+import { PortfolioBadgeDto } from '../../../student/models/student-api.models';
 
 @Component({
   selector: 'app-portfolio-detail',
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    @if (portfolio) {
+    @if (portfolio()) {
     <div class="portfolio-detail">
       <!-- Header -->
       <div class="bg-white border-bottom py-3 mb-4">
@@ -22,8 +24,8 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
               <i class="fas fa-arrow-left"></i>
             </button>
             <div class="flex-grow-1">
-              <h4 class="fw-bold mb-0">{{ portfolio.studentName }}</h4>
-              <p class="text-muted mb-0 small">{{ portfolio.subjectName }} Portfolio</p>
+              <h4 class="fw-bold mb-0">{{ portfolio()?.studentName }}</h4>
+              <p class="text-muted mb-0 small">{{ portfolio()?.subjectName }} Portfolio</p>
             </div>
             <button class="btn btn-outline-primary rounded-pill px-4" (click)="downloadPortfolio()">
               <i class="fas fa-download me-2"></i>Download Portfolio
@@ -37,7 +39,7 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
           <!-- Main Content -->
           <div class="col-lg-8">
             <!-- Latest Submission -->
-            @if (portfolio.submissions && portfolio.submissions.length > 0) {
+            @if (portfolio()?.submissions && portfolio()!.submissions.length > 0) {
             <div class="card border-0 shadow-sm rounded-4 mb-4">
               <div class="card-header bg-white border-bottom py-3 px-4">
                 <h5 class="fw-bold mb-0">
@@ -45,22 +47,22 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
                 </h5>
               </div>
               <div class="card-body p-4">
-                <h6 class="fw-bold mb-3">{{ portfolio.submissions[0].title }}</h6>
-                <div [innerHTML]="portfolio.submissions[0].content"></div>
+                <h6 class="fw-bold mb-3">{{ portfolio()!.submissions[0].title }}</h6>
+                <div [innerHTML]="portfolio()!.submissions[0].content"></div>
                 <hr class="my-3" />
                 <div class="d-flex justify-content-between align-items-center">
                   <small class="text-muted">
                     <i class="fas fa-clock me-1"></i>
-                    Submitted {{ formatDate(portfolio.submissions[0].submittedAt) }}
+                    Submitted {{ formatDate(portfolio()!.submissions[0].submittedAt) }}
                   </small>
                   <div class="d-flex gap-2">
                     <button
                       class="btn btn-sm"
-                      [class.btn-primary]="portfolio.isLiked"
-                      [class.btn-outline-primary]="!portfolio.isLiked"
+                      [class.btn-primary]="portfolio()?.isLiked"
+                      [class.btn-outline-primary]="!portfolio()?.isLiked"
                       (click)="toggleLike()"
                     >
-                      <i class="fas fa-heart me-1"></i>{{ portfolio.likes }}
+                      <i class="fas fa-heart me-1"></i>{{ portfolio()?.likes }}
                     </button>
                   </div>
                 </div>
@@ -76,8 +78,8 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
                 </h5>
               </div>
               <div class="card-body p-4">
-                @if (portfolio.feedback && portfolio.feedback.length > 0) { @for (comment of
-                portfolio.feedback; track comment.id) {
+                @if (portfolio()?.feedback && portfolio()!.feedback.length > 0) { @for (comment of
+                portfolio()!.feedback; track comment.id) {
                 <div class="mb-3 pb-3 border-bottom">
                   <div class="d-flex justify-content-between align-items-start mb-2">
                     <div>
@@ -147,9 +149,9 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
                 </h6>
               </div>
               <div class="card-body p-4">
-                @if (portfolio.badges && portfolio.badges.length > 0) {
+                @if (portfolio()?.badges && portfolio()!.badges.length > 0) {
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                  @for (badge of portfolio.badges; track badge.id) {
+                  @for (badge of portfolio()!.badges; track badge.id) {
                   <div
                     class="badge p-2 d-flex align-items-center gap-2"
                     [style.background]="badge.color"
@@ -169,7 +171,7 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
                 <h6 class="fw-bold mb-2 small">Award New Badge</h6>
                 <select class="form-select mb-2" [(ngModel)]="selectedBadgeId">
                   <option value="">Select a badge...</option>
-                  @for (badge of availableBadges; track badge.id) {
+                  @for (badge of availableBadges(); track badge.id) {
                   <option [value]="badge.id">{{ badge.name }}</option>
                   }
                 </select>
@@ -191,27 +193,27 @@ import { Portfolio, Badge } from '../../models/portfolio.model';
               <div class="card-body p-4">
                 <div class="mb-3">
                   <label class="text-muted small">Student</label>
-                  <div class="fw-bold">{{ portfolio.studentName }}</div>
+                  <div class="fw-bold">{{ portfolio()?.studentName }}</div>
                 </div>
                 <div class="mb-3">
                   <label class="text-muted small">Subject</label>
-                  <div class="fw-bold">{{ portfolio.subjectName }}</div>
+                  <div class="fw-bold">{{ portfolio()?.subjectName }}</div>
                 </div>
                 <div class="mb-3">
                   <label class="text-muted small">Submissions</label>
-                  <div class="fw-bold">{{ portfolio.submissions.length || 0 }}</div>
+                  <div class="fw-bold">{{ portfolio()?.submissions?.length || 0 }}</div>
                 </div>
                 <div class="mb-3">
                   <label class="text-muted small">Feedback</label>
-                  <div class="fw-bold">{{ portfolio.feedback.length || 0 }} comments</div>
+                  <div class="fw-bold">{{ portfolio()?.feedback?.length || 0 }} comments</div>
                 </div>
                 <div class="mb-3">
                   <label class="text-muted small">Badges Earned</label>
-                  <div class="fw-bold">{{ portfolio.badges.length || 0 }}</div>
+                  <div class="fw-bold">{{ portfolio()?.badges?.length || 0 }}</div>
                 </div>
                 <div class="mb-0">
                   <label class="text-muted small">Last Updated</label>
-                  <div class="fw-bold">{{ formatDate(portfolio.lastUpdated) }}</div>
+                  <div class="fw-bold">{{ portfolio()?.lastUpdated ? formatDate(portfolio()!.lastUpdated) : 'N/A' }}</div>
                 </div>
               </div>
             </div>
@@ -243,72 +245,93 @@ export class PortfolioDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private portfolioService = inject(PortfolioService);
+  private toastService = inject(ToastService);
 
-  portfolio: Portfolio | null = null;
-  availableBadges: Badge[] = [];
+  // Use computed to get portfolio value from signal
+  portfolio = computed(() => this.portfolioService.getCurrentPortfolio()());
+  availableBadges = computed(() => this.portfolioService.getAvailableBadgesSignal()());
   newComment = '';
   selectedBadgeId = '';
+  studentId = '';
+  subjectId = '';
 
   ngOnInit(): void {
-    const studentId = this.route.snapshot.params['studentId'];
-    const subjectId = this.route.snapshot.params['subjectId'];
+    this.studentId = this.route.snapshot.params['studentId'];
+    this.subjectId = this.route.snapshot.params['subjectId'];
 
-    this.portfolio = this.portfolioService.getStudentPortfolio(studentId, subjectId);
-    this.availableBadges = this.portfolioService.getAvailableBadges();
+    // Validate that subjectId is not "null" or empty
+    if (!this.subjectId || this.subjectId === 'null' || this.subjectId === 'undefined') {
+      console.error('Invalid subjectId:', this.subjectId);
+      return;
+    }
+
+    // Load portfolio using the service method
+    this.portfolioService.loadStudentPortfolio(this.studentId, this.subjectId);
+
+    // Badges will be loaded automatically via the signal
   }
 
   addComment(): void {
-    if (!this.portfolio || !this.newComment.trim()) return;
+    const p = this.portfolio();
+    if (!p || !this.newComment.trim() || !this.studentId || !this.subjectId) return;
 
-    this.portfolioService.addComment(this.portfolio.id, this.newComment);
-    this.portfolio = this.portfolioService.getStudentPortfolio(
-      this.portfolio.studentId,
-      this.portfolio.subjectId
-    );
+    this.portfolioService.addComment(this.studentId, this.subjectId, this.newComment);
     this.newComment = '';
-    alert('Feedback sent successfully! The student has been notified.');
+    this.toastService.showSuccess('Feedback Sent', 'Feedback sent successfully! The student has been notified.');
   }
 
   requestRevision(): void {
-    if (!this.portfolio || !this.newComment.trim()) return;
+    const p = this.portfolio();
+    if (!p || !this.newComment.trim() || !this.studentId || !this.subjectId) return;
 
-    this.portfolioService.requestRevision(this.portfolio.id, this.newComment);
-    this.portfolio = this.portfolioService.getStudentPortfolio(
-      this.portfolio.studentId,
-      this.portfolio.subjectId
-    );
+    this.portfolioService.requestRevision(this.studentId, this.subjectId, this.newComment);
     this.newComment = '';
-    alert('Revision requested! The student has been notified to resubmit their work.');
+    this.toastService.showWarning('Revision Requested', 'Revision requested! The student has been notified to resubmit their work.');
   }
 
   toggleLike(): void {
-    if (!this.portfolio) return;
+    const p = this.portfolio();
+    if (!p || !this.studentId || !this.subjectId) return;
 
-    this.portfolioService.toggleLike(this.portfolio.id);
-    this.portfolio = this.portfolioService.getStudentPortfolio(
-      this.portfolio.studentId,
-      this.portfolio.subjectId
-    );
+    this.portfolioService.toggleLike(this.studentId, this.subjectId);
   }
 
   awardBadge(): void {
-    if (!this.portfolio || !this.selectedBadgeId) return;
+    const p = this.portfolio();
+    if (!p || !this.selectedBadgeId || !this.studentId || !this.subjectId) return;
 
-    this.portfolioService.awardBadge(this.portfolio.id, this.selectedBadgeId);
-    this.portfolio = this.portfolioService.getStudentPortfolio(
-      this.portfolio.studentId,
-      this.portfolio.subjectId
-    );
+    const selectedBadge = this.availableBadges().find(b => b.id === this.selectedBadgeId);
+    
+    this.portfolioService.awardBadge(this.studentId, this.subjectId, this.selectedBadgeId, (badgeDto: PortfolioBadgeDto) => {
+      // Show badge toast notification
+      if (badgeDto) {
+        this.toastService.showBadgeEarned({
+          Id: String(badgeDto.Id),
+          Name: badgeDto.Name,
+          Description: badgeDto.Description,
+          Icon: badgeDto.Icon,
+          Color: badgeDto.Color,
+          EarnedDate: badgeDto.EarnedDate,
+          RelatedWorkId: badgeDto.RelatedWorkId ? String(badgeDto.RelatedWorkId) : undefined,
+          Category: badgeDto.Category
+        });
+        this.toastService.showSuccess('Work Status Updated', 'Student work has been marked as reviewed.');
+      } else if (selectedBadge) {
+        // Fallback to show success message if badge DTO not available
+        this.toastService.showSuccess('Badge Awarded', `${selectedBadge.name} badge awarded! Student work marked as reviewed.`);
+      }
+    });
+    
     this.selectedBadgeId = '';
-    alert('Badge awarded! The student has been notified.');
   }
 
   downloadPortfolio(): void {
-    if (!this.portfolio) return;
+    const p = this.portfolio();
+    if (!p) return;
 
     // Mock download functionality
-    alert(`Downloading ${this.portfolio.studentName}'s ${this.portfolio.subjectName} portfolio...`);
-    console.log('Portfolio download initiated', this.portfolio);
+    alert(`Downloading ${p.studentName}'s ${p.subjectName} portfolio...`);
+    console.log('Portfolio download initiated', p);
   }
 
   formatDate(date: Date): string {

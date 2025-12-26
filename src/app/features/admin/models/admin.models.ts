@@ -147,7 +147,6 @@ export interface CpdTier {
 
 export interface Mission {
   id: string;
-  name: string;
   title: string;
   description: string;
   icon: string;
@@ -159,7 +158,6 @@ export interface Mission {
 }
 
 export interface CreateMissionRequest {
-  Name: string;
   Title: string;
   Description: string;
   Icon: string;
@@ -167,6 +165,35 @@ export interface CreateMissionRequest {
   Enabled: boolean;
   BadgeId?: string;
   Duration?: string;
+}
+
+export interface MissionResource {
+  id: string;
+  missionId: string;
+  type: 'video' | 'article' | 'interactive' | 'pdf';
+  title: string;
+  url: string;
+  description?: string;
+  order: number;
+  isRequired: boolean;
+}
+
+export interface CreateMissionResourceRequest {
+  Type: string;
+  Title: string;
+  Url: string;
+  Description?: string;
+  Order: number;
+  IsRequired: boolean;
+}
+
+export interface UpdateMissionResourceRequest {
+  Type: string;
+  Title: string;
+  Url: string;
+  Description?: string;
+  Order: number;
+  IsRequired: boolean;
 }
 
 export interface EmailTemplates {

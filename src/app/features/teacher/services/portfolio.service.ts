@@ -22,10 +22,10 @@ interface StudentDto {
 }
 
 interface StudentPortfolioDto {
-  StudentId: number;
+  StudentId: string; // All IDs are strings
   StudentName: string;
   Email: string;
-  ClassId: number;
+  ClassId: string; // All IDs are strings
   ClassName: string;
   TotalFiles: number;
   PendingFiles: number;
@@ -36,22 +36,22 @@ interface StudentPortfolioDto {
 }
 
 interface StudentPortfolioDetailDto {
-  StudentId: number;
+  StudentId: string; // All IDs are strings
   StudentName: string;
-  SubjectId: number;
+  SubjectId: string; // All IDs are strings
   SubjectName: string;
   Files: TeacherPortfolioFileDto[];
 }
 
 interface TeacherPortfolioFileDto {
-  Id: number;
+  Id: string; // All IDs are strings
   FileName: string;
   FileType: string;
-  FileSize: number;
+  FileSize: number; // FileSize is a number (bytes)
   DownloadUrl: string;
   UploadedAt: string;
   Status: string;
-  ReviewedBy?: number;
+  ReviewedBy?: string; // All IDs are strings
   ReviewerName?: string;
   ReviewedAt?: string;
   RevisionNotes?: string;
@@ -64,22 +64,25 @@ interface ApiResponse<T> {
   ErrorCode: string;
 }
 
+interface PortfolioFileDto {
+  Id: string;
+  FileName: string;
+  FileType: string;
+  FileSize: number;
+  UploadDate: string;
+  SubjectId: string;
+  ThumbnailUrl?: string;
+  PreviewUrl?: string;
+  DownloadUrl: string;
+}
+
 interface PortfolioDto {
   Id: string;
   StudentId: string;
   StudentName: string;
   SubjectId: string;
   SubjectName: string;
-  Submissions: {
-    Id: string;
-    Title: string;
-    Content: string;
-    SubmittedAt: string;
-    Type: 'onenote' | 'file-upload';
-    FileUrl?: string;
-    FileName?: string;
-    FileSize?: string;
-  }[];
+  Submissions: PortfolioFileDto[];
   Feedback: {
     Id: string;
     TeacherId: string;
@@ -99,7 +102,7 @@ interface PortfolioDto {
   }[];
   Likes: number;
   IsLiked: boolean;
-  LastUpdated: string;
+  LastUpdated: string | null;
 }
 
 interface BadgeDto {
@@ -111,52 +114,19 @@ interface BadgeDto {
   Category: 'subject' | 'skill' | 'achievement';
 }
 
+interface TeacherPortfolioRevisionRequest {
+  Feedback: string;
+}
+
+interface TeacherAwardPortfolioBadgeRequest {
+  BadgeId: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class PortfolioService extends BaseHttpService {
-  private mockBadges: Badge[] = [
-    {
-      id: 'critical-thinker',
-      name: 'Critical Thinker',
-      icon: 'fas fa-brain',
-      description: 'Demonstrates exceptional critical thinking skills',
-      color: '#6366f1',
-      category: 'skill',
-    },
-    {
-      id: 'creative-writer',
-      name: 'Creative Writer',
-      icon: 'fas fa-pen-fancy',
-      description: 'Shows creativity and originality in writing',
-      color: '#ec4899',
-      category: 'subject',
-    },
-    {
-      id: 'problem-solver',
-      name: 'Problem Solver',
-      icon: 'fas fa-lightbulb',
-      description: 'Excels at solving complex problems',
-      color: '#f59e0b',
-      category: 'skill',
-    },
-    {
-      id: 'excellent-researcher',
-      name: 'Excellent Researcher',
-      icon: 'fas fa-search',
-      description: 'Shows strong research and citation skills',
-      color: '#10b981',
-      category: 'skill',
-    },
-    {
-      id: 'subject-mastery',
-      name: 'Subject Mastery',
-      icon: 'fas fa-star',
-      description: 'Demonstrates mastery of subject content',
-      color: '#8b5cf6',
-      category: 'achievement',
-    },
-  ];
+  private availableBadges = signal<Badge[]>([]);
 
   private portfolios = signal<Portfolio[]>([
     {
@@ -192,7 +162,7 @@ export class PortfolioService extends BaseHttpService {
           type: 'comment',
         },
       ],
-      badges: [{ ...this.mockBadges[2], awardedAt: new Date('2024-11-15') }],
+      badges: [],
       likes: 3,
       isLiked: true,
       lastUpdated: new Date('2024-12-01'),
@@ -294,26 +264,40 @@ export class PortfolioService extends BaseHttpService {
   // API calls
   // ============================================
 
-  getStudents(subjectId?: string, classId?: string): Student[] {
-    const subjectIdNum = subjectId ? parseInt(subjectId) : undefined;
-    const classIdNum = classId ? parseInt(classId) : undefined;
-    
-    let url = Teacher_API_ENDPOINTS.Portfolio.MY_STUDENTS;
-    const params: string[] = [];
-    if (subjectIdNum) {
-      params.push(`subjectId=${subjectIdNum}`);
-    }
-    if (classIdNum) {
-      params.push(`classId=${classIdNum}`);
-    }
-    if (params.length > 0) {
-      url += `?${params.join('&')}`;
-    }
+  getStudents(subjectId?: string, classId?: string): void {
+      let url = Teacher_API_ENDPOINTS.Portfolio.MY_STUDENTS;
+      const params: string[] = [];
+      
+      // Only add parameters if they are valid (not null, undefined, or "null" string)
+      if (subjectId && subjectId !== 'null' && subjectId !== 'undefined') {
+        params.push(`subjectId=${subjectId}`);
+      }
+      if (classId && classId !== 'null' && classId !== 'undefined') {
+        params.push(`classId=${classId}`);
+      }
+      
+      if (params.length > 0) {
+        url += `?${params.join('&')}`;
+      }
 
+    console.log('Loading students from:', url);
     this.get<ApiResponse<StudentPortfolioDto[]>>(url).subscribe({
       next: (response) => {
-        const data = response.Data || [];
+        console.log('Students API response:', response);
+        let data: StudentPortfolioDto[] = [];
+        
+        // Handle different response formats
+        if (Array.isArray(response)) {
+          data = response;
+        } else if (response && 'Data' in response && response.Data) {
+          data = Array.isArray(response.Data) ? response.Data : [];
+        } else if (response && 'data' in response && (response as any).data) {
+          data = Array.isArray((response as any).data) ? (response as any).data : [];
+        }
+        
+        console.log('Extracted students data:', data);
         const mapped = data.map((s) => this.mapStudentPortfolioDto(s));
+        console.log('Mapped students:', mapped);
         this.students.set(mapped);
       },
       error: (err) => {
@@ -321,8 +305,6 @@ export class PortfolioService extends BaseHttpService {
         this.students.set([]);
       },
     });
-
-    return this.students();
   }
 
   /**
@@ -332,18 +314,36 @@ export class PortfolioService extends BaseHttpService {
     this.getStudents();
   }
 
-  loadStudentPortfolio(studentId: string, subjectId: string): void {
-    const studentIdNum = parseInt(studentId);
-    const subjectIdNum = parseInt(subjectId);
+  /**
+   * Get students signal (reactive)
+   */
+  getStudentsSignal() {
+    return this.students.asReadonly();
+  }
 
-    this.get<ApiResponse<StudentPortfolioDetailDto>>(
-      Teacher_API_ENDPOINTS.Portfolio.STUDENT_DETAIL(studentIdNum, subjectIdNum)
+  loadStudentPortfolio(studentId: string, subjectId: string): void {
+    // Validate inputs
+    if (!studentId || !subjectId || subjectId === 'null' || subjectId === 'undefined') {
+      console.error('Invalid studentId or subjectId:', { studentId, subjectId });
+      this.currentPortfolio.set(null);
+      return;
+    }
+
+    // IDs are strings, no need to parse them
+    this.get<ApiResponse<PortfolioDto>>(
+      Teacher_API_ENDPOINTS.Portfolio.STUDENT_DETAIL(studentId, subjectId)
     ).subscribe({
       next: (response) => {
-        if (response.Data) {
-          const portfolio = this.mapStudentPortfolioDetailDto(response.Data);
-          this.currentPortfolio.set(portfolio);
+        let dto: PortfolioDto;
+        if (response && 'Data' in response && response.Data) {
+          dto = response.Data;
+        } else if (response && 'data' in response && (response as any).data) {
+          dto = (response as any).data;
+        } else {
+          dto = response as unknown as PortfolioDto;
         }
+        const portfolio = this.mapPortfolioDto(dto);
+        this.currentPortfolio.set(portfolio);
       },
       error: (err) => {
         console.error('Failed to load student portfolio', err);
@@ -354,8 +354,22 @@ export class PortfolioService extends BaseHttpService {
 
   getStudentPortfolio(studentId: string, subjectId: string): Portfolio | null {
     this.loadStudentPortfolio(studentId, subjectId);
-    this.get<PortfolioDto>(`/Teacher/Portfolio/${studentId}/${subjectId}`).subscribe({
-      next: (dto) => {
+    this.get<ApiResponse<PortfolioDto> | PortfolioDto>(
+      Teacher_API_ENDPOINTS.Portfolio.STUDENT_DETAIL(studentId, subjectId)
+    ).subscribe({
+      next: (response) => {
+        let dto: PortfolioDto;
+        if (response && 'Data' in response && response.Data) {
+          dto = response.Data;
+        } else if (response && 'data' in response && (response as any).data) {
+          dto = (response as any).data;
+        } else if ('Id' in response || 'StudentId' in response) {
+          // It's already a PortfolioDto
+          dto = response as PortfolioDto;
+        } else {
+          console.error('Unexpected response format:', response);
+          return;
+        }
         const portfolio = this.mapPortfolioDto(dto);
         this.portfolios.update((portfolios) => {
           const existingIndex = portfolios.findIndex((p) => p.id === portfolio.id);
@@ -377,30 +391,18 @@ export class PortfolioService extends BaseHttpService {
   }
 
   addComment(
-    portfolioId: string,
+    studentId: string,
+    subjectId: string,
     content: string,
     type: 'comment' | 'revision-request' = 'comment'
   ): void {
-    this.post<{ Content: string; Type: string }, void>(
-      `/Teacher/Portfolio/${portfolioId}/Comment`,
+    this.post<{ Content: string; Type: string }, ApiResponse<boolean>>(
+      Teacher_API_ENDPOINTS.Portfolio.ADD_COMMENT(studentId, subjectId),
       { Content: content, Type: type }
     ).subscribe({
       next: () => {
-        // Optimistic update: append comment locally
-        const newComment: Comment = {
-          id: `comment-${Date.now()}`,
-          teacherId: 'teacher-1',
-          teacherName: 'Teacher',
-          content,
-          createdAt: new Date(),
-          type,
-        };
-
-        this.portfolios.update((portfolios) =>
-          portfolios.map((p) =>
-            p.id === portfolioId ? { ...p, feedback: [...p.feedback, newComment] } : p
-          )
-        );
+        // Reload portfolio to get updated feedback
+        this.loadStudentPortfolio(studentId, subjectId);
       },
       error: (err) => {
         console.error('Failed to add comment', err);
@@ -408,16 +410,14 @@ export class PortfolioService extends BaseHttpService {
     });
   }
 
-  toggleLike(portfolioId: string): void {
-    this.post<{}, void>(`/Teacher/Portfolio/${portfolioId}/ToggleLike`, {}).subscribe({
+  toggleLike(studentId: string, subjectId: string): void {
+    this.post<{}, ApiResponse<boolean>>(
+      Teacher_API_ENDPOINTS.Portfolio.TOGGLE_LIKE(studentId, subjectId),
+      {}
+    ).subscribe({
       next: () => {
-        this.portfolios.update((portfolios) =>
-          portfolios.map((p) =>
-            p.id === portfolioId
-              ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-              : p
-          )
-        );
+        // Reload portfolio to get updated like status
+        this.loadStudentPortfolio(studentId, subjectId);
       },
       error: (err) => {
         console.error('Failed to toggle like', err);
@@ -425,13 +425,14 @@ export class PortfolioService extends BaseHttpService {
     });
   }
 
-  requestRevision(portfolioId: string, feedback: string): void {
-    this.post<{ Feedback: string }, void>(
-      `/Teacher/Portfolio/${portfolioId}/RequestRevision`,
+  requestRevision(studentId: string, subjectId: string, feedback: string): void {
+    this.post<TeacherPortfolioRevisionRequest, ApiResponse<boolean>>(
+      Teacher_API_ENDPOINTS.Portfolio.REQUEST_REVISION(studentId, subjectId),
       { Feedback: feedback }
     ).subscribe({
       next: () => {
-        this.addComment(portfolioId, feedback, 'revision-request');
+        // Reload portfolio to get updated feedback
+        this.loadStudentPortfolio(studentId, subjectId);
       },
       error: (err) => {
         console.error('Failed to request revision', err);
@@ -439,24 +440,31 @@ export class PortfolioService extends BaseHttpService {
     });
   }
 
-  awardBadge(portfolioId: string, badgeId: string): void {
-    this.post<{ BadgeId: string }, void>(`/Teacher/Portfolio/${portfolioId}/AwardBadge`, {
-      BadgeId: badgeId,
-    }).subscribe({
-      next: () => {
-        const badge = this.mockBadges.find((b) => b.id === badgeId);
-        if (!badge) return;
+  awardBadge(studentId: string, subjectId: string, badgeId: string, onSuccess?: (badgeDto: any) => void): void {
+    // Validate that badgeId is a numeric string (backend expects long)
+ 
 
-        const awardedBadge: Badge = {
-          ...badge,
-          awardedAt: new Date(),
-        };
-
-        this.portfolios.update((portfolios) =>
-          portfolios.map((p) =>
-            p.id === portfolioId ? { ...p, badges: [...p.badges, awardedBadge] } : p
-          )
-        );
+    // Backend expects BadgeId as string representation of long (due to LongAsStringConverter)
+    this.post<TeacherAwardPortfolioBadgeRequest, ApiResponse<any>>(
+      Teacher_API_ENDPOINTS.Portfolio.AWARD_BADGE(studentId, subjectId),
+      { BadgeId: badgeId }
+    ).subscribe({
+      next: (response) => {
+        // Extract badge DTO from response
+        let badgeDto: any = null;
+        if (response && 'Data' in response && response.Data) {
+          badgeDto = response.Data;
+        } else if (response && 'data' in response && (response as any).data) {
+          badgeDto = (response as any).data;
+        }
+        
+        // Call success callback if provided
+        if (onSuccess && badgeDto) {
+          onSuccess(badgeDto);
+        }
+        
+        // Reload portfolio to get updated badges and status
+        this.loadStudentPortfolio(studentId, subjectId);
       },
       error: (err) => {
         console.error('Failed to award badge', err);
@@ -465,24 +473,47 @@ export class PortfolioService extends BaseHttpService {
   }
 
   getAvailableBadges(): Badge[] {
-    // Backend-backed list
-    this.get<BadgeDto[]>(`/Teacher/Portfolio/Badges`).subscribe({
-      next: (dtos) => {
-        this.mockBadges = dtos.map((b) => ({
-          id: b.Id,
+    // Load badges from backend if not already loaded
+    if (this.availableBadges().length === 0) {
+      this.loadAvailableBadges();
+    }
+    return this.availableBadges();
+  }
+
+  getAvailableBadgesSignal() {
+    if (this.availableBadges().length === 0) {
+      this.loadAvailableBadges();
+    }
+    return this.availableBadges.asReadonly();
+  }
+
+  private loadAvailableBadges(): void {
+    this.get<ApiResponse<BadgeDto[]>>(Teacher_API_ENDPOINTS.Portfolio.BADGES).subscribe({
+      next: (response) => {
+        let dtos: BadgeDto[] = [];
+        if (response && 'Data' in response && response.Data) {
+          dtos = Array.isArray(response.Data) ? response.Data : [];
+        } else if (Array.isArray(response)) {
+          dtos = response;
+        } else if (response && 'data' in response && (response as any).data) {
+          dtos = Array.isArray((response as any).data) ? (response as any).data : [];
+        }
+
+        const badges = dtos.map((b) => ({
+          id: b.Id, // Ensure ID is string (backend sends as string due to LongAsStringConverter)
           name: b.Name,
           icon: b.Icon,
           description: b.Description,
           color: b.Color,
-          category: b.Category,
+          category: b.Category as 'subject' | 'skill' | 'achievement',
         }));
+        this.availableBadges.set(badges);
       },
       error: (err) => {
         console.error('Failed to load available badges', err);
+        this.availableBadges.set([]);
       },
     });
-
-    return this.mockBadges;
   }
 
   private getSubjectName(id: string): string {
@@ -507,38 +538,47 @@ export class PortfolioService extends BaseHttpService {
       avatar: dto.Avatar || undefined,
       portfolioStatus: dto.PortfolioStatus,
       latestSubmission: dto.LatestSubmission
-        ? this.mapSubmission({
-            Id: dto.LatestSubmission.Id,
-            Title: dto.LatestSubmission.Title,
-            Content: dto.LatestSubmission.Content,
-            SubmittedAt: dto.LatestSubmission.SubmittedAt,
-            Type: dto.LatestSubmission.Type,
-            FileUrl: dto.LatestSubmission.FileUrl,
-            FileName: dto.LatestSubmission.FileName,
-            FileSize: dto.LatestSubmission.FileSize,
-          })
+        ? {
+            id: dto.LatestSubmission.Id,
+            title: dto.LatestSubmission.Title,
+            content: dto.LatestSubmission.Content,
+            submittedAt: new Date(dto.LatestSubmission.SubmittedAt),
+            type: dto.LatestSubmission.Type,
+            fileUrl: dto.LatestSubmission.FileUrl,
+            fileName: dto.LatestSubmission.FileName,
+            fileSize: dto.LatestSubmission.FileSize,
+          }
         : undefined,
     };
   }
 
   private mapPortfolioDto(dto: PortfolioDto): Portfolio {
     return {
-      id: dto.Id,
-      studentId: dto.StudentId,
+      id: dto.Id || `${dto.StudentId}-${dto.SubjectId}`,
+      studentId: String(dto.StudentId),
       studentName: dto.StudentName,
-      subjectId: dto.SubjectId,
+      subjectId: String(dto.SubjectId),
       subjectName: dto.SubjectName,
-      submissions: dto.Submissions.map((s) => this.mapSubmission(s)),
+      submissions: dto.Submissions.map((s) => ({
+        id: String(s.Id),
+        title: s.FileName,
+        content: '',
+        submittedAt: new Date(s.UploadDate),
+        type: 'file-upload' as const,
+        fileUrl: s.DownloadUrl,
+        fileName: s.FileName,
+        fileSize: this.formatFileSize(s.FileSize),
+      })),
       feedback: dto.Feedback.map((f) => ({
-        id: f.Id,
-        teacherId: f.TeacherId,
+        id: String(f.Id),
+        teacherId: String(f.TeacherId),
         teacherName: f.TeacherName,
         content: f.Content,
         createdAt: new Date(f.CreatedAt),
         type: f.Type,
       })),
       badges: dto.Badges.map((b) => ({
-        id: b.Id,
+        id: String(b.Id),
         name: b.Name,
         icon: b.Icon,
         description: b.Description,
@@ -548,63 +588,45 @@ export class PortfolioService extends BaseHttpService {
       })),
       likes: dto.Likes,
       isLiked: dto.IsLiked,
-      lastUpdated: new Date(dto.LastUpdated),
-    };
-  }
-
-  private mapSubmission(dto: {
-    Id: string;
-    Title: string;
-    Content: string;
-    SubmittedAt: string;
-    Type: 'onenote' | 'file-upload';
-    FileUrl?: string;
-    FileName?: string;
-    FileSize?: string;
-  }): Submission {
-    return {
-      id: dto.Id,
-      title: dto.Title,
-      content: dto.Content,
-      submittedAt: new Date(dto.SubmittedAt),
-      type: dto.Type,
-      fileUrl: dto.FileUrl,
-      fileName: dto.FileName,
-      fileSize: dto.FileSize,
+      lastUpdated: dto.LastUpdated ? new Date(dto.LastUpdated) : new Date(),
     };
   }
 
   private mapStudentPortfolioDto(dto: StudentPortfolioDto): Student {
+    // All IDs are strings
+    const studentId = String(dto.StudentId || (dto as any).studentId || '');
+    const classId = String(dto.ClassId || (dto as any).classId || '');
+    
     return {
-      id: dto.StudentId.toString(),
-      name: dto.StudentName,
-      email: dto.Email || '',
+      id: studentId,
+      name: dto.StudentName || (dto as any).studentName || '',
+      email: dto.Email || (dto as any).email || '',
       avatar: '',
-      portfolioStatus: this.mapPortfolioStatus(dto.PortfolioStatus),
-      latestSubmission: dto.LastSubmissionDate
+      portfolioStatus: this.mapPortfolioStatus(dto.PortfolioStatus || (dto as any).portfolioStatus || 'Pending'),
+      latestSubmission: (dto.LastSubmissionDate || (dto as any).lastSubmissionDate)
         ? {
             id: 'latest',
             title: 'Latest Submission',
             content: '',
-            submittedAt: new Date(dto.LastSubmissionDate),
+            submittedAt: new Date(dto.LastSubmissionDate || (dto as any).lastSubmissionDate),
             type: 'file-upload',
           }
         : undefined,
       // Include class information
-      classId: dto.ClassId?.toString(),
-      className: dto.ClassName,
+      classId: classId,
+      className: dto.ClassName || (dto as any).className || '',
     };
   }
 
   private mapStudentPortfolioDetailDto(dto: StudentPortfolioDetailDto): Portfolio {
     return {
       id: `portfolio-${dto.StudentId}-${dto.SubjectId}`,
-      studentId: dto.StudentId.toString(),
+      studentId: String(dto.StudentId || ''), // Ensure it's a string
       studentName: dto.StudentName,
-      subjectId: dto.SubjectId.toString(),
+      subjectId: String(dto.SubjectId || ''), // Ensure it's a string
       subjectName: dto.SubjectName,
       submissions: dto.Files.map((f) => ({
-        id: f.Id.toString(),
+        id: String(f.Id || ''), // Ensure it's a string
         title: f.FileName,
         content: '',
         submittedAt: new Date(f.UploadedAt),

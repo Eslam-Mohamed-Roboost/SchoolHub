@@ -1,8 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ClassService } from '../../services/class.service';
 import { ClassStudent } from '../../models/class.model';
+import { ToastService } from '../../../../shared/services/toast.service';
 
 @Component({
   selector: 'app-class-students',
@@ -58,13 +59,22 @@ import { ClassStudent } from '../../models/class.model';
                       </td>
                       <td>{{ formatDate(student.lastLogin) }}</td>
                       <td>
-                        <button class="btn btn-sm btn-outline-primary me-1">
+                        <button 
+                          class="btn btn-sm btn-outline-primary me-1"
+                          (click)="viewGrades(student.id)"
+                          title="View student grades">
                           <i class="fas fa-graduation-cap me-1"></i>View Grades
                         </button>
-                        <button class="btn btn-sm btn-outline-success me-1">
+                        <button 
+                          class="btn btn-sm btn-outline-success me-1"
+                          (click)="createExercise(student.id)"
+                          title="Create exercise for this student">
                           <i class="fas fa-tasks me-1"></i>Create Exercise
                         </button>
-                        <button class="btn btn-sm btn-outline-info">
+                        <button 
+                          class="btn btn-sm btn-outline-info"
+                          (click)="createExam(student.id)"
+                          title="Create exam for this student">
                           <i class="fas fa-clipboard-list me-1"></i>Create Exam
                         </button>
                       </td>
@@ -82,14 +92,18 @@ import { ClassStudent } from '../../models/class.model';
 export class ClassStudentsComponent implements OnInit {
   private classService = inject(ClassService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private toastService = inject(ToastService);
 
   students = signal<ClassStudent[]>([]);
   className = signal('');
   loading = signal(true);
+  classId = signal<string | null>(null);
 
   ngOnInit(): void {
     const classId = this.route.snapshot.paramMap.get('id');
     if (classId) {
+      this.classId.set(classId);
       this.loadStudents(classId);
     }
   }
@@ -114,6 +128,55 @@ export class ClassStudentsComponent implements OnInit {
   formatDate(date?: Date): string {
     if (!date) return 'Never';
     return new Date(date).toLocaleDateString();
+  }
+
+  viewGrades(studentId: string): void {
+    const classId = this.classId();
+    if (classId) {
+      this.router.navigate(['/teacher/grades'], {
+        queryParams: { studentId, classId }
+      });
+    } else {
+      this.toastService.showMessage(
+        'Class ID not available for viewing grades',
+        'error',
+        3000
+      );
+    }
+  }
+
+  createExercise(studentId: string): void {
+    const classId = this.classId();
+    
+    if (!classId) {
+      this.toastService.showMessage(
+        'Class ID not available for creating exercise',
+        'error',
+        3000
+      );
+      return;
+    }
+    
+    this.router.navigate(['/teacher/exercises/create'], {
+      queryParams: { studentId, classId }
+    });
+  }
+
+  createExam(studentId: string): void {
+    const classId = this.classId();
+    
+    if (!classId) {
+      this.toastService.showMessage(
+        'Class ID not available for creating exam',
+        'error',
+        3000
+      );
+      return;
+    }
+    
+    this.router.navigate(['/teacher/exams/create'], {
+      queryParams: { studentId, classId }
+    });
   }
 }
 

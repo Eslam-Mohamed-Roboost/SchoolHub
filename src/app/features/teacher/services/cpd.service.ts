@@ -3,8 +3,8 @@ import { BaseHttpService } from '../../../core/services/base-http.service';
 import { Teacher_API_ENDPOINTS } from '../../../config/TeacherConfig/TeacherEndpoint';
 import { CpdHoursSummary } from '../../student/models/learning-hours.model';
 import { CPDModule, CPDProgress } from '../models/cpd.model';
-import { Observable } from 'rxjs';
-
+import { Observable, tap } from 'rxjs';
+ 
 // CPD Stats interface (for compatibility with existing components)
 export interface CPDStats {
   completedModules: number;
@@ -46,9 +46,33 @@ export class CpdService extends BaseHttpService {
 
   loadModules(): void {
     this.isLoading.set(true);
+    // BaseHttpService.transformResponse unwraps ApiResponse and returns Data directly
     this.get<CPDModule[]>(Teacher_API_ENDPOINTS.CPD.MODULES).subscribe({
       next: (modules) => {
-        this.modules.set(modules);
+        if (modules && Array.isArray(modules)) {
+          // Map backend DTOs to frontend models
+          const mappedModules = modules.map((m: any) => ({
+            id: m.Id.toString(),
+            title: m.Title,
+            duration: m.Duration,
+            status: m.Status || 'not-started',
+            icon: m.Icon || 'fas fa-book',
+            color: m.Color || '#6366f1',
+            bgColor: m.BgColor || 'rgba(99, 102, 241, 0.1)',
+            videoUrl: m.VideoUrl || '',
+            videoProvider: (m.VideoProvider || 'youtube') as 'youtube' | 'vimeo' | 'self-hosted',
+            guideContent: m.GuideContent || '',
+            formUrl: m.FormUrl || '',
+            evidenceFiles: m.EvidenceFiles || [],
+            completedAt: m.CompletedAt ? new Date(m.CompletedAt) : undefined,
+            startedAt: m.StartedAt ? new Date(m.StartedAt) : undefined,
+            lastAccessedAt: m.LastAccessedAt ? new Date(m.LastAccessedAt) : undefined,
+          }));
+          this.modules.set(mappedModules);
+        } else {
+          console.error('Failed to load CPD modules: Invalid response format');
+          this.modules.set(this.getMockModules());
+        }
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -64,41 +88,118 @@ export class CpdService extends BaseHttpService {
     return this.modules().find(m => m.id === moduleId);
   }
 
-  markModuleInProgress(moduleId: string): void {
-    // TODO: Call actual API endpoint
-    this.modules.update(modules => 
-      modules.map(m => 
-        m.id === moduleId ? { ...m, status: 'in-progress', startedAt: new Date() } : m
-      )
+  /**
+   * Load a single module detail from the API
+   * This ensures fresh data is loaded even on page refresh
+   */
+  loadModuleDetail(moduleId: string): Observable<CPDModule> {
+    // BaseHttpService.transformResponse unwraps ApiResponse and returns Data directly
+    return this.get<CPDModule>(Teacher_API_ENDPOINTS.CPD.MODULE_DETAIL(moduleId)).pipe(
+      tap((moduleData) => {
+        if (moduleData) {
+          const mappedModule = this.mapModuleDto(moduleData);
+          // Update the module in the modules array
+          this.modules.update(modules => {
+            const index = modules.findIndex(m => m.id === moduleId);
+            if (index !== -1) {
+              const updated = [...modules];
+              updated[index] = mappedModule;
+              return updated;
+            } else {
+              // If module not in list, add it
+              return [...modules, mappedModule];
+            }
+          });
+        }
+      })
     );
-    console.log(`Module ${moduleId} marked as in progress`);
   }
 
-  markModuleComplete(moduleId: string): void {
-    // TODO: Call actual API endpoint
-    this.modules.update(modules => 
-      modules.map(m => 
-        m.id === moduleId 
-          ? { ...m, status: 'completed', completedAt: new Date() } 
-          : m
-      )
+  markModuleInProgress(moduleId: string): Observable<CPDModule> {
+    // BaseHttpService.transformResponse unwraps ApiResponse and returns Data directly
+    return this.post<{ Status: string }, CPDModule>(
+      Teacher_API_ENDPOINTS.CPD.UPDATE_STATUS(moduleId),
+      { Status: 'in-progress' }
+    ).pipe(
+      tap((moduleData) => {
+        if (moduleData) {
+          const updatedModule = this.mapModuleDto(moduleData);
+          this.modules.update(modules => 
+            modules.map(m => m.id === moduleId ? updatedModule : m)
+          );
+        }
+      })
     );
-    console.log(`Module ${moduleId} marked as complete`);
-    
-    // Reload progress and stats
-    this.loadProgress();
-    this.loadStats();
-    this.loadCpdHours();
   }
 
-  uploadEvidence(moduleId: string, fileList: FileList): void {
-    // TODO: Implement actual file upload
-    console.log(`Uploading evidence for module ${moduleId}`, fileList);
+  markModuleComplete(moduleId: string): Observable<CPDModule> {
+    // BaseHttpService.transformResponse unwraps ApiResponse and returns Data directly
+    return this.post<{ Status: string }, CPDModule>(
+      Teacher_API_ENDPOINTS.CPD.UPDATE_STATUS(moduleId),
+      { Status: 'completed' }
+    ).pipe(
+      tap((moduleData) => {
+        if (moduleData) {
+          const updatedModule = this.mapModuleDto(moduleData);
+          this.modules.update(modules => 
+            modules.map(m => m.id === moduleId ? updatedModule : m)
+          );
+          
+          // Reload progress and stats
+          this.loadProgress();
+          this.loadStats();
+          this.loadCpdHours();
+        }
+      })
+    );
+  }
+
+  private mapModuleDto(dto: any): CPDModule {
+    return {
+      id: dto.Id.toString(),
+      title: dto.Title,
+      duration: dto.Duration,
+      status: dto.Status || 'not-started',
+      icon: dto.Icon || 'fas fa-book',
+      color: dto.Color || '#6366f1',
+      bgColor: dto.BgColor || 'rgba(99, 102, 241, 0.1)',
+      videoUrl: dto.VideoUrl || '',
+      videoProvider: (dto.VideoProvider || 'youtube') as 'youtube' | 'vimeo' | 'self-hosted',
+      guideContent: dto.GuideContent || '',
+      formUrl: dto.FormUrl || '',
+      evidenceFiles: dto.EvidenceFiles || [],
+      completedAt: dto.CompletedAt ? new Date(dto.CompletedAt) : undefined,
+      startedAt: dto.StartedAt ? new Date(dto.StartedAt) : undefined,
+      lastAccessedAt: dto.LastAccessedAt ? new Date(dto.LastAccessedAt) : undefined,
+    };
+  }
+
+  uploadEvidence(moduleId: string, fileList: FileList): Observable<CPDModule> {
+    const formData = new FormData();
     
-    // Mock implementation - mark module as complete after upload
-    setTimeout(() => {
-      this.markModuleComplete(moduleId);
-    }, 1000);
+    // Add files to FormData
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList.item(i);
+      if (file) {
+        formData.append('Files', file);
+      }
+    }
+
+    // BaseHttpService.transformResponse unwraps ApiResponse and returns Data directly
+    return this.post<FormData, CPDModule>(
+      Teacher_API_ENDPOINTS.CPD.UPLOAD_EVIDENCE(moduleId),
+      formData,
+      {} // No additional options needed for FormData
+    ).pipe(
+      tap((moduleData) => {
+        if (moduleData) {
+          const updatedModule = this.mapModuleDto(moduleData);
+          this.modules.update(modules => 
+            modules.map(m => m.id === moduleId ? updatedModule : m)
+          );
+        }
+      })
+    );
   }
 
   // ============================================
@@ -106,14 +207,39 @@ export class CpdService extends BaseHttpService {
   // ============================================
 
   loadProgress(): void {
-    // TODO: Replace with actual API call
+    // BaseHttpService.transformResponse unwraps ApiResponse and returns Data directly
+    this.get<CPDProgress>(Teacher_API_ENDPOINTS.CPD.PROGRESS).subscribe({
+      next: (data) => {
+        if (data) {
+          const progressData = data as any;
+          this.progress.set({
+            hoursCompleted: progressData.HoursCompleted || 0,
+            targetHours: progressData.TargetHours || 20,
+            completedModules: progressData.CompletedModules || 0,
+            totalModules: progressData.TotalModules || 0,
+            lastActivityDate: progressData.LastActivityDate ? new Date(progressData.LastActivityDate) : new Date(),
+            streak: progressData.Streak || 0
+          });
+        } else {
+          console.error('Failed to load CPD progress: Invalid response format');
+          this.calculateProgressFromModules();
+        }
+      },
+      error: (err) => {
+        console.error('Failed to load CPD progress:', err);
+        // Fallback: calculate from modules
+        this.calculateProgressFromModules();
+      }
+    });
+  }
+
+  private calculateProgressFromModules(): void {
     const modules = this.modules();
     const completedModules = modules.filter(m => m.status === 'completed').length;
     const hoursCompleted = modules
       .filter(m => m.status === 'completed')
-      .reduce((sum, m) => sum + (m.duration / 60), 0); // Convert minutes to hours
+      .reduce((sum, m) => sum + (m.duration / 60), 0);
     
-    // Get last activity date from most recent completed or started module
     const lastActivityDate = modules
       .filter(m => m.completedAt || m.startedAt)
       .sort((a, b) => {
@@ -124,11 +250,11 @@ export class CpdService extends BaseHttpService {
 
     this.progress.set({
       hoursCompleted,
-      targetHours: 20, // Default annual target
+      targetHours: 20,
       completedModules,
       totalModules: modules.length,
       lastActivityDate,
-      streak: this.calculateStreak(modules) // Calculate streak based on completion dates
+      streak: this.calculateStreak(modules)
     });
   }
 
@@ -167,13 +293,26 @@ export class CpdService extends BaseHttpService {
   // ============================================
 
   getCpdHoursSummary(): Observable<CpdHoursSummary> {
+    // BaseHttpService.transformResponse unwraps ApiResponse and returns Data directly
     return this.get<CpdHoursSummary>(Teacher_API_ENDPOINTS.CPD.HOURS);
   }
 
   loadCpdHours(): void {
     this.getCpdHoursSummary().subscribe({
       next: (data) => {
-        this.cpdHours.set(data);
+        if (data) {
+          this.cpdHours.set(data);
+        } else {
+          console.error('Failed to load CPD hours: Invalid response format');
+          // Set mock data on error
+          this.cpdHours.set({
+            totalHours: 15,
+            thisYearHours: 12,
+            annualGoal: 20,
+            progressPercentage: 60,
+            recentActivities: []
+          });
+        }
       },
       error: (err) => {
         console.error('Failed to load CPD hours:', err);

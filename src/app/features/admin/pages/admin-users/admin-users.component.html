@@ -19,51 +19,96 @@
 
   <!-- Filters Section -->
   <div class="filters-section">
-    <div class="search-box">
-      <input 
-        type="text"
-        placeholder="Search by name or email..."
-        [ngModel]="searchQuery()"
-        (ngModelChange)="onSearch($event)"
-        class="search-input" />
-      <span class="search-icon">🔍</span>
+    <div class="filters-header">
+      <h3 class="filters-title">Search & Filter Users</h3>
     </div>
+    
+    <div class="filters-content">
+      <div class="search-row">
+        <div class="search-box">
+          <input 
+            type="text"
+            placeholder="Search by name or email..."
+            [ngModel]="tempSearchQuery()"
+            (ngModelChange)="onSearchInput($event)"
+            (keydown.enter)="onSearchKeyPress($any($event))"
+            class="search-input" />
+        </div>
+      </div>
 
-    <div class="filter-group">
-      <select 
-        [value]="roleFilter()"
-        (change)="onRoleFilter($any($event.target).value)"
-        class="filter-select">
-        <option value="">All Roles</option>
-        @for (role of roles; track role) {
-          <option [value]="role">{{ getRoleName(role) }}</option>
+      <div class="filters-row">
+        <div class="filter-item">
+          <label class="filter-label">Role</label>
+          <select 
+            [value]="tempRoleFilter()"
+            (change)="onRoleFilterChange($any($event.target).value)"
+            class="filter-select">
+            <option value="">All Roles</option>
+            @for (role of roles; track role) {
+              <option [value]="role">{{ getRoleName(role) }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label class="filter-label">Status</label>
+          <select 
+            [value]="tempStatusFilter()"
+            (change)="onStatusFilterChange($any($event.target).value)"
+            class="filter-select">
+            <option value="">All Status</option>
+            @for (status of statuses; track status) {
+              <option [value]="status">{{ status }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-item">
+          <label class="filter-label">Class</label>
+          <select 
+            [value]="tempClassFilter()"
+            (change)="onClassFilterChange($any($event.target).value)"
+            class="filter-select">
+            <option value="">All Classes</option>
+            @for (cls of classes(); track cls.id) {
+              <option [value]="cls.id">
+                {{ cls.name || 'Unnamed Class' }} (Grade {{ cls.grade || 'N/A' }})
+              </option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="actions-row">
+        <button 
+          type="button"
+          class="btn btn-primary search-action-btn"
+          (click)="applySearch()"
+          title="Apply all filters">
+          <span class="icon">🔍</span>
+          Search
+        </button>
+
+        @if (hasActiveFilters()) {
+          <button 
+            type="button"
+            class="btn btn-secondary clear-filters-btn"
+            (click)="clearFilters()"
+            title="Clear all filters">
+            <span class="icon">✕</span>
+            Clear Filters
+          </button>
         }
-      </select>
 
-      <select 
-        [value]="statusFilter()"
-        (change)="onStatusFilter($any($event.target).value)"
-        class="filter-select">
-        <option value="">All Status</option>
-        @for (status of statuses; track status) {
-          <option [value]="status">{{ status }}</option>
-        }
-      </select>
-
-      <select 
-        [value]="classFilter()"
-        (change)="onClassFilter($any($event.target).value)"
-        class="filter-select">
-        <option value="">All Classes</option>
-        @for (cls of classes(); track cls.id) {
-          <option [value]="cls.id">{{ cls.name }} (Grade {{ cls.grade }})</option>
-        }
-      </select>
-
-      <button class="btn btn-text" (click)="exportUsers()">
-        <span class="icon">📊</span>
-        Export to Excel
-      </button>
+        <button 
+          type="button"
+          class="btn btn-text export-btn" 
+          (click)="exportUsers()"
+          title="Export to Excel">
+          <span class="icon">📊</span>
+          Export to Excel
+        </button>
+      </div>
     </div>
   </div>
 
@@ -102,7 +147,7 @@
             </td>
             <td>
               <span class="role-badge" [class]="getRoleBadgeClass(user.Role || user.role)">
-                {{ user.Role || user.role }}
+                {{ getRoleDisplayName(user.Role || user.role) }}
               </span>
             </td>
             <td>
@@ -149,6 +194,9 @@
                     🏫
                   </button>
                 }
+                <button class="btn-icon" title="Change Password" (click)="openChangePasswordModal(user)">
+                  🔑
+                </button>
                 <button class="btn-icon" title="Edit User" (click)="openEditUserModal(user)">
                   ✏️
                 </button>
@@ -349,24 +397,6 @@
             </div>
           }
 
-          @if (showEditUserModal() && isTeacher(selectedUser()!)) {
-            <div class="form-section">
-              <h3 class="section-title">Teacher Assignments</h3>
-              <div class="form-group">
-                <button 
-                  type="button"
-                  class="btn btn-outline-primary"
-                  (click)="openTeacherAssignmentsModal()">
-                  <span class="icon">🏫</span>
-                  Manage Class & Subject Assignments
-                </button>
-                <small class="text-muted d-block mt-2">
-                  Assign this teacher to classes and subjects
-                </small>
-              </div>
-            </div>
-          }
-
           <div class="form-section">
             <h3 class="section-title">Contact Information</h3>
             <div class="form-group">
@@ -431,6 +461,78 @@
   </div>
 }
 
+<!-- Change Password Modal -->
+@if (showChangePasswordModal()) {
+  <div class="modal-overlay" (click)="cancelChangePassword()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Change Password</h2>
+        <button class="modal-close" (click)="cancelChangePassword()">✕</button>
+      </div>
+
+      <form [formGroup]="passwordForm" (ngSubmit)="confirmChangePassword()">
+        <div class="modal-body">
+          <p>Change password for <strong>{{ selectedUser()?.Name || selectedUser()?.name }}</strong></p>
+          
+          <div class="form-group">
+            <label for="newPassword">New Password *</label>
+            <input 
+              type="password"
+              id="newPassword"
+              formControlName="newPassword"
+              class="form-input"
+              placeholder="Enter new password (min 6 characters)" />
+            @if (passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched) {
+              <span class="error-text">
+                @if (passwordForm.get('newPassword')?.errors?.['required']) {
+                  Password is required
+                } @else if (passwordForm.get('newPassword')?.errors?.['minlength']) {
+                  Password must be at least 6 characters
+                }
+              </span>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password *</label>
+            <input 
+              type="password"
+              id="confirmPassword"
+              formControlName="confirmPassword"
+              class="form-input"
+              placeholder="Confirm new password" />
+            @if (passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched) {
+              <span class="error-text">
+                @if (passwordForm.get('confirmPassword')?.errors?.['required']) {
+                  Please confirm the password
+                } @else if (passwordForm.get('confirmPassword')?.errors?.['passwordMismatch']) {
+                  Passwords do not match
+                }
+              </span>
+            }
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="cancelChangePassword()">
+            Cancel
+          </button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="passwordForm.invalid || isChangingPassword()">
+            @if (isChangingPassword()) {
+              <span class="spinner"></span> Changing...
+            } @else {
+              Change Password
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
 <!-- Quick Class Assignment Modal -->
 @if (showQuickClassAssign()) {
   <div class="modal-overlay" (click)="closeQuickClassAssign()">
@@ -464,7 +566,7 @@
         </button>
         <button 
           class="btn btn-primary" 
-          (click)="quickAssignClass(+classSelect.value)"
+          (click)="quickAssignClass(classSelect.value)"
           [disabled]="!classSelect.value || isUpdatingUser(selectedUser()?.id || '')">
           @if (isUpdatingUser(selectedUser()?.id || '')) {
             <span class="spinner"></span> Assigning...

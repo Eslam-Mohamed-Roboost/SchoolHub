@@ -243,24 +243,58 @@
 
           <div class="tracker-card">
             <h3>📖 Reading Progress</h3>
-            <p><strong>Current Level:</strong> {{ portfolioBook().exactPathProgress.reading.currentLevel }}</p>
-            <p><strong>Lessons Completed:</strong> {{ portfolioBook().exactPathProgress.reading.lessonsCompleted }}/{{ portfolioBook().exactPathProgress.reading.totalLessons }}</p>
-            <p><strong>Minutes This Week:</strong> {{ portfolioBook().exactPathProgress.reading.minutesThisWeek }} minutes</p>
-            <p><strong>Target Completion:</strong> {{ portfolioBook().exactPathProgress.reading.targetCompletion }}</p>
+            <p>
+              <strong>Current Level:</strong>
+              {{ portfolioBook().exactPathProgress.reading.currentLevel }}
+            </p>
+            <p>
+              <strong>Lessons Completed:</strong>
+              {{ portfolioBook().exactPathProgress.reading.lessonsCompleted }}/{{
+                portfolioBook().exactPathProgress.reading.totalLessons
+              }}
+            </p>
+            <p>
+              <strong>Minutes This Week:</strong>
+              {{ portfolioBook().exactPathProgress.reading.minutesThisWeek }} minutes
+            </p>
+            <p>
+              <strong>Target Completion:</strong>
+              {{ portfolioBook().exactPathProgress.reading.targetCompletion }}
+            </p>
           </div>
 
           <div class="tracker-card">
             <h3>📝 Vocabulary Skills</h3>
-            <p><strong>Current Level:</strong> {{ portfolioBook().exactPathProgress.vocabulary.currentLevel }}</p>
-            <p><strong>Words Mastered:</strong> {{ portfolioBook().exactPathProgress.vocabulary.wordsMastered }}</p>
-            <p><strong>Accuracy Rate:</strong> {{ portfolioBook().exactPathProgress.vocabulary.accuracyRate }}%</p>
+            <p>
+              <strong>Current Level:</strong>
+              {{ portfolioBook().exactPathProgress.vocabulary.currentLevel }}
+            </p>
+            <p>
+              <strong>Words Mastered:</strong>
+              {{ portfolioBook().exactPathProgress.vocabulary.wordsMastered }}
+            </p>
+            <p>
+              <strong>Accuracy Rate:</strong>
+              {{ portfolioBook().exactPathProgress.vocabulary.accuracyRate }}%
+            </p>
           </div>
 
           <div class="tracker-card">
             <h3>✏️ Grammar & Mechanics</h3>
-            <p><strong>Current Level:</strong> {{ portfolioBook().exactPathProgress.grammar.currentLevel }}</p>
-            <p><strong>Lessons Completed:</strong> {{ portfolioBook().exactPathProgress.grammar.lessonsCompleted }}/{{ portfolioBook().exactPathProgress.grammar.totalLessons }}</p>
-            <p><strong>Focus Areas:</strong> {{ portfolioBook().exactPathProgress.grammar.focusAreas.join(', ') }}</p>
+            <p>
+              <strong>Current Level:</strong>
+              {{ portfolioBook().exactPathProgress.grammar.currentLevel }}
+            </p>
+            <p>
+              <strong>Lessons Completed:</strong>
+              {{ portfolioBook().exactPathProgress.grammar.lessonsCompleted }}/{{
+                portfolioBook().exactPathProgress.grammar.totalLessons
+              }}
+            </p>
+            <p>
+              <strong>Focus Areas:</strong>
+              {{ portfolioBook().exactPathProgress.grammar.focusAreas.join(', ') }}
+            </p>
           </div>
 
           <span class="page-number">Page 5</span>
@@ -320,8 +354,9 @@
             @for (assignment of portfolioBook().assignments; track assignment.id) {
             <p>
               {{ getStatusIcon(assignment.status) }}
-              {{ assignment.name }} - {{ assignment.status }}
-              @if (assignment.grade) { ({{ assignment.grade }}) }
+              {{ assignment.name }} - {{ assignment.status }} @if (assignment.grade) { ({{
+                assignment.grade
+              }}) }
               <span style="opacity: 0.7">({{ assignment.dueDate | date : 'MMM d' }})</span>
             </p>
             }
@@ -338,16 +373,17 @@
         @if (currentPage() === 7) {
         <div class="page-content">
           <div class="page-header">
-            <h2>🤔 Weekly Reflection</h2>
-            <p>Filled Every Friday | Reflect on your learning journey</p>
+            <h2>🤔 Daily Reflection</h2>
+            <p>Filled Every Day | Reflect on your learning journey</p>
           </div>
 
           <div class="reflection-prompt">
-            <strong>💡 Reflection Prompt:</strong> Think about this week's learning. What went well? What was challenging?
+            <strong>💡 Reflection Prompt:</strong> Think about this week's learning. What went well?
+            What was challenging?
           </div>
 
           <div class="form-field">
-            <label for="reflectionWeekOf">Week of</label>
+            <label for="reflectionWeekOf">Date</label>
             <input
               id="reflectionWeekOf"
               type="date"
@@ -403,9 +439,18 @@
             </select>
           </div>
 
-          <button class="save-button" (click)="saveReflection()" [disabled]="isSaving()">
-            💾 Save This Week's Reflection
+          <button
+            class="save-button"
+            (click)="saveReflection()"
+            [disabled]="isSaving() || hasTodayReflection()"
+          >
+            💾 {{ hasTodayReflection() ? 'Reflection Saved Today' : "Save Today's Reflection" }}
           </button>
+          @if (hasTodayReflection()) {
+          <div class="success-message" style="margin-top: 1rem; color: #059669; font-weight: 500">
+            ✅ Amazing! You've already completed your reflection for today. See you tomorrow!
+          </div>
+          }
           <span class="page-number">Page 7</span>
         </div>
         }
@@ -471,9 +516,18 @@
             }
           </div>
 
-          <button class="save-button" (click)="saveJourneyEntry()" [disabled]="isSaving()">
-            💾 Save Learning Entry
+          <button
+            class="save-button"
+            (click)="saveJourneyEntry()"
+            [disabled]="isSaving() || hasTodayJourney()"
+          >
+            💾 {{ hasTodayJourney() ? 'Entry Saved Today' : 'Save Learning Entry' }}
           </button>
+          @if (hasTodayJourney()) {
+          <div class="success-message" style="margin-top: 1rem; color: #059669; font-weight: 500">
+            ✅ Great job! You've documented your journey entry for today. Keep growing!
+          </div>
+          }
           <span class="page-number">Page 8</span>
         </div>
         }
@@ -551,9 +605,9 @@
             <h3>📚 Completed Projects</h3>
             @for (project of portfolioBook().projects; track project.id) {
             <p>
-              {{ getProjectIcon(project.type) }} "{{ project.title }}"
-              ({{ project.completedDate | date : 'MMM yyyy' }})
-              @if (project.grade) { - Grade: {{ project.grade }} }
+              {{ getProjectIcon(project.type) }} "{{ project.title }}" ({{
+                project.completedDate | date : 'MMM yyyy'
+              }}) @if (project.grade) { - Grade: {{ project.grade }} }
             </p>
             }
           </div>
@@ -591,7 +645,9 @@
       </div>
       <div class="progress-card">
         <h3>Pages Completed</h3>
-        <div class="value">{{ portfolioBook().progress.pagesCompleted }}/{{ portfolioBook().progress.totalPages }}</div>
+        <div class="value">
+          {{ portfolioBook().progress.pagesCompleted }}/{{ portfolioBook().progress.totalPages }}
+        </div>
       </div>
       <div class="progress-card">
         <h3>Reflections This Term</h3>

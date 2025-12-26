@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ProgressCardComponent } from '../../../../shared/ui/progress-card/progress-card.component';
 import { CpdService } from '../../services/cpd.service';
@@ -20,7 +20,7 @@ import { CpdService } from '../../services/cpd.service';
               [target]="progressData?.targetHours || 0"
               unit="hours"
               color="#6366f1"
-              [subtitle]="progressData?.lastActivityDate ? 'Last activity: ' + formatDate(progressData.lastActivityDate) : 'No activity yet'"
+              [subtitle]="'Last activity: ' + formatDate(progressData?.lastActivityDate)"
             />
           </div>
           <div class="col-md-6">
@@ -220,10 +220,15 @@ import { CpdService } from '../../services/cpd.service';
   `,
   styleUrls: ['../../teacher.css'],
 })
-export class TeacherCpdComponent {
+export class TeacherCpdComponent implements OnInit {
   private cpdService = inject(CpdService);
   progress = this.cpdService.getProgress();
   stats = this.cpdService.getStats();
+
+  ngOnInit(): void {
+    // Initialize and load CPD data from API
+    this.cpdService.init();
+  }
 
   get progressData() {
     return this.progress();
@@ -233,8 +238,10 @@ export class TeacherCpdComponent {
     return this.stats();
   }
 
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('en-US', {
+  formatDate(date: Date | string | null | undefined): string {
+    if (!date) return 'No activity yet';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',

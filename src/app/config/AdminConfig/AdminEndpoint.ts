@@ -18,11 +18,11 @@ export const Admin_API_ENDPOINTS = {
   // ============================================
   Classes: {
     GET_ALL: '/Admin/Classes',
-    GET_BY_ID: (id: number) => `/Admin/Classes/${id}`,
+    GET_BY_ID: (id: string) => `/Admin/Classes/${id}`,
     DROPDOWN: '/Admin/Classes/Dropdown',
     CREATE: '/Admin/Classes',
-    UPDATE: (id: number) => `/Admin/Classes/${id}`,
-    DELETE: (id: number) => `/Admin/Classes/${id}`,
+    UPDATE: (id: string) => `/Admin/Classes/${id}`,
+    DELETE: (id: string) => `/Admin/Classes/${id}`,
   },
 
   // ============================================
@@ -47,6 +47,7 @@ export const Admin_API_ENDPOINTS = {
     GET_ALL: '/Admin/Users',
     UPDATE_STATUS: '/Admin/Users/Status',
     UPDATE: (id: string) => `/Admin/Users/${id}`,
+    CHANGE_PASSWORD: (id: string) => `/Admin/Users/${id}/ChangePassword`,
   },
 
   // ============================================
@@ -147,6 +148,11 @@ export const Admin_API_ENDPOINTS = {
     CREATE: '/Admin/Missions',
     UPDATE: (id: string) => `/Admin/Missions/${id}`,
     DELETE: (id: string) => `/Admin/Missions/${id}`,
+    GET_RESOURCES: (missionId: string) => `/Admin/Missions/${missionId}/Resources`,
+    CREATE_RESOURCE: (missionId: string) => `/Admin/Missions/${missionId}/Resources`,
+    UPLOAD_RESOURCE: (missionId: string) => `/Admin/Missions/${missionId}/Resources/Upload`,
+    UPDATE_RESOURCE: (resourceId: string) => `/Admin/Missions/Resources/${resourceId}`,
+    DELETE_RESOURCE: (resourceId: string) => `/Admin/Missions/Resources/${resourceId}`,
   },
 
   // ============================================

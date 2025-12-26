@@ -238,13 +238,19 @@ export class AdminClassesComponent implements OnInit {
           }
         }
 
-        this.subjects.set(
-          subjectsData.map((s) => ({
-            Id: String(s.Id || s.id || ''),
-            Name: s.Name || s.name || '',
-            Icon: s.Icon || s.icon,
-          }))
-        );
+        // Map and deduplicate subjects by Id
+        const uniqueSubjectsMap = new Map<string, { Id: string; Name: string; Icon?: string }>();
+        subjectsData.forEach((s) => {
+          const id = String(s.Id || s.id || '');
+          if (id && !uniqueSubjectsMap.has(id)) {
+            uniqueSubjectsMap.set(id, {
+              Id: id,
+              Name: s.Name || s.name || '',
+              Icon: s.Icon || s.icon,
+            });
+          }
+        });
+        this.subjects.set(Array.from(uniqueSubjectsMap.values()));
       },
       error: (err) => {
         console.error('Failed to load subjects', err);

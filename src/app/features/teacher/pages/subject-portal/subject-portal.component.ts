@@ -1,10 +1,10 @@
 import { Component, signal, inject, OnInit, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { PortfolioService } from '../../services/portfolio.service';
 import { HttpClient } from '@angular/common/http';
-import { Admin_API_ENDPOINTS } from '../../../../config/AdminConfig/AdminEndpoint';
+import { Teacher_API_ENDPOINTS } from '../../../../config/TeacherConfig/TeacherEndpoint';
 import { environment } from '../../../../config/environment';
 
 @Component({
@@ -13,57 +13,70 @@ import { environment } from '../../../../config/environment';
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="subject-portal">
-      <div class="bg-white border-bottom py-3 mb-4 border-b border-gray-200">
-        <div class="container mx-auto px-4 d-flex align-items-center gap-3 flex items-center gap-4">
-          <button
-            class="btn btn-light rounded-circle p-2 rounded-full hover:bg-gray-200"
-            onclick="history.back()"
-          >
-            <i class="fas fa-arrow-left"></i>
-          </button>
-          <div class="d-flex align-items-center gap-3 flex items-center gap-3">
-            <div class="rounded-3 p-2 rounded-lg bg-indigo-100 text-indigo-600">
-              <i class="fas fa-folder-open fs-4 text-2xl"></i>
-            </div>
-            <div>
-              <h4 class="fw-bold mb-1 text-xl font-bold">Student Portfolio Hub</h4>
-              <p class="mb-0 text-muted small">
-                @if (selectedSubjectId()) {
-                  Reviewing portfolios for <strong>{{ subjectName() }}</strong>
+      <!-- Header -->
+      <div class="bg-white border-bottom shadow-sm sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4">
+          <div class="d-flex align-items-center gap-3">
+            <button
+              class="btn btn-light rounded-circle p-2"
+              (click)="goBack()"
+              type="button"
+            >
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="d-flex align-items-center gap-3 flex-grow-1">
+              <div class="rounded p-2 bg-indigo-100 text-indigo-600">
+                <i class="fas fa-folder-open fs-4"></i>
+              </div>
+              <div class="flex-grow-1">
+                <h4 class="fw-bold mb-1">Student Portfolio Hub</h4>
+                <p class="mb-0 text-muted small">
+                  @if (selectedSubjectId()) {
+                    Reviewing portfolios for <strong>{{ subjectName() }}</strong>
+                  } @else {
+                    Viewing all students
+                  }
+                </p>
+              </div>
+              <div>
+                @if (subjects().length === 0) {
+                <div class="text-muted small">
+                  <i class="fas fa-spinner fa-spin me-1"></i>Loading subjects...
+                </div>
                 } @else {
-                  Viewing all students
+                <select 
+                  class="form-select form-select-sm" 
+                  style="min-width: 200px; display: block;"
+                  [ngModel]="selectedSubjectId()"
+                  (ngModelChange)="onSubjectChange($event)">
+                  <option [value]="null">All Students</option>
+                  @for (subject of subjects(); track subject.Id) {
+                    <option [value]="subject.Id">{{ subject.Name }}</option>
+                  }
+                </select>
+                <small class="text-muted d-block mt-1">
+                  {{ subjects().length }} subject{{ subjects().length !== 1 ? 's' : '' }} available
+                </small>
                 }
-              </p>
-            </div>
-            <div class="ms-auto">
-              <select 
-                class="form-select form-select-sm" 
-                style="width: auto;"
-                [(ngModel)]="selectedSubjectId"
-                (ngModelChange)="onSubjectFilterChange()">
-                <option [value]="null">All Students</option>
-                @for (subject of subjects(); track subject.Id) {
-                  <option [value]="subject.Id">{{ subject.Name }}</option>
-                }
-              </select>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="container mx-auto px-4">
+      <div class="container mx-auto px-4 py-4">
         <!-- Tabs -->
-        <ul class="nav nav-pills mb-4 gap-2 flex gap-2 mb-6">
+        <ul class="nav nav-pills mb-4">
           @for (tab of tabs; track tab.id) {
           <li class="nav-item">
             <button
               [class]="
                 activeTab() === tab.id
-                  ? 'nav-link active bg-cyan-500 text-white'
-                  : 'nav-link bg-white text-dark border border-gray-200'
+                  ? 'nav-link active'
+                  : 'nav-link'
               "
               (click)="activeTab.set(tab.id)"
-              class="px-4 py-2 rounded-lg font-semibold transition-colors"
+              type="button"
             >
               {{ tab.label }}
             </button>
@@ -73,46 +86,40 @@ import { environment } from '../../../../config/environment';
 
         <!-- Tab Content -->
         @if (activeTab() === 'lesson-plans') {
-        <div class="card border-0 shadow-sm rounded-4 bg-white rounded-2xl shadow-sm">
-          <div
-            class="card-header bg-white border-bottom py-3 p-4 border-b border-gray-200 flex justify-between items-center"
-          >
-            <h5 class="fw-bold mb-0 font-bold text-lg">📂 Term 1 Resources</h5>
-            <button
-              class="btn btn-primary btn-sm rounded-pill bg-cyan-500 text-white px-4 py-2 rounded-full text-sm"
-            >
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
+            <h5 class="fw-bold mb-0">📂 Term 1 Resources</h5>
+            <button class="btn btn-primary btn-sm" type="button">
               <i class="fas fa-plus me-1"></i> Upload
             </button>
           </div>
-          <div class="list-group list-group-flush divide-y divide-gray-100">
-            <div
-              class="list-group-item py-3 p-4 d-flex align-items-center justify-content-between hover-bg flex justify-between items-center"
-            >
-              <div class="d-flex align-items-center gap-3 flex items-center gap-4">
-                <i class="fas fa-folder text-warning fs-4 text-yellow-500 text-2xl"></i>
+          <div class="list-group list-group-flush">
+            <div class="list-group-item py-3 px-4 d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-3">
+                <i class="fas fa-folder text-warning fs-4"></i>
                 <div>
-                  <h6 class="mb-0 fw-bold font-bold">Unit 1: Algebra Basics</h6>
-                  <small class="text-muted text-gray-500">Updated 2 days ago</small>
+                  <h6 class="mb-0 fw-bold">Unit 1: Algebra Basics</h6>
+                  <small class="text-muted">Updated 2 days ago</small>
                 </div>
               </div>
-              <i class="fas fa-chevron-right text-muted opacity-25"></i>
+              <i class="fas fa-chevron-right text-muted"></i>
             </div>
           </div>
         </div>
         } @if (activeTab() === 'assessments') {
-        <div class="text-center p-8 text-gray-400">
-          <i class="fas fa-clipboard-list text-6xl mb-4"></i>
-          <h3 class="text-xl font-bold">Assessments</h3>
-          <p>Quizzes and exams will appear here</p>
+        <div class="text-center p-5">
+          <i class="fas fa-clipboard-list fs-1 text-muted mb-3"></i>
+          <h3 class="fw-bold">Assessments</h3>
+          <p class="text-muted">Quizzes and exams will appear here</p>
         </div>
         } @if (activeTab() === 'ai-tools') {
-        <div class="text-center p-8 text-gray-400">
-          <i class="fas fa-robot text-6xl mb-4"></i>
-          <h3 class="text-xl font-bold">AI Tools</h3>
-          <p>Recommended AI tools for this subject</p>
+        <div class="text-center p-5">
+          <i class="fas fa-robot fs-1 text-muted mb-3"></i>
+          <h3 class="fw-bold">AI Tools</h3>
+          <p class="text-muted">Recommended AI tools for this subject</p>
         </div>
         } @if (activeTab() === 'student-work') {
-        <div class="card border-0 shadow-sm rounded-4">
+        <div class="card border-0 shadow-sm">
           <div
             class="card-header bg-white border-bottom py-3 px-4 d-flex justify-content-between align-items-center"
           >
@@ -139,17 +146,32 @@ import { environment } from '../../../../config/environment';
               >
             </div>
           </div>
+          @if (!selectedSubjectId()) {
+          <div class="alert alert-info m-4">
+            <i class="fas fa-info-circle me-2"></i>
+            Please select a subject from the dropdown above to view student portfolios.
+          </div>
+          }
           <div class="list-group list-group-flush">
+            @if (students().length === 0) {
+            <div class="list-group-item text-center py-5">
+              <i class="fas fa-users fs-1 text-muted mb-3"></i>
+              <p class="text-muted mb-0">No students found</p>
+            </div>
+            } @else {
             @for (student of students(); track student.id) {
             <a
-              [routerLink]="['/teacher/portfolio', student.id, subjectId]"
+              [routerLink]="selectedSubjectId() && selectedSubjectId() !== 'null' ? ['/teacher/portfolio', student.id, selectedSubjectId()] : null"
+              [class.disabled]="!selectedSubjectId() || selectedSubjectId() === 'null'"
               class="list-group-item list-group-item-action py-3"
+              (click)="(!selectedSubjectId() || selectedSubjectId() === 'null') && $event.preventDefault()"
+              [title]="(!selectedSubjectId() || selectedSubjectId() === 'null') ? 'Please select a subject first' : 'View portfolio'"
             >
               <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center gap-3">
                   <div
                     class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                    style="width: 45px; height: 45px; font-weight: bold;"
+                    style="width: 45px; height: 45px; font-weight: bold; font-size: 0.875rem;"
                   >
                     {{ getInitials(student.name) }}
                   </div>
@@ -190,6 +212,7 @@ import { environment } from '../../../../config/environment';
               </div>
             </a>
             }
+            }
           </div>
         </div>
         }
@@ -201,13 +224,14 @@ import { environment } from '../../../../config/environment';
 export class SubjectPortalComponent implements OnInit {
   private portfolioService = inject(PortfolioService);
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private http = inject(HttpClient);
 
   activeTab = signal('lesson-plans');
   subjectName = signal('All Students');
   subjectId = '';
   selectedSubjectId = signal<string | null>(null);
-  students = signal<any[]>([]);
+  students = this.portfolioService.getStudentsSignal();
   subjects = signal<Array<{ Id: string; Name: string; Icon?: string }>>([]);
 
   tabs = [
@@ -226,22 +250,28 @@ export class SubjectPortalComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.subjectId = this.route.snapshot.params['id'] || '';
-    if (this.subjectId) {
-      // If subject ID provided in route, use it
-      this.selectedSubjectId.set(this.subjectId);
-    } else {
-      // Otherwise, show all students
-      this.selectedSubjectId.set(null);
-    }
+    // Subscribe to route params to handle navigation changes
+    this.route.params.subscribe(params => {
+      this.subjectId = params['id'] || '';
+      if (this.subjectId) {
+        // If subject ID provided in route, use it
+        this.selectedSubjectId.set(this.subjectId);
+      } else {
+        // Otherwise, show all students
+        this.selectedSubjectId.set(null);
+      }
+    });
     this.loadSubjects();
-    this.loadStudents(this.selectedSubjectId() || undefined);
+    // Initial load will be handled by the effect in constructor
   }
 
   loadSubjects(): void {
-    const url = `${environment.apiUrl}/${Admin_API_ENDPOINTS.Subjects.GET_ALL}`.replace(/\/+/g, '/').replace(':/', '://');
+    // Load only subjects assigned to this teacher
+    const url = `${environment.apiUrl}/${Teacher_API_ENDPOINTS.Portfolio.MY_SUBJECTS}`.replace(/\/+/g, '/').replace(':/', '://');
+    console.log('Loading teacher subjects from:', url);
     this.http.get<any>(url).subscribe({
       next: (response) => {
+        console.log('Teacher subjects API response:', response);
         let subjectsData: any[] = [];
         // Handle API response wrapper
         if (response && typeof response === 'object') {
@@ -256,16 +286,20 @@ export class SubjectPortalComponent implements OnInit {
           }
         }
 
-        this.subjects.set(
-          subjectsData.map((s) => ({
-            Id: String(s.Id || s.id || ''),
-            Name: s.Name || s.name || '',
-            Icon: s.Icon || s.icon,
-          }))
-        );
+        console.log('Extracted subjects data:', subjectsData);
+        const mappedSubjects = subjectsData.map((s) => ({
+          Id: String(s.SubjectId || s.subjectId || s.Id || s.id || ''),
+          Name: s.SubjectName || s.subjectName || s.Name || s.name || '',
+          Icon: s.Icon || s.icon,
+        }));
+        console.log('Mapped subjects:', mappedSubjects);
+        console.log('Subjects signal before update:', this.subjects());
+        this.subjects.set(mappedSubjects);
+        console.log('Subjects signal after update:', this.subjects());
+        console.log('Subjects length:', this.subjects().length);
       },
       error: (err) => {
-        console.error('Failed to load subjects', err);
+        console.error('Failed to load teacher subjects', err);
         this.subjects.set([]);
       },
     });
@@ -280,8 +314,14 @@ export class SubjectPortalComponent implements OnInit {
       this.subjectName.set('All Students');
     }
 
-    const students = this.portfolioService.getStudents(subjectId);
-    this.students.set(students);
+    // Load students - the service will update its signal, which we're already subscribed to
+    this.portfolioService.getStudents(subjectId);
+  }
+
+  onSubjectChange(value: string | null): void {
+    console.log('Subject changed to:', value);
+    this.selectedSubjectId.set(value);
+    this.onSubjectFilterChange();
   }
 
   onSubjectFilterChange(): void {
@@ -334,5 +374,9 @@ export class SubjectPortalComponent implements OnInit {
 
   getStatusCount(status: string): number {
     return this.students().filter((s) => s.portfolioStatus === status).length;
+  }
+
+  goBack(): void {
+    this.router.navigate(['/teacher/dashboard']);
   }
 }

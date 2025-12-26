@@ -89,3 +89,48 @@
     color: white;
     transform: scale(1.1) rotate(5deg);
 }
+
+/* Subject Portal Styles */
+.subject-portal {
+    min-height: 100vh;
+    background-color: var(--teacher-bg);
+}
+
+.subject-portal .list-group-item-action {
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.subject-portal .list-group-item-action:hover:not(.disabled) {
+    background-color: #f8f9fa;
+    border-left-color: var(--teacher-primary);
+    transform: translateX(4px);
+}
+
+.subject-portal .list-group-item-action.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.subject-portal .nav-pills .nav-link {
+    border-radius: 8px;
+    margin-right: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.subject-portal .nav-pills .nav-link.active {
+    background-color: var(--teacher-primary);
+    color: white;
+}
+
+.subject-portal .nav-pills .nav-link:not(.active) {
+    background-color: white;
+    color: #495057;
+    border: 1px solid #dee2e6;
+}
+
+.subject-portal .nav-pills .nav-link:not(.active):hover {
+    background-color: #f8f9fa;
+    border-color: var(--teacher-primary);
+}

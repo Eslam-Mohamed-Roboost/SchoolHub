@@ -53,6 +53,19 @@ export class DigitalPortfolioBookComponent implements OnInit {
     return book || this.getEmptyBook();
   });
 
+  // Check if today's entries already exist
+  hasTodayReflection = computed(() => {
+    const reflections = this.portfolioBook().reflections;
+    const today = new Date().toDateString();
+    return reflections.some((r) => new Date(r.weekOf).toDateString() === today);
+  });
+
+  hasTodayJourney = computed(() => {
+    const entries = this.portfolioBook().journeyEntries;
+    const today = new Date().toDateString();
+    return entries.some((e) => new Date(e.date).toDateString() === today);
+  });
+
   readonly bookPages: BookPage[] = [
     { id: 1, title: 'All About Me', icon: '📖', description: 'Student profile' },
     { id: 2, title: 'Goal Setting', icon: '🎯', description: 'Learning goals' },
@@ -60,7 +73,7 @@ export class DigitalPortfolioBookComponent implements OnInit {
     { id: 4, title: 'MAP Scores', icon: '📊', description: 'Assessment tracker' },
     { id: 5, title: 'Exact Path', icon: '🎮', description: 'Progress tracker' },
     { id: 6, title: 'Assignments', icon: '📝', description: 'Assignment tracker' },
-    { id: 7, title: 'Reflections', icon: '🤔', description: 'Weekly reflections' },
+    { id: 7, title: 'Daily Reflection', icon: '🤔', description: 'Daily learning reflections' },
     { id: 8, title: 'Learning Journey', icon: '🚀', description: 'Growth documentation' },
     { id: 9, title: 'My Projects', icon: '🎨', description: 'Project showcase' },
   ];
@@ -266,6 +279,10 @@ export class DigitalPortfolioBookComponent implements OnInit {
   }
 
   saveReflection(): void {
+    if (this.hasTodayReflection()) {
+      console.warn('Reflection already submitted for today');
+      return;
+    }
     this.isSaving.set(true);
     this.portfolioBookService.saveReflection(this.subjectId, this.newReflection).subscribe({
       next: (saved) => {
@@ -288,6 +305,10 @@ export class DigitalPortfolioBookComponent implements OnInit {
   }
 
   saveJourneyEntry(): void {
+    if (this.hasTodayJourney()) {
+      console.warn('Journey entry already submitted for today');
+      return;
+    }
     this.isSaving.set(true);
     this.portfolioBookService.saveJourneyEntry(this.subjectId, this.newJourneyEntry).subscribe({
       next: (saved) => {

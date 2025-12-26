@@ -45,7 +45,7 @@
         <thead>
           <tr>
             <th>Icon</th>
-            <th>Name</th>
+            
             <th>Title</th>
             <th>Order</th>
             <th>Status</th>
@@ -59,9 +59,7 @@
               <td>
                 <span class="mission-icon-large">{{ mission.icon }}</span>
               </td>
-              <td>
-                <div class="mission-name">{{ mission.name }}</div>
-              </td>
+             
               <td>
                 <div class="mission-title">{{ mission.title }}</div>
               </td>
@@ -79,6 +77,9 @@
               </td>
               <td>
                 <div class="action-buttons">
+                  <button class="btn-icon" title="Manage Resources" (click)="openEditMissionModal(mission)">
+                    📚
+                  </button>
                   <button class="btn-icon" title="Edit Mission" (click)="openEditMissionModal(mission)">
                     ✏️
                   </button>
@@ -189,25 +190,7 @@
           }
 
           <div class="form-row">
-            <div class="form-group">
-              <label for="missionName">Name *</label>
-              <input 
-                type="text"
-                id="missionName"
-                formControlName="name"
-                class="form-input"
-                [class.is-invalid]="missionNameError() || (missionForm.get('name')?.invalid && missionForm.get('name')?.touched)"
-                placeholder="e.g., Digital Citizenship" />
-              @if (missionNameError()) {
-                <div class="invalid-feedback d-block small text-start mt-1">
-                  {{ missionNameError() }}
-                </div>
-              } @else if (missionForm.get('name')?.invalid && missionForm.get('name')?.touched) {
-                <div class="invalid-feedback d-block small text-start mt-1">
-                  Name is required (min 3 characters)
-                </div>
-              }
-            </div>
+             
 
             <div class="form-group">
               <label for="missionTitle">Title *</label>
@@ -330,6 +313,59 @@
               <span>Mission Enabled</span>
             </label>
           </div>
+
+          <!-- Resources Section -->
+          @if (selectedMission()) {
+            <div class="form-group">
+              <div class="form-group-header">
+                <label>Learning Resources</label>
+                <button type="button" class="btn btn-text btn-sm" (click)="openAddResourceModal(selectedMission()!.id)">
+                  + Add Resource
+                </button>
+              </div>
+              <div class="resources-container">
+                @if (missionChallengeService.getIsLoading()) {
+                  <div class="text-center py-2">
+                    <span class="spinner-border spinner-border-sm text-primary"></span>
+                    <span class="ms-2 small">Loading resources...</span>
+                  </div>
+                } @else if (getMissionResources(selectedMission()!.id).length > 0) {
+                  @for (resource of getMissionResources(selectedMission()!.id); track resource.id) {
+                    <div class="resource-item">
+                      <div class="resource-icon">{{ getResourceTypeIcon(resource.type) }}</div>
+                      <div class="resource-info">
+                        <div class="resource-title">
+                          {{ resource.title }}
+                          @if (resource.isRequired) {
+                            <span class="status-badge status-inactive ms-2">Required</span>
+                          }
+                        </div>
+                        <div class="resource-url">{{ resource.url }}</div>
+                        @if (resource.description) {
+                          <div class="resource-description">{{ resource.description }}</div>
+                        }
+                      </div>
+                      <div class="resource-actions">
+                        <button type="button" class="btn-icon-small" title="Edit Resource" (click)="openEditResourceModal(resource, selectedMission()!.id)">
+                          ✏️
+                        </button>
+                        <button type="button" class="btn-icon-small" title="Delete Resource" (click)="openDeleteResourceConfirm(resource, selectedMission()!.id)">
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  }
+                } @else {
+                  <p class="text-muted small">No resources added. Click "Add Resource" to add learning materials.</p>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="form-group">
+              <label>Learning Resources</label>
+              <p class="text-muted small">You can add resources after creating the mission.</p>
+            </div>
+          }
         </div>
 
         <div class="modal-footer">
@@ -551,6 +587,196 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="cancelDeleteChallenge()">Cancel</button>
         <button class="btn btn-danger" (click)="confirmDeleteChallenge()">Delete Challenge</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Add/Edit Resource Modal -->
+@if (showResourceModal()) {
+  <div class="modal-overlay" (click)="closeResourceModal()">
+    <div class="modal-content modal-medium" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editingResource() ? 'Edit Resource' : 'Add New Resource' }}</h2>
+        <button class="modal-close" (click)="closeResourceModal()">✕</button>
+      </div>
+
+      <form [formGroup]="resourceForm" (ngSubmit)="onSubmitResource()">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="resourceType">Resource Type *</label>
+            <select 
+              id="resourceType"
+              formControlName="type"
+              class="form-select"
+              [class.is-invalid]="resourceForm.get('type')?.invalid && resourceForm.get('type')?.touched">
+              <option value="video">📹 Video</option>
+              <option value="article">📄 Article</option>
+              <option value="interactive">🎮 Interactive</option>
+              <option value="pdf">📕 PDF</option>
+            </select>
+            @if (resourceForm.get('type')?.invalid && resourceForm.get('type')?.touched) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                Resource type is required
+              </div>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="resourceTitle">Title *</label>
+            <input 
+              type="text"
+              id="resourceTitle"
+              formControlName="title"
+              class="form-input"
+              [class.is-invalid]="resourceForm.get('title')?.invalid && resourceForm.get('title')?.touched"
+              placeholder="e.g., Introduction to Digital Citizenship" />
+            @if (resourceForm.get('title')?.invalid && resourceForm.get('title')?.touched) {
+              <div class="invalid-feedback d-block small text-start mt-1">
+                Title is required (min 3 characters)
+              </div>
+            }
+          </div>
+
+          <!-- File Upload or URL Option -->
+          <div class="form-group">
+            <label>Resource Source *</label>
+            <div class="resource-source-tabs">
+              <button 
+                type="button"
+                class="tab-button"
+                [class.active]="resourceUploadMode() === 'url'"
+                (click)="setResourceUploadMode('url')">
+                📎 External URL
+              </button>
+              <button 
+                type="button"
+                class="tab-button"
+                [class.active]="resourceUploadMode() === 'file'"
+                (click)="setResourceUploadMode('file')">
+                📤 Upload File
+              </button>
+            </div>
+          </div>
+
+          @if (resourceUploadMode() === 'url') {
+            <div class="form-group">
+              <label for="resourceUrl">URL *</label>
+              <input 
+                type="url"
+                id="resourceUrl"
+                formControlName="url"
+                class="form-input"
+                [class.is-invalid]="resourceForm.get('url')?.invalid && resourceForm.get('url')?.touched"
+                placeholder="https://example.com/resource" />
+              @if (resourceForm.get('url')?.invalid && resourceForm.get('url')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Valid URL is required (must start with http:// or https://)
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="form-group">
+              <label for="resourceFile">File *</label>
+              <input 
+                type="file"
+                id="resourceFile"
+                #fileInput
+                (change)="onResourceFileSelected($event)"
+                class="form-input"
+                [accept]="getFileAcceptTypes()" />
+              @if (selectedResourceFile()) {
+                <div class="file-info">
+                  <i class="fas fa-file"></i>
+                  <span>{{ selectedResourceFile()!.name }}</span>
+                  <span class="file-size">({{ formatFileSize(selectedResourceFile()!.size) }})</span>
+                  <button type="button" class="btn-remove-file" (click)="clearResourceFile()">✕</button>
+                </div>
+              }
+              <small class="text-muted d-block mt-1">
+                Max size: {{ resourceForm.get('type')?.value === 'video' ? '100 MB' : '50 MB' }}
+                @if (resourceForm.get('type')?.value === 'video') {
+                  <br>Supported: MP4, WebM, OGG, MOV, AVI, MKV, M4V
+                } @else if (resourceForm.get('type')?.value === 'pdf') {
+                  <br>Supported: PDF
+                } @else if (resourceForm.get('type')?.value === 'article') {
+                  <br>Supported: PDF, DOCX, TXT, HTML
+                }
+              </small>
+            </div>
+          }
+
+          <div class="form-group">
+            <label for="resourceDescription">Description (Optional)</label>
+            <textarea 
+              id="resourceDescription"
+              formControlName="description"
+              class="form-textarea"
+              rows="3"
+              placeholder="Brief description of the resource..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="resourceOrder">Order *</label>
+              <input 
+                type="number"
+                id="resourceOrder"
+                formControlName="order"
+                class="form-input"
+                [class.is-invalid]="resourceForm.get('order')?.invalid && resourceForm.get('order')?.touched"
+                min="0"
+                placeholder="0" />
+              @if (resourceForm.get('order')?.invalid && resourceForm.get('order')?.touched) {
+                <div class="invalid-feedback d-block small text-start mt-1">
+                  Order is required (min 0)
+                </div>
+              }
+            </div>
+
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox"
+                  formControlName="isRequired"
+                  class="form-checkbox" />
+                <span>Required Resource</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeResourceModal()">
+            Cancel
+          </button>
+          <button type="submit" class="btn btn-primary" [disabled]="resourceForm.invalid || isSubmitting()">
+            @if (isSubmitting()) {
+              <span class="spinner-border spinner-border-sm me-2"></span>
+            }
+            {{ editingResource() ? 'Update Resource' : 'Create Resource' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Resource Confirmation Modal -->
+@if (showDeleteResourceConfirm()) {
+  <div class="modal-overlay" (click)="cancelDeleteResource()">
+    <div class="modal-content modal-small" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Confirm Delete</h2>
+        <button class="modal-close" (click)="cancelDeleteResource()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete the resource <strong>{{ selectedResource()?.title }}</strong>?</p>
+        <p class="warning-text">This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="cancelDeleteResource()">Cancel</button>
+        <button class="btn btn-danger" (click)="confirmDeleteResource()">Delete Resource</button>
       </div>
     </div>
   </div>

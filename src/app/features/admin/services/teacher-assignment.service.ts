@@ -57,10 +57,12 @@ export class TeacherAssignmentService extends BaseHttpService {
    * Get all assignments for a teacher
    */
   getTeacherAssignments(teacherId: string): Observable<TeacherAssignmentInfo[]> {
+    console.log('TeacherAssignmentService: Getting assignments for teacher:', teacherId);
     return this.get<ApiResponse<TeacherAssignmentInfo[]> | TeacherAssignmentInfo[]>(
       Admin_API_ENDPOINTS.Teachers.ASSIGNMENTS(teacherId)
     ).pipe(
       map((response) => {
+        console.log('TeacherAssignmentService: Raw response:', response);
         let assignments: TeacherAssignmentInfo[] = [];
 
         if (Array.isArray(response)) {
@@ -71,8 +73,10 @@ export class TeacherAssignmentService extends BaseHttpService {
           assignments = response.Data;
         }
 
+        console.log('TeacherAssignmentService: Extracted assignments:', assignments);
+
         // Map backend long IDs to frontend strings
-        return assignments.map((a) => ({
+        const mappedAssignments = assignments.map((a) => ({
           Id: String(a.Id || (a as any).id || ''),
           ClassId: String(a.ClassId || (a as any).classId || ''),
           ClassName: a.ClassName || (a as any).className || '',
@@ -81,8 +85,12 @@ export class TeacherAssignmentService extends BaseHttpService {
           SubjectName: a.SubjectName || (a as any).subjectName || '',
           AssignedAt: a.AssignedAt || (a as any).assignedAt || '',
         }));
+        
+        console.log('TeacherAssignmentService: Mapped assignments:', mappedAssignments);
+        return mappedAssignments;
       }),
       tap((assignments) => {
+        console.log('TeacherAssignmentService: Caching assignments:', assignments);
         // Cache assignments
         this.assignments.update((map) => {
           const newMap = new Map(map);

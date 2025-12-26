@@ -24,6 +24,7 @@ export interface CurrentUser {
       </div>
 
       <div class="card-body p-4">
+        @if (leaders().length > 0) {
         <!-- Top 3 Leaders -->
         @for (leader of leaders(); track leader.rank) {
         <div
@@ -87,6 +88,25 @@ export interface CurrentUser {
             </div>
             <span class="badge bg-primary">{{ currentUser()!.value }}</span>
           </div>
+        </div>
+        }
+        } @else {
+        <!-- Empty State -->
+        <div class="text-center py-5">
+          <i class="fas fa-chart-line text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+          <p class="text-muted mt-3 mb-0">No data available yet</p>
+          <small class="text-muted">Check back later for leaderboard updates</small>
+          @if (currentUser()) {
+          <div class="mt-4 pt-3 border-top">
+            <div class="d-flex align-items-center justify-content-between p-3 bg-primary text-white rounded-3">
+              <div>
+                <span>Your Position:</span>
+                <span class="fw-bold ms-2">#{{ currentUser()!.rank }}</span>
+              </div>
+              <span class="badge bg-white text-primary">{{ currentUser()!.value }}</span>
+            </div>
+          </div>
+          }
         </div>
         }
       </div>

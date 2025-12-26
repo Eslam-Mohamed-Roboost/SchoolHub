@@ -160,16 +160,24 @@ export class DashboardService extends BaseHttpService {
       next: (response: ApiResponse<EnhancedDashboardDto> | EnhancedDashboardDto) => {
         console.log('Enhanced Dashboard Data received:', response);
 
+        let data: any = null;
+
         // Check if response is wrapped or direct data
-        if ('studentAchievement' in response) {
-          // Direct data format
-          this.enhancedDashboardData.set(response as EnhancedDashboardDto);
+        if ('studentAchievement' in response || 'StudentAchievement' in response) {
+          // Direct data format (camelCase or PascalCase)
+          data = response;
         } else if ('Data' in response && response.IsSuccess && response.Data) {
           // Wrapped format { Data: ..., IsSuccess: ... }
-          this.enhancedDashboardData.set(response.Data);
+          data = response.Data;
         } else if ('Data' in response && response.Data) {
           // Wrapped but IsSuccess might be undefined
-          this.enhancedDashboardData.set(response.Data);
+          data = response.Data;
+        }
+
+        // Convert PascalCase API response to camelCase frontend model
+        if (data) {
+          const mappedData = this.mapEnhancedDashboardData(data);
+          this.enhancedDashboardData.set(mappedData);
         } else {
           console.warn('API returned unexpected format, using mock data');
           this.enhancedDashboardData.set(this.getMockEnhancedDashboard());
@@ -182,6 +190,58 @@ export class DashboardService extends BaseHttpService {
         this.isEnhancedLoading.set(false);
       },
     });
+  }
+
+  /**
+   * Maps PascalCase API response to camelCase frontend model
+   */
+  private mapEnhancedDashboardData(data: any): EnhancedDashboardDto {
+    return {
+      studentAchievement: {
+        totalStudents: data.StudentAchievement?.TotalStudents ?? data.studentAchievement?.totalStudents ?? 0,
+        grade6Count: data.StudentAchievement?.Grade6Count ?? data.studentAchievement?.grade6Count ?? 0,
+        grade7Count: data.StudentAchievement?.Grade7Count ?? data.studentAchievement?.grade7Count ?? 0,
+        digitalCitizenshipProgress: data.StudentAchievement?.DigitalCitizenshipProgress ?? data.studentAchievement?.digitalCitizenshipProgress ?? 0,
+        portfolioQualityScore: data.StudentAchievement?.PortfolioQualityScore ?? data.studentAchievement?.portfolioQualityScore ?? 0,
+        atRiskCount: data.StudentAchievement?.AtRiskCount ?? data.studentAchievement?.atRiskCount ?? 0,
+        topPerformersCount: data.StudentAchievement?.TopPerformersCount ?? data.studentAchievement?.topPerformersCount ?? 0,
+      },
+      teacherCPD: {
+        totalTeachers: data.TeacherCPD?.TotalTeachers ?? data.teacherCPD?.totalTeachers ?? 0,
+        activeTeachers: data.TeacherCPD?.ActiveTeachers ?? data.teacherCPD?.activeTeachers ?? 0,
+        cpdHoursThisMonth: data.TeacherCPD?.CPDHoursThisMonth ?? data.teacherCPD?.cpdHoursThisMonth ?? 0,
+        targetHoursThisMonth: data.TeacherCPD?.TargetHoursThisMonth ?? data.teacherCPD?.targetHoursThisMonth ?? 0,
+        badgeCompletionRate: data.TeacherCPD?.BadgeCompletionRate ?? data.teacherCPD?.badgeCompletionRate ?? 0,
+        resourceDownloads: data.TeacherCPD?.ResourceDownloads ?? data.teacherCPD?.resourceDownloads ?? 0,
+        topPerformerName: data.TeacherCPD?.TopPerformerName ?? data.teacherCPD?.topPerformerName ?? '',
+        topPerformerHours: data.TeacherCPD?.TopPerformerHours ?? data.teacherCPD?.topPerformerHours ?? 0,
+      },
+      adekCompliance: {
+        totalEvidenceItems: data.ADEKCompliance?.TotalEvidenceItems ?? data.adekCompliance?.totalEvidenceItems ?? 0,
+        portfolioCompletionPercentage: data.ADEKCompliance?.PortfolioCompletionPercentage ?? data.adekCompliance?.portfolioCompletionPercentage ?? 0,
+        cpdDocumentationPercentage: data.ADEKCompliance?.CPDDocumentationPercentage ?? data.adekCompliance?.cpdDocumentationPercentage ?? 0,
+        pendingReviewCount: data.ADEKCompliance?.PendingReviewCount ?? data.adekCompliance?.pendingReviewCount ?? 0,
+        nextDeadline: data.ADEKCompliance?.NextDeadline ?? data.adekCompliance?.nextDeadline ?? '',
+        daysUntilDeadline: data.ADEKCompliance?.DaysUntilDeadline ?? data.adekCompliance?.daysUntilDeadline ?? 0,
+      },
+      platformEngagement: {
+        dailyActiveUsers: data.PlatformEngagement?.DailyActiveUsers ?? data.platformEngagement?.dailyActiveUsers ?? 0,
+        totalUsers: data.PlatformEngagement?.TotalUsers ?? data.platformEngagement?.totalUsers ?? 0,
+        engagementPercentage: data.PlatformEngagement?.EngagementPercentage ?? data.platformEngagement?.engagementPercentage ?? 0,
+        peakUsageTime: data.PlatformEngagement?.PeakUsageTime ?? data.platformEngagement?.peakUsageTime ?? '',
+        mostAccessedResource: data.PlatformEngagement?.MostAccessedResource ?? data.platformEngagement?.mostAccessedResource ?? '',
+        oneNoteAdoptionRate: data.PlatformEngagement?.OneNoteAdoptionRate ?? data.platformEngagement?.oneNoteAdoptionRate ?? 0,
+        badgeAdoptionRate: data.PlatformEngagement?.BadgeAdoptionRate ?? data.platformEngagement?.badgeAdoptionRate ?? 0,
+        weeklyTrendPercentage: data.PlatformEngagement?.WeeklyTrendPercentage ?? data.platformEngagement?.weeklyTrendPercentage ?? 0,
+      },
+      aiInsights: (data.AIInsights ?? data.aiInsights ?? []).map((insight: any) => ({
+        type: insight.Type ?? insight.type ?? 'info',
+        icon: insight.Icon ?? insight.icon ?? 'ℹ️',
+        message: insight.Message ?? insight.message ?? '',
+        count: insight.Count ?? insight.count,
+        actionLink: insight.ActionLink ?? insight.actionLink,
+      })),
+    };
   }
 
   reloadEnhanced(): void {

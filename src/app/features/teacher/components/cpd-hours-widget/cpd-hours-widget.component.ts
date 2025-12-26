@@ -24,7 +24,9 @@ export class CpdHoursWidgetComponent implements OnInit {
     this.isLoading.set(true);
     this.cpdService.getCpdHoursSummary().subscribe({
       next: (data) => {
-        this.cpdHours.set(data);
+        if (data) {
+          this.cpdHours.set(data);
+        }
         this.isLoading.set(false);
       },
       error: (err) => {

@@ -13,9 +13,11 @@ export const Teacher_API_ENDPOINTS = {
   // ============================================
   CPD: {
     MODULES: '/Teacher/Cpd/Modules',
-    MODULE_DETAIL: (id: number) => `/Teacher/Cpd/Modules/${id}`,
-    START_MODULE: (id: number) => `/Teacher/Cpd/Modules/${id}/Start`,
-    COMPLETE_MODULE: (id: number) => `/Teacher/Cpd/Modules/${id}/Complete`,
+    MODULE_DETAIL: (id: string) => `/Teacher/Cpd/Modules/${id}`,
+    START_MODULE: (id: string) => `/Teacher/Cpd/Modules/${id}/Start`,
+    COMPLETE_MODULE: (id: string) => `/Teacher/Cpd/Modules/${id}/Complete`,
+    UPDATE_STATUS: (id: string) => `/Teacher/Cpd/Modules/${id}/Status`,
+    UPLOAD_EVIDENCE: (id: string) => `/Teacher/Cpd/Modules/${id}/Evidence`,
     PROGRESS: '/Teacher/Cpd/Progress',
     HOURS: '/Teacher/CPD/Hours',
     HOURS_SUMMARY: '/Teacher/CPD/Hours/Summary',
@@ -26,10 +28,18 @@ export const Teacher_API_ENDPOINTS = {
   // ============================================
   Portfolio: {
     MY_STUDENTS: '/Teacher/Portfolio/MyStudents',
-    STUDENT_DETAIL: (studentId: number, subjectId: number) => 
-      `/Teacher/Portfolio/Student/${studentId}/Subject/${subjectId}`,
+    MY_SUBJECTS: '/Teacher/Portfolio/MySubjects',
+    STUDENT_DETAIL: (studentId: string, subjectId: string) => 
+      `/Teacher/Portfolio/Student/${studentId}/${subjectId}`,
+    ADD_COMMENT: (studentId: string, subjectId: string) => 
+      `/Teacher/Portfolio/Student/${studentId}/${subjectId}/Comment`,
+    TOGGLE_LIKE: (studentId: string, subjectId: string) => 
+      `/Teacher/Portfolio/Student/${studentId}/${subjectId}/ToggleLike`,
+    REQUEST_REVISION: (studentId: string, subjectId: string) => 
+      `/Teacher/Portfolio/Student/${studentId}/${subjectId}/RequestRevision`,
+    AWARD_BADGE: (studentId: string, subjectId: string) => 
+      `/Teacher/Portfolio/Student/${studentId}/${subjectId}/AwardBadge`,
     REVIEW: (fileId: number) => `/Teacher/Portfolio/Review/${fileId}`,
-    REQUEST_REVISION: (fileId: number) => `/Teacher/Portfolio/RequestRevision/${fileId}`,
     BADGES: '/Teacher/Portfolio/Badges',
   },
 
@@ -77,6 +87,37 @@ export const Teacher_API_ENDPOINTS = {
     UPDATE: (id: string) => `/Teacher/Grades/${id}`,
     APPROVE: (id: string) => `/Teacher/Grades/${id}/Approve`,
     GET_SUMMARY: '/Teacher/Grades/Summary',
+  },
+
+  // ============================================
+  // MISSIONS
+  // ============================================
+  Missions: {
+    GET_ALL: '/Teacher/Missions',
+    GET_DETAIL: (missionId: string) => `/Teacher/Missions/${missionId}`,
+    GET_PROGRESS: '/Teacher/Missions/Progress',
+    START: (missionId: string) => `/Teacher/Missions/${missionId}/Start`,
+    UPDATE_PROGRESS: (missionId: string) => `/Teacher/Missions/${missionId}/Progress`,
+  },
+
+  // ============================================
+  // ATTENDANCE
+  // ============================================
+  Attendance: {
+    GET_CLASS_ATTENDANCE: (classId: string, date: string) => 
+      `/Teacher/Classes/${classId}/Attendance/${date}`,
+    MARK_ATTENDANCE: (classId: string) => `/Teacher/Classes/${classId}/Attendance`,
+    BULK_MARK: (classId: string) => `/Teacher/Classes/${classId}/Attendance/Bulk`,
+    UPDATE: (attendanceId: string) => `/Teacher/Attendance/${attendanceId}`,
+    PROCESS_AUTOMATIC: (classId: string) => `/Teacher/Classes/${classId}/Attendance/ProcessAutomatic`,
+  },
+
+  // ============================================
+  // TEACHERS LOUNGE
+  // ============================================
+  Lounge: {
+    GET: '/Teacher/Lounge',
+    GET_ANNOUNCEMENTS: '/Teacher/Lounge/Announcements',
   },
 } as const;
 

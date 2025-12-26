@@ -36,20 +36,26 @@ export class AdminUsersComponent implements OnInit {
 
   // State
   users = this.userService.getUsers();
-  searchQuery = signal('');
-  roleFilter = signal<ApplicationRole | ''>('');
-  statusFilter = signal<UserStatus | ''>('');
-  classFilter = signal<number | ''>('');
+  searchQuery = signal(''); // Applied search query
+  tempSearchQuery = signal(''); // Temporary search input (before clicking search)
+  roleFilter = signal<ApplicationRole | ''>(''); // Applied role filter
+  tempRoleFilter = signal<ApplicationRole | ''>(''); // Temporary role filter
+  statusFilter = signal<UserStatus | ''>(''); // Applied status filter
+  tempStatusFilter = signal<UserStatus | ''>(''); // Temporary status filter
+  classFilter = signal<string | ''>(''); // Applied class filter (string ID)
+  tempClassFilter = signal<string | ''>(''); // Temporary class filter (string ID)
 
   // Modals
   showAddUserModal = signal(false);
   showEditUserModal = signal(false);
   showBulkImportModal = signal(false);
   showDeleteConfirm = signal(false);
+  showChangePasswordModal = signal(false);
   showQuickClassAssign = signal(false);
   showTeacherAssignmentsModal = signal(false);
   selectedUser = signal<User | null>(null);
   updatingUsers = signal<Set<string>>(new Set());
+  isChangingPassword = signal(false);
 
   // Teacher assignments
   teacherAssignments = signal<TeacherAssignmentInfo[]>([]);
@@ -59,6 +65,7 @@ export class AdminUsersComponent implements OnInit {
 
   // Form
   userForm: FormGroup;
+  passwordForm: FormGroup;
 
   // Computed filtered users - REMOVED in favor of server-side filtering
   // filteredUsers = ...
@@ -106,6 +113,11 @@ export class AdminUsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadClassesForDropdown(); // Load lightweight classes for dropdowns
+    // Initialize temp filters with current applied values
+    this.tempSearchQuery.set(this.searchQuery());
+    this.tempRoleFilter.set(this.roleFilter());
+    this.tempStatusFilter.set(this.statusFilter());
+    this.tempClassFilter.set(this.classFilter());
   }
 
   loadClassesForDropdown(): void {
@@ -144,14 +156,23 @@ export class AdminUsersComponent implements OnInit {
       notes: [''],
     });
 
-    // Effect to reload users when filters or page size change (Server-side filtering)
+    // Password change form with custom validator for password match
+    this.passwordForm = this.fb.group({
+      newPassword: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', Validators.required],
+    }, {
+      validators: (form: FormGroup) => this.passwordMatchValidator(form)
+    });
+
+    // Effect to reload users when applied filters or page size change (Server-side filtering)
     // Note: This effect does NOT watch currentPage to avoid double calls with goToPage()
+    // Only triggers when applied filters change, not temp filters
     effect(
       () => {
-        const query = this.searchQuery();
-        const role = this.roleFilter();
-        const status = this.statusFilter();
-        const classId = this.classFilter();
+        const query = this.searchQuery(); // Only watch applied search
+        const role = this.roleFilter(); // Only watch applied role filter
+        const status = this.statusFilter(); // Only watch applied status filter
+        const classId = this.classFilter(); // Only watch applied class filter
         const pageSize = this.pageSize();
 
         // Map status to isActive boolean
@@ -162,7 +183,7 @@ export class AdminUsersComponent implements OnInit {
         // Determine if query is email or general search
         const isEmail = query.includes('@');
 
-        // Use current page from service (filters already reset page to 1 via resetToFirstPage)
+        // Use current page from service
         this.userService.loadUsers({
           pageIndex: this.currentPage(),
           pageSize: pageSize,
@@ -170,8 +191,8 @@ export class AdminUsersComponent implements OnInit {
           email: isEmail ? query : undefined,
           role: role ? Number(role) : undefined,
           isActive: isActive,
-          status: status || undefined, // Keep status for legacy if needed
-          classId: classId ? Number(classId) : undefined,
+          status: status || undefined,
+          classId: classId ? classId : undefined, // classId is already string
         });
       },
       { allowSignalWrites: true }
@@ -179,29 +200,63 @@ export class AdminUsersComponent implements OnInit {
   }
 
   // Search and filter methods
-  onSearch(query: string) {
-    // Update search query immediately for UI feedback
-    this.searchQuery.set(query);
-    // Reset to page 1 when search changes (effect will handle the load)
+  onSearchInput(query: string) {
+    // Update temporary search query (doesn't trigger search)
+    this.tempSearchQuery.set(query);
+  }
+
+  onRoleFilterChange(role: string) {
+    // Update temporary role filter (doesn't trigger search)
+    this.tempRoleFilter.set(role as ApplicationRole | '');
+  }
+
+  onStatusFilterChange(status: string) {
+    // Update temporary status filter (doesn't trigger search)
+    this.tempStatusFilter.set(status as UserStatus | '');
+  }
+
+  onClassFilterChange(classId: string) {
+    // Update temporary class filter (doesn't trigger search)
+    this.tempClassFilter.set(classId || '');
+  }
+
+  applySearch() {
+    // Apply all filters (search + role + status + class) and trigger API call
+    this.searchQuery.set(this.tempSearchQuery());
+    this.roleFilter.set(this.tempRoleFilter());
+    this.statusFilter.set(this.tempStatusFilter());
+    this.classFilter.set(this.tempClassFilter());
     this.userService.resetToFirstPage();
   }
 
-  onRoleFilter(role: string) {
-    // Reset to page 1 when role filter changes (effect will handle the load)
-    this.userService.resetToFirstPage();
-    this.roleFilter.set(role as ApplicationRole | '');
+  onSearchKeyPress(event: KeyboardEvent) {
+    // Allow Enter key to trigger search
+    if (event.key === 'Enter') {
+      this.applySearch();
+    }
   }
 
-  onStatusFilter(status: string) {
-    // Reset to page 1 when status filter changes (effect will handle the load)
+  clearFilters() {
+    // Clear all filters and search (both temp and applied)
+    this.tempSearchQuery.set('');
+    this.searchQuery.set('');
+    this.tempRoleFilter.set('');
+    this.roleFilter.set('');
+    this.tempStatusFilter.set('');
+    this.statusFilter.set('');
+    this.tempClassFilter.set('');
+    this.classFilter.set('');
     this.userService.resetToFirstPage();
-    this.statusFilter.set(status as UserStatus | '');
   }
 
-  onClassFilter(classId: string) {
-    // Reset to page 1 when class filter changes (effect will handle the load)
-    this.userService.resetToFirstPage();
-    this.classFilter.set(classId ? Number(classId) : '');
+  hasActiveFilters(): boolean {
+    // Check if any filters are active (check applied filters)
+    return !!(
+      this.searchQuery() ||
+      this.roleFilter() ||
+      this.statusFilter() ||
+      this.classFilter()
+    );
   }
 
   onItemsPerPageChange(items: number) {
@@ -307,7 +362,7 @@ export class AdminUsersComponent implements OnInit {
         
         if (classValue && classValue !== '' && classValue !== '0' && classValue !== null && classValue !== undefined) {
           // Assign class
-          const selectedClass = this.classes().find(c => c.id === Number(classValue));
+          const selectedClass = this.classes().find(c => c.id === classValue);
           updateData.ClassId = String(classValue); // Backend long -> send as string
           updateData.ClassName = selectedClass?.name;
         } else {
@@ -389,6 +444,62 @@ export class AdminUsersComponent implements OnInit {
     this.selectedUser.set(null);
   }
 
+  // Password change
+  openChangePasswordModal(user: User) {
+    this.selectedUser.set(user);
+    this.passwordForm.reset();
+    this.showChangePasswordModal.set(true);
+  }
+
+  cancelChangePassword() {
+    this.showChangePasswordModal.set(false);
+    this.selectedUser.set(null);
+    this.passwordForm.reset();
+  }
+
+  confirmChangePassword() {
+    if (this.passwordForm.invalid) {
+      this.passwordForm.markAllAsTouched();
+      return;
+    }
+
+    const user = this.selectedUser();
+    if (!user) {
+      this.toastService.showErrorMessage('No user selected.');
+      return;
+    }
+
+    const userId = user.Id || user.id;
+    if (!userId) {
+      this.toastService.showErrorMessage('Invalid user ID.');
+      return;
+    }
+
+    const newPassword = this.passwordForm.get('newPassword')?.value;
+    if (!newPassword) {
+      this.toastService.showErrorMessage('Password is required.');
+      return;
+    }
+
+    this.isChangingPassword.set(true);
+    this.userService.changePassword(userId, newPassword).subscribe({
+      next: (response) => {
+        this.isChangingPassword.set(false);
+        if (response.success) {
+          this.toastService.showSuccessMessage(response.message || 'Password changed successfully');
+          this.cancelChangePassword();
+        } else {
+          this.toastService.showErrorMessage(response.message || 'Failed to change password');
+        }
+      },
+      error: (err) => {
+        this.isChangingPassword.set(false);
+        console.error('Failed to change password', err);
+        this.toastService.showErrorMessage(err.error?.Message || err.message || 'Failed to change password');
+      },
+    });
+  }
+
   // Bulk import
   openBulkImportModal() {
     this.showBulkImportModal.set(true);
@@ -465,6 +576,39 @@ export class AdminUsersComponent implements OnInit {
     return ApplicationRole[role];
   }
 
+  getRoleDisplayName(role: ApplicationRole | string | number | undefined): string {
+    if (role === undefined || role === null) return 'Unknown';
+    
+    // Handle string role names (e.g., "Admin", "Teacher", "Student")
+    if (typeof role === 'string') {
+      // Check if it's already a role name (capitalize first letter)
+      const capitalized = role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
+      if (capitalized === 'Admin' || capitalized === 'Teacher' || capitalized === 'Student') {
+        return capitalized;
+      }
+      // Try to convert string number to enum
+      const numRole = Number(role);
+      if (!isNaN(numRole)) {
+        const enumValue = ApplicationRole[numRole as ApplicationRole];
+        return enumValue || role;
+      }
+      return role;
+    }
+    
+    // Handle number role (enum value)
+    if (typeof role === 'number') {
+      // Map enum values to names
+      const roleMap: Record<number, string> = {
+        [ApplicationRole.Admin]: 'Admin',
+        [ApplicationRole.Teacher]: 'Teacher',
+        [ApplicationRole.Student]: 'Student',
+      };
+      return roleMap[role] || `Role ${role}`;
+    }
+    
+    return 'Unknown';
+  }
+
   // Inline editing methods
   isUpdatingUser(userId: string): boolean {
     return this.updatingUsers().has(userId);
@@ -511,7 +655,7 @@ export class AdminUsersComponent implements OnInit {
     this.selectedUser.set(null);
   }
 
-  quickAssignClass(classId: number): void {
+  quickAssignClass(classId: string): void {
     const user = this.selectedUser();
     const userId = user?.Id || user?.id;
     if (!user || !userId || this.isUpdatingUser(userId)) return;
@@ -571,18 +715,31 @@ export class AdminUsersComponent implements OnInit {
   loadTeacherAssignments(): void {
     const user = this.selectedUser();
     const userId = user?.Id || user?.id;
-    if (!userId) return;
+    if (!userId) {
+      console.warn('Cannot load teacher assignments: no user selected');
+      return;
+    }
 
+    console.log('Loading teacher assignments for user:', userId);
     this.isLoadingAssignments.set(true);
+    
+    // Clear previous assignments to show loading state
+    this.teacherAssignments.set([]);
+    
     this.teacherAssignmentService.getTeacherAssignments(userId).subscribe({
       next: (assignments) => {
-        this.teacherAssignments.set(assignments);
+        console.log('Received teacher assignments:', assignments);
+        // Use update() to ensure signal change detection
+        this.teacherAssignments.update(() => assignments);
         this.isLoadingAssignments.set(false);
+        console.log('Teacher assignments signal updated:', this.teacherAssignments());
       },
       error: (err) => {
         console.error('Failed to load teacher assignments', err);
         this.toastService.showErrorMessage('Failed to load teacher assignments');
         this.isLoadingAssignments.set(false);
+        // Clear assignments on error
+        this.teacherAssignments.set([]);
       },
     });
   }
@@ -615,13 +772,19 @@ export class AdminUsersComponent implements OnInit {
           }
         }
 
-        this.subjects.set(
-          subjectsData.map((s) => ({
-            Id: String(s.Id || s.id || ''),
-            Name: s.Name || s.name || '',
-            Icon: s.Icon || s.icon,
-          }))
-        );
+        // Map and deduplicate subjects by Id
+        const uniqueSubjectsMap = new Map<string, { Id: string; Name: string; Icon?: string }>();
+        subjectsData.forEach((s) => {
+          const id = String(s.Id || s.id || '');
+          if (id && !uniqueSubjectsMap.has(id)) {
+            uniqueSubjectsMap.set(id, {
+              Id: id,
+              Name: s.Name || s.name || '',
+              Icon: s.Icon || s.icon,
+            });
+          }
+        });
+        this.subjects.set(Array.from(uniqueSubjectsMap.values()));
       },
       error: (err) => {
         console.error('Failed to load subjects', err);
@@ -697,5 +860,25 @@ export class AdminUsersComponent implements OnInit {
   isTeacher(user: User): boolean {
     const role = Number(user.Role || user.role);
     return role === ApplicationRole.Teacher || role === 2;
+  }
+
+  // Custom validator for password match
+  passwordMatchValidator(form: FormGroup): { [key: string]: boolean } | null {
+    const newPassword = form.get('newPassword');
+    const confirmPassword = form.get('confirmPassword');
+    
+    if (!newPassword || !confirmPassword) {
+      return null;
+    }
+
+    if (newPassword.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    } else {
+      if (confirmPassword.hasError('passwordMismatch')) {
+        confirmPassword.setErrors(null);
+      }
+      return null;
+    }
   }
 }

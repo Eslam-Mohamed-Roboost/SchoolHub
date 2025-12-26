@@ -109,4 +109,14 @@ export const Student_API_ENDPOINTS = {
     GET_SUMMARY: '/Student/Points',
     AWARD: '/Student/Points/Award',
   },
+
+  // ============================================
+  // ATTENDANCE
+  // ============================================
+  Attendance: {
+    GET_HISTORY: '/Student/Attendance',
+    GET_STATISTICS: '/Student/Attendance/Statistics',
+    CALCULATE_BONUS: '/Student/Attendance/CalculateBonus',
+    AWARD_BONUS: '/Student/Attendance/AwardBonus',
+  },
 } as const;

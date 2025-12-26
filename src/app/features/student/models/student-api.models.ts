@@ -16,11 +16,12 @@ export interface ApiResponse<T> {
 }
 
 export interface LearningResourceDto {
-  id: string;
-  title: string;
-  type: 'video' | 'article' | 'interactive' | 'pdf';
-  url: string;
-  duration?: string;
+  Id: string;
+  Title: string;
+  Type: 'video' | 'article' | 'interactive' | 'pdf';
+  Url: string;
+  Duration?: string;
+  IsRequired?: boolean;
 }
 
 // ============================================

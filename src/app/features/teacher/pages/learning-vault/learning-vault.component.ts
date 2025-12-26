@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { CpdService } from '../../services/cpd.service';
@@ -72,7 +72,7 @@ import { CpdService } from '../../services/cpd.service';
                     >
                     <span
                       ><i class="fas fa-calendar me-1"></i>Last activity:
-                      {{ progressData?.lastActivityDate ? formatDate(progressData.lastActivityDate) : 'Never' }}</span
+                      {{ formatDate(progressData?.lastActivityDate) }}</span
                     >
                   </div>
                 </div>
@@ -248,15 +248,21 @@ import { CpdService } from '../../services/cpd.service';
   `,
   styleUrls: ['../../teacher.css'],
 })
-export class LearningVaultComponent {
+export class LearningVaultComponent implements OnInit {
   private cpdService = inject(CpdService);
   modules = this.cpdService.getModules();
   progress = this.cpdService.getProgress();
 
+  ngOnInit(): void {
+    // Initialize and load CPD data
+    this.cpdService.init();
+  }
+
   get progressPercentage(): number {
     const prog = this.progress();
     if (!prog) return 0;
-    return Math.round((prog.hoursCompleted / prog.targetHours) * 100);
+    const percentage = (prog.hoursCompleted / prog.targetHours) * 100;
+    return Math.min(Math.round(percentage), 100); // Cap at 100%
   }
 
   get progressData() {
@@ -267,8 +273,10 @@ export class LearningVaultComponent {
     return this.modules();
   }
 
-  formatDate(date: Date): string {
-    return new Date(date).toLocaleDateString('en-US', {
+  formatDate(date: Date | string | undefined): string {
+    if (!date) return 'Never';
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return dateObj.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
     });
