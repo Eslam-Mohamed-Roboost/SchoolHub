@@ -11,6 +11,7 @@ import {
   WeeklyReflection,
   LearningJourneyEntry,
   Project,
+  ProjectFile,
   MapScore,
   ExactPathProgress,
   JourneyMilestone,
@@ -26,6 +27,9 @@ interface DigitalPortfolioBookDto {
   SubjectName: string;
   StudentName: string;
   AcademicYear: string;
+  IsProfileSubmitted: boolean;
+  IsGoalsSubmitted: boolean;
+  IsLearningStyleSubmitted: boolean;
   Profile: StudentProfileDto;
   Goals: LearningGoalsDto;
   LearningStyle: LearningStyleDto;
@@ -136,7 +140,9 @@ interface ProjectDto {
   Description: string;
   SkillsUsed: string;
   WhatLearned: string;
-  Files: ProjectFileDto[];
+  Files?: ProjectFileDto[];
+  FileUrls?: string[];
+  CreatedDate?: string;
   Grade?: string;
   CompletedDate?: string;
 }
@@ -226,7 +232,9 @@ export class DigitalPortfolioBookService extends BaseHttpService {
 
     return this.put<typeof dto, void>(Student_API_ENDPOINTS.PortfolioBook.SAVE_PROFILE, dto).pipe(
       tap(() => {
-        this.portfolioBook.update((book) => (book ? { ...book, profile } : null));
+        this.portfolioBook.update((book) =>
+          book ? { ...book, profile, isProfileSubmitted: true } : null
+        );
       }),
       map(() => true),
       catchError((err) => {
@@ -248,7 +256,9 @@ export class DigitalPortfolioBookService extends BaseHttpService {
 
     return this.put<typeof dto, void>(Student_API_ENDPOINTS.PortfolioBook.SAVE_GOALS, dto).pipe(
       tap(() => {
-        this.portfolioBook.update((book) => (book ? { ...book, goals } : null));
+        this.portfolioBook.update((book) =>
+          book ? { ...book, goals, isGoalsSubmitted: true } : null
+        );
       }),
       map(() => true),
       catchError((err) => {
@@ -273,7 +283,9 @@ export class DigitalPortfolioBookService extends BaseHttpService {
       dto
     ).pipe(
       tap(() => {
-        this.portfolioBook.update((book) => (book ? { ...book, learningStyle: style } : null));
+        this.portfolioBook.update((book) =>
+          book ? { ...book, learningStyle: style, isLearningStyleSubmitted: true } : null
+        );
       }),
       map(() => true),
       catchError((err) => {
@@ -426,40 +438,43 @@ export class DigitalPortfolioBookService extends BaseHttpService {
       subjectName: dto.SubjectName,
       studentName: dto.StudentName,
       academicYear: dto.AcademicYear,
+      isProfileSubmitted: dto.IsProfileSubmitted,
+      isGoalsSubmitted: dto.IsGoalsSubmitted,
+      isLearningStyleSubmitted: dto.IsLearningStyleSubmitted,
       profile: {
-        fullName: dto.Profile.FullName,
-        gradeSection: dto.Profile.GradeSection,
-        favoriteThings: dto.Profile.FavoriteThings,
-        uniqueness: dto.Profile.Uniqueness,
-        futureDream: dto.Profile.FutureDream,
+        fullName: dto.Profile?.FullName || '',
+        gradeSection: dto.Profile?.GradeSection || '',
+        favoriteThings: dto.Profile?.FavoriteThings || '',
+        uniqueness: dto.Profile?.Uniqueness || '',
+        futureDream: dto.Profile?.FutureDream || '',
       },
       goals: {
-        academicGoal: dto.Goals.AcademicGoal,
-        behavioralGoal: dto.Goals.BehavioralGoal,
-        personalGrowthGoal: dto.Goals.PersonalGrowthGoal,
-        achievementSteps: dto.Goals.AchievementSteps,
-        targetDate: dto.Goals.TargetDate ? new Date(dto.Goals.TargetDate) : null,
+        academicGoal: dto.Goals?.AcademicGoal || '',
+        behavioralGoal: dto.Goals?.BehavioralGoal || '',
+        personalGrowthGoal: dto.Goals?.PersonalGrowthGoal || '',
+        achievementSteps: dto.Goals?.AchievementSteps || '',
+        targetDate: dto.Goals?.TargetDate ? new Date(dto.Goals.TargetDate) : null,
       },
       learningStyle: {
-        learnsBestBy: dto.LearningStyle.LearnsBestBy,
-        bestTimeToStudy: dto.LearningStyle.BestTimeToStudy,
-        focusConditions: dto.LearningStyle.FocusConditions,
-        helpfulTools: dto.LearningStyle.HelpfulTools,
-        distractions: dto.LearningStyle.Distractions,
+        learnsBestBy: dto.LearningStyle?.LearnsBestBy || '',
+        bestTimeToStudy: dto.LearningStyle?.BestTimeToStudy || '',
+        focusConditions: dto.LearningStyle?.FocusConditions || '',
+        helpfulTools: dto.LearningStyle?.HelpfulTools || '',
+        distractions: dto.LearningStyle?.Distractions || '',
       },
-      mapScores: dto.MapScores.map((s) => this.mapMapScoreDto(s)),
+      mapScores: (dto.MapScores || []).map((s) => this.mapMapScoreDto(s)),
       exactPathProgress: this.mapExactPathProgressDto(dto.ExactPathProgress),
-      assignments: dto.Assignments.map((a) => this.mapAssignmentDto(a)),
-      reflections: dto.Reflections.map((r) => this.mapWeeklyReflectionDto(r)),
-      journeyEntries: dto.JourneyEntries.map((j) => this.mapLearningJourneyEntryDto(j)),
-      milestones: dto.Milestones.map((m) => this.mapMilestoneDto(m)),
-      projects: dto.Projects.map((p) => this.mapProjectDto(p)),
+      assignments: (dto.Assignments || []).map((a) => this.mapAssignmentDto(a)),
+      reflections: (dto.Reflections || []).map((r) => this.mapWeeklyReflectionDto(r)),
+      journeyEntries: (dto.JourneyEntries || []).map((j) => this.mapLearningJourneyEntryDto(j)),
+      milestones: (dto.Milestones || []).map((m) => this.mapMilestoneDto(m)),
+      projects: (dto.Projects || []).map((p) => this.mapProjectDto(p)),
       progress: {
-        completionPercentage: dto.Progress.CompletionPercentage,
-        pagesCompleted: dto.Progress.PagesCompleted,
-        totalPages: dto.Progress.TotalPages,
-        reflectionsThisTerm: dto.Progress.ReflectionsThisTerm,
-        projectsUploaded: dto.Progress.ProjectsUploaded,
+        completionPercentage: dto.Progress?.CompletionPercentage ?? 0,
+        pagesCompleted: dto.Progress?.PagesCompleted ?? 0,
+        totalPages: dto.Progress?.TotalPages ?? 9,
+        reflectionsThisTerm: dto.Progress?.ReflectionsThisTerm ?? 0,
+        projectsUploaded: dto.Progress?.ProjectsUploaded ?? 0,
       },
     };
   }
@@ -543,6 +558,27 @@ export class DigitalPortfolioBookService extends BaseHttpService {
   }
 
   private mapProjectDto(dto: ProjectDto): Project {
+    const files: ProjectFile[] = (dto.Files || []).map((f) => ({
+      id: f.Id,
+      fileName: f.FileName,
+      fileType: f.FileType,
+      fileSize: f.FileSize,
+      uploadDate: new Date(f.UploadDate),
+      url: f.Url,
+    }));
+
+    const fileUrls = dto.FileUrls || [];
+    for (const url of fileUrls) {
+      files.push({
+        id: url,
+        fileName: url.split('/').pop() || url,
+        fileType: '',
+        fileSize: 0,
+        uploadDate: dto.CreatedDate ? new Date(dto.CreatedDate) : new Date(),
+        url,
+      });
+    }
+
     return {
       id: dto.Id,
       title: dto.Title,
@@ -550,16 +586,13 @@ export class DigitalPortfolioBookService extends BaseHttpService {
       description: dto.Description,
       skillsUsed: dto.SkillsUsed,
       whatLearned: dto.WhatLearned,
-      files: dto.Files.map((f) => ({
-        id: f.Id,
-        fileName: f.FileName,
-        fileType: f.FileType,
-        fileSize: f.FileSize,
-        uploadDate: new Date(f.UploadDate),
-        url: f.Url,
-      })),
+      files,
       grade: dto.Grade,
-      completedDate: dto.CompletedDate ? new Date(dto.CompletedDate) : undefined,
+      completedDate: dto.CompletedDate
+        ? new Date(dto.CompletedDate)
+        : dto.CreatedDate
+          ? new Date(dto.CreatedDate)
+          : undefined,
     };
   }
 

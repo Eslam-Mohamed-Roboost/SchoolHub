@@ -13,6 +13,7 @@ import { ClassStudentsComponent } from './pages/class-students/class-students.co
 import { StudentGradesComponent } from './pages/student-grades/student-grades.component';
 import { CreateExerciseComponent } from './pages/create-exercise/create-exercise.component';
 import { CreateExamComponent } from './pages/create-exam/create-exam.component';
+import { StudentPortfolioBookComponent } from './pages/student-portfolio-book/student-portfolio-book.component';
 
 export const TEACHER_ROUTES: Routes = [
   {
@@ -34,6 +35,7 @@ export const TEACHER_ROUTES: Routes = [
       { path: 'grades', component: StudentGradesComponent },
       { path: 'exercises/create', component: CreateExerciseComponent },
       { path: 'exams/create', component: CreateExamComponent },
+      { path: 'portfolio-book/:studentId/:subjectId', component: StudentPortfolioBookComponent },
       // Keep home route for backward compatibility
       { path: 'home', component: TeacherDashboardComponent },
     ],

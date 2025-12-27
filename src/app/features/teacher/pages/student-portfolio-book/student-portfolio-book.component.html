@@ -1,0 +1,433 @@
+<div class="portfolio-book-container">
+  <!-- Header -->
+  <header class="page-header">
+    <button class="back-button" (click)="goBack()" aria-label="Go back to portfolio list">
+      ← Back
+    </button>
+    <div class="header-content">
+      <h1>Student Portfolio Book</h1>
+      @if (portfolioBook()) {
+        <p class="student-info">
+          <strong>{{ portfolioBook()?.studentName }}</strong> - {{ portfolioBook()?.subjectName }}
+        </p>
+      }
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container" role="status" aria-live="polite">
+      <div class="spinner"></div>
+      <p>Loading portfolio book...</p>
+    </div>
+  }
+
+  <!-- Content -->
+  @if (!isLoading() && portfolioBook()) {
+    <!-- Tab Navigation -->
+    <nav class="tab-navigation" role="tablist" aria-label="Portfolio book sections">
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'overview'"
+        [class.active]="activeTab() === 'overview'"
+        (click)="setActiveTab('overview')"
+      >
+        📊 Overview
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'map-score'"
+        [class.active]="activeTab() === 'map-score'"
+        (click)="setActiveTab('map-score')"
+      >
+        📈 MAP Score
+      </button>
+      <button
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'exact-path'"
+        [class.active]="activeTab() === 'exact-path'"
+        (click)="setActiveTab('exact-path')"
+      >
+        🎯 Exact Path
+      </button>
+    </nav>
+
+    <!-- Tab Panels -->
+    <div class="tab-content">
+      <!-- Overview Tab -->
+      @if (activeTab() === 'overview') {
+        <section class="overview-panel" role="tabpanel" aria-label="Overview">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <span class="stat-icon">📝</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ portfolioBook()?.progress?.completionPercentage ?? 0 }}%</span>
+                <span class="stat-label">Completion</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">📚</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ portfolioBook()?.assignments?.length ?? 0 }}</span>
+                <span class="stat-label">Assignments</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">💭</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ portfolioBook()?.reflections?.length ?? 0 }}</span>
+                <span class="stat-label">Reflections</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🚀</span>
+              <div class="stat-info">
+                <span class="stat-value">{{ portfolioBook()?.projects?.length ?? 0 }}</span>
+                <span class="stat-label">Projects</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Student Profile Summary -->
+          @if (portfolioBook()?.profile) {
+            <div class="section-card">
+              <h3>📋 Student Profile</h3>
+              <div class="profile-grid">
+                <div class="profile-item">
+                  <label>Full Name</label>
+                  <p>{{ portfolioBook()?.profile?.fullName }}</p>
+                </div>
+                <div class="profile-item">
+                  <label>Grade/Section</label>
+                  <p>{{ portfolioBook()?.profile?.gradeSection }}</p>
+                </div>
+                <div class="profile-item">
+                  <label>Favorite Things</label>
+                  <p>{{ portfolioBook()?.profile?.favoriteThings }}</p>
+                </div>
+                <div class="profile-item">
+                  <label>Future Dream</label>
+                  <p>{{ portfolioBook()?.profile?.futureDream }}</p>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Goals Summary -->
+          @if (portfolioBook()?.goals) {
+            <div class="section-card">
+              <h3>🎯 Learning Goals</h3>
+              <div class="goals-grid">
+                <div class="goal-item">
+                  <label>Academic Goal</label>
+                  <p>{{ portfolioBook()?.goals?.academicGoal }}</p>
+                </div>
+                <div class="goal-item">
+                  <label>Behavioral Goal</label>
+                  <p>{{ portfolioBook()?.goals?.behavioralGoal }}</p>
+                </div>
+                <div class="goal-item">
+                  <label>Personal Growth Goal</label>
+                  <p>{{ portfolioBook()?.goals?.personalGrowthGoal }}</p>
+                </div>
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- MAP Score Tab -->
+      @if (activeTab() === 'map-score') {
+        <section class="map-score-panel" role="tabpanel" aria-label="MAP Score">
+          <div class="section-card">
+            <h3>📈 Add/Update MAP Score</h3>
+            <form class="map-score-form" (ngSubmit)="saveMapScore()">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="map-term">Term</label>
+                  <select
+                    id="map-term"
+                    [value]="newMapScore().term"
+                    (change)="updateMapScoreTerm($any($event.target).value)"
+                    required
+                  >
+                    <option value="Fall">Fall</option>
+                    <option value="Winter">Winter</option>
+                    <option value="Spring">Spring</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="map-year">Year</label>
+                  <select
+                    id="map-year"
+                    [value]="newMapScore().year"
+                    (change)="updateMapScoreYear(+$any($event.target).value)"
+                    required
+                  >
+                    @for (year of yearOptions; track year) {
+                      <option [value]="year">{{ year }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="map-score">Score</label>
+                  <input
+                    type="number"
+                    id="map-score"
+                    [value]="newMapScore().score"
+                    (input)="updateMapScoreScore(+$any($event.target).value)"
+                    min="100"
+                    max="350"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="map-percentile">Percentile</label>
+                  <input
+                    type="number"
+                    id="map-percentile"
+                    [value]="newMapScore().percentile ?? ''"
+                    (input)="updateMapScorePercentile(+$any($event.target).value || null)"
+                    min="1"
+                    max="99"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="map-date">Date Taken</label>
+                  <input
+                    type="date"
+                    id="map-date"
+                    [value]="newMapScore().dateTaken"
+                    (input)="updateMapScoreDateTaken($any($event.target).value)"
+                    required
+                  />
+                </div>
+              </div>
+              <button type="submit" class="save-button" [disabled]="isSaving()">
+                @if (isSaving()) {
+                  Saving...
+                } @else {
+                  💾 Save MAP Score
+                }
+              </button>
+            </form>
+          </div>
+
+          <!-- Existing MAP Scores -->
+          @if (hasMapScores()) {
+            <div class="section-card">
+              <h3>📊 MAP Score History</h3>
+              <div class="scores-table">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Term</th>
+                      <th>Year</th>
+                      <th>Score</th>
+                      <th>Percentile</th>
+                      <th>Growth</th>
+                      <th>Date Taken</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (score of portfolioBook()?.mapScores; track score.id) {
+                      <tr>
+                        <td>{{ score.term }}</td>
+                        <td>{{ score.year }}</td>
+                        <td class="score-value">{{ score.score }}</td>
+                        <td>{{ score.percentile ?? '-' }}%</td>
+                        <td>
+                          @if (score.growth !== null) {
+                            <span [class.positive]="score.growth > 0" [class.negative]="score.growth < 0">
+                              {{ score.growth > 0 ? '+' : '' }}{{ score.growth }}
+                            </span>
+                          } @else {
+                            -
+                          }
+                        </td>
+                        <td>{{ formatDate(score.dateTaken) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </section>
+      }
+
+      <!-- Exact Path Tab -->
+      @if (activeTab() === 'exact-path') {
+        <section class="exact-path-panel" role="tabpanel" aria-label="Exact Path Progress">
+          <form class="exact-path-form" (ngSubmit)="saveExactPath()">
+            <!-- Reading Progress -->
+            <div class="section-card">
+              <h3>📖 Reading Progress</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="reading-level">Current Level</label>
+                  <input
+                    type="text"
+                    id="reading-level"
+                    [value]="exactPathForm().reading.currentLevel"
+                    (input)="updateReadingField('currentLevel', $any($event.target).value)"
+                    placeholder="e.g., Level 5"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="reading-target">Target Completion</label>
+                  <input
+                    type="text"
+                    id="reading-target"
+                    [value]="exactPathForm().reading.targetCompletion"
+                    (input)="updateReadingField('targetCompletion', $any($event.target).value)"
+                    placeholder="e.g., June 2025"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="reading-completed">Lessons Completed</label>
+                  <input
+                    type="number"
+                    id="reading-completed"
+                    [value]="exactPathForm().reading.lessonsCompleted"
+                    (input)="updateReadingField('lessonsCompleted', +$any($event.target).value)"
+                    min="0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="reading-total">Total Lessons</label>
+                  <input
+                    type="number"
+                    id="reading-total"
+                    [value]="exactPathForm().reading.totalLessons"
+                    (input)="updateReadingField('totalLessons', +$any($event.target).value)"
+                    min="0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="reading-minutes">Minutes This Week</label>
+                  <input
+                    type="number"
+                    id="reading-minutes"
+                    [value]="exactPathForm().reading.minutesThisWeek"
+                    (input)="updateReadingField('minutesThisWeek', +$any($event.target).value)"
+                    min="0"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Vocabulary Progress -->
+            <div class="section-card">
+              <h3>📝 Vocabulary Progress</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="vocab-level">Current Level</label>
+                  <input
+                    type="text"
+                    id="vocab-level"
+                    [value]="exactPathForm().vocabulary.currentLevel"
+                    (input)="updateVocabularyField('currentLevel', $any($event.target).value)"
+                    placeholder="e.g., Grade 5"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="vocab-words">Words Mastered</label>
+                  <input
+                    type="number"
+                    id="vocab-words"
+                    [value]="exactPathForm().vocabulary.wordsMastered"
+                    (input)="updateVocabularyField('wordsMastered', +$any($event.target).value)"
+                    min="0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="vocab-accuracy">Accuracy Rate (%)</label>
+                  <input
+                    type="number"
+                    id="vocab-accuracy"
+                    [value]="exactPathForm().vocabulary.accuracyRate"
+                    (input)="updateVocabularyField('accuracyRate', +$any($event.target).value)"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Grammar Progress -->
+            <div class="section-card">
+              <h3>✏️ Grammar Progress</h3>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="grammar-level">Current Level</label>
+                  <input
+                    type="text"
+                    id="grammar-level"
+                    [value]="exactPathForm().grammar.currentLevel"
+                    (input)="updateGrammarField('currentLevel', $any($event.target).value)"
+                    placeholder="e.g., Grade 5"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="grammar-completed">Lessons Completed</label>
+                  <input
+                    type="number"
+                    id="grammar-completed"
+                    [value]="exactPathForm().grammar.lessonsCompleted"
+                    (input)="updateGrammarField('lessonsCompleted', +$any($event.target).value)"
+                    min="0"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="grammar-total">Total Lessons</label>
+                  <input
+                    type="number"
+                    id="grammar-total"
+                    [value]="exactPathForm().grammar.totalLessons"
+                    (input)="updateGrammarField('totalLessons', +$any($event.target).value)"
+                    min="0"
+                  />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group full-width">
+                  <label for="grammar-focus">Focus Areas (comma-separated)</label>
+                  <input
+                    type="text"
+                    id="grammar-focus"
+                    [value]="grammarFocusAreasInput()"
+                    (input)="updateGrammarFocusAreas($any($event.target).value)"
+                    placeholder="e.g., Subject-Verb Agreement, Punctuation"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" class="save-button" [disabled]="isSaving()">
+              @if (isSaving()) {
+                Saving...
+              } @else {
+                💾 Save Exact Path Progress
+              }
+            </button>
+          </form>
+        </section>
+      }
+    </div>
+  }
+
+  <!-- No Data State -->
+  @if (!isLoading() && !portfolioBook()) {
+    <div class="empty-state">
+      <p>No portfolio book data found for this student.</p>
+      <button class="back-button" (click)="goBack()">← Back to Portfolio List</button>
+    </div>
+  }
+</div>

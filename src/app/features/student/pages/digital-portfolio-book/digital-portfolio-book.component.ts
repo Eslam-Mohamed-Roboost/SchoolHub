@@ -53,6 +53,12 @@ export class DigitalPortfolioBookComponent implements OnInit {
     return book || this.getEmptyBook();
   });
 
+  readonly isProfileSubmitted = computed(() => this.portfolioBook().isProfileSubmitted === true);
+  readonly isGoalsSubmitted = computed(() => this.portfolioBook().isGoalsSubmitted === true);
+  readonly isLearningStyleSubmitted = computed(
+    () => this.portfolioBook().isLearningStyleSubmitted === true
+  );
+
   // Check if today's entries already exist
   hasTodayReflection = computed(() => {
     const reflections = this.portfolioBook().reflections;
@@ -65,6 +71,13 @@ export class DigitalPortfolioBookComponent implements OnInit {
     const today = new Date().toDateString();
     return entries.some((e) => new Date(e.date).toDateString() === today);
   });
+
+  // Validate project form - require title at minimum
+  isProjectValid = signal(false);
+
+  updateProjectValidation(): void {
+    this.isProjectValid.set(this.newProject.title.trim().length > 0);
+  }
 
   readonly bookPages: BookPage[] = [
     { id: 1, title: 'All About Me', icon: '📖', description: 'Student profile' },
@@ -220,6 +233,7 @@ export class DigitalPortfolioBookComponent implements OnInit {
   // ============================================
 
   saveProfile(): void {
+    if (this.isProfileSubmitted()) return;
     this.isSaving.set(true);
     this.portfolioBookService.saveProfile(this.subjectId, this.profile).subscribe({
       next: (success) => {
@@ -233,6 +247,7 @@ export class DigitalPortfolioBookComponent implements OnInit {
   }
 
   saveGoals(): void {
+    if (this.isGoalsSubmitted()) return;
     this.isSaving.set(true);
     this.portfolioBookService.saveGoals(this.subjectId, this.goals).subscribe({
       next: (success) => {
@@ -246,6 +261,7 @@ export class DigitalPortfolioBookComponent implements OnInit {
   }
 
   saveLearningStyle(): void {
+    if (this.isLearningStyleSubmitted()) return;
     this.isSaving.set(true);
     this.portfolioBookService.saveLearningStyle(this.subjectId, this.learningStyle).subscribe({
       next: (success) => {
@@ -330,6 +346,8 @@ export class DigitalPortfolioBookComponent implements OnInit {
   }
 
   saveProject(): void {
+    if (!this.isProjectValid()) return;
+    
     this.isSaving.set(true);
     this.portfolioBookService
       .saveProject(this.subjectId, this.newProject, this.selectedFiles)
@@ -347,6 +365,7 @@ export class DigitalPortfolioBookComponent implements OnInit {
               files: [],
             };
             this.selectedFiles = [];
+            this.isProjectValid.set(false);
             console.log('Project saved successfully');
           }
         },

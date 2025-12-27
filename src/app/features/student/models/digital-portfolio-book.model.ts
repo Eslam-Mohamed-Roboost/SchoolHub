@@ -132,6 +132,9 @@ export interface DigitalPortfolioBook {
   subjectName: string;
   studentName: string;
   academicYear: string;
+  isProfileSubmitted?: boolean;
+  isGoalsSubmitted?: boolean;
+  isLearningStyleSubmitted?: boolean;
   profile: StudentProfile;
   goals: LearningGoals;
   learningStyle: LearningStyle;

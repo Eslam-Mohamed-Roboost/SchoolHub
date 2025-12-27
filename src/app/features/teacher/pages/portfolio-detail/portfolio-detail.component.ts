@@ -185,6 +185,26 @@ import { PortfolioBadgeDto } from '../../../student/models/student-api.models';
               </div>
             </div>
 
+            <!-- Portfolio Book Link -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+              <div class="card-header bg-white border-bottom py-3 px-4">
+                <h6 class="fw-bold mb-0">
+                  <i class="fas fa-book text-info me-2"></i>Portfolio Book
+                </h6>
+              </div>
+              <div class="card-body p-4">
+                <p class="text-muted small mb-3">
+                  View student's portfolio book, manage MAP Scores and Exact Path progress.
+                </p>
+                <a
+                  [routerLink]="['/teacher/portfolio-book', studentId, subjectId]"
+                  class="btn btn-info text-white w-100"
+                >
+                  <i class="fas fa-chart-line me-2"></i>Manage MAP & Exact Path
+                </a>
+              </div>
+            </div>
+
             <!-- Portfolio Stats -->
             <div class="card border-0 shadow-sm rounded-4">
               <div class="card-header bg-white border-bottom py-3 px-4">

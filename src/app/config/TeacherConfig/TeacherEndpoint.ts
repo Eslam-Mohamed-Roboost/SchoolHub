@@ -119,5 +119,15 @@ export const Teacher_API_ENDPOINTS = {
     GET: '/Teacher/Lounge',
     GET_ANNOUNCEMENTS: '/Teacher/Lounge/Announcements',
   },
+
+  // ============================================
+  // PORTFOLIO BOOK (Map Score & Exact Path)
+  // ============================================
+  PortfolioBook: {
+    GET_STUDENT: (studentId: string, subjectId: string) =>
+      `/Teacher/PortfolioBook/Student/${studentId}/${subjectId}`,
+    UPDATE_MAP_SCORE: '/Teacher/PortfolioBook/MapScore',
+    UPDATE_EXACT_PATH: '/Teacher/PortfolioBook/ExactPath',
+  },
 } as const;
 

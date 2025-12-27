@@ -27,6 +27,10 @@
             <p>Tell us who you are!</p>
           </div>
 
+          @if (isProfileSubmitted()) {
+          <div class="teacher-note" role="status">✅ Profile already submitted. Editing is locked.</div>
+          }
+
           <div class="form-field">
             <label for="fullName">My Full Name</label>
             <input
@@ -34,6 +38,7 @@
               type="text"
               [(ngModel)]="profile.fullName"
               placeholder="Enter your full name"
+              [disabled]="isProfileSubmitted()"
             />
           </div>
 
@@ -44,6 +49,7 @@
               type="text"
               [(ngModel)]="profile.gradeSection"
               placeholder="e.g., Grade 6-A"
+              [disabled]="isProfileSubmitted()"
             />
           </div>
 
@@ -53,6 +59,7 @@
               id="favoriteThings"
               [(ngModel)]="profile.favoriteThings"
               placeholder="What do you love? (sports, games, subjects, hobbies)"
+              [disabled]="isProfileSubmitted()"
             ></textarea>
           </div>
 
@@ -62,6 +69,7 @@
               id="uniqueness"
               [(ngModel)]="profile.uniqueness"
               placeholder="What makes you special? Share your talents and strengths!"
+              [disabled]="isProfileSubmitted()"
             ></textarea>
           </div>
 
@@ -71,10 +79,11 @@
               id="futureDream"
               [(ngModel)]="profile.futureDream"
               placeholder="What do you want to be when you grow up?"
+              [disabled]="isProfileSubmitted()"
             ></textarea>
           </div>
 
-          <button class="save-button" (click)="saveProfile()" [disabled]="isSaving()">
+          <button class="save-button" (click)="saveProfile()" [disabled]="isSaving() || isProfileSubmitted()">
             💾 Save My Profile
           </button>
           <span class="page-number">Page 1</span>
@@ -89,12 +98,17 @@
             <p>What do you want to achieve this term?</p>
           </div>
 
+          @if (isGoalsSubmitted()) {
+          <div class="teacher-note" role="status">✅ Goals already submitted. Editing is locked.</div>
+          }
+
           <div class="form-field">
             <label for="academicGoal">Academic Goal (ELA)</label>
             <textarea
               id="academicGoal"
               [(ngModel)]="goals.academicGoal"
               placeholder="What do you want to improve in ELA? (e.g., become a better reader)"
+              [disabled]="isGoalsSubmitted()"
             ></textarea>
           </div>
 
@@ -104,6 +118,7 @@
               id="behavioralGoal"
               [(ngModel)]="goals.behavioralGoal"
               placeholder="How do you want to improve your classroom behavior?"
+              [disabled]="isGoalsSubmitted()"
             ></textarea>
           </div>
 
@@ -113,6 +128,7 @@
               id="personalGrowthGoal"
               [(ngModel)]="goals.personalGrowthGoal"
               placeholder="What skill do you want to develop? (e.g., time management)"
+              [disabled]="isGoalsSubmitted()"
             ></textarea>
           </div>
 
@@ -122,6 +138,7 @@
               id="achievementSteps"
               [(ngModel)]="goals.achievementSteps"
               placeholder="What steps will you take to reach your goals?"
+              [disabled]="isGoalsSubmitted()"
             ></textarea>
           </div>
 
@@ -132,10 +149,11 @@
               type="date"
               [ngModel]="goals.targetDate | date : 'yyyy-MM-dd'"
               (ngModelChange)="onTargetDateChange($event)"
+              [disabled]="isGoalsSubmitted()"
             />
           </div>
 
-          <button class="save-button" (click)="saveGoals()" [disabled]="isSaving()">
+          <button class="save-button" (click)="saveGoals()" [disabled]="isSaving() || isGoalsSubmitted()">
             💾 Save My Goals
           </button>
           <span class="page-number">Page 2</span>
@@ -150,9 +168,13 @@
             <p>How do you learn best?</p>
           </div>
 
+          @if (isLearningStyleSubmitted()) {
+          <div class="teacher-note" role="status">✅ Learning style already submitted. Editing is locked.</div>
+          }
+
           <div class="form-field">
             <label for="learnsBestBy">I Learn Best By</label>
-            <select id="learnsBestBy" [(ngModel)]="learningStyle.learnsBestBy">
+            <select id="learnsBestBy" [(ngModel)]="learningStyle.learnsBestBy" [disabled]="isLearningStyleSubmitted()">
               <option value="">Select your learning style</option>
               <option value="visual">📺 Watching videos and demonstrations</option>
               <option value="reading">📚 Reading and taking notes</option>
@@ -164,7 +186,7 @@
 
           <div class="form-field">
             <label for="bestTimeToStudy">Best Time to Study</label>
-            <select id="bestTimeToStudy" [(ngModel)]="learningStyle.bestTimeToStudy">
+            <select id="bestTimeToStudy" [(ngModel)]="learningStyle.bestTimeToStudy" [disabled]="isLearningStyleSubmitted()">
               <option value="morning">🌅 Morning (8am-12pm)</option>
               <option value="afternoon">☀️ Afternoon (12pm-5pm)</option>
               <option value="evening">🌙 Evening (5pm-9pm)</option>
@@ -177,6 +199,7 @@
               id="focusConditions"
               [(ngModel)]="learningStyle.focusConditions"
               placeholder="Describe your ideal learning environment (quiet, music, with others, etc.)"
+              [disabled]="isLearningStyleSubmitted()"
             ></textarea>
           </div>
 
@@ -186,6 +209,7 @@
               id="helpfulTools"
               [(ngModel)]="learningStyle.helpfulTools"
               placeholder="What tools or apps help you study? (OneNote, videos, flashcards, etc.)"
+              [disabled]="isLearningStyleSubmitted()"
             ></textarea>
           </div>
 
@@ -195,10 +219,11 @@
               id="distractions"
               [(ngModel)]="learningStyle.distractions"
               placeholder="What makes it hard for you to focus?"
+              [disabled]="isLearningStyleSubmitted()"
             ></textarea>
           </div>
 
-          <button class="save-button" (click)="saveLearningStyle()" [disabled]="isSaving()">
+          <button class="save-button" (click)="saveLearningStyle()" [disabled]="isSaving() || isLearningStyleSubmitted()">
             💾 Save My Preferences
           </button>
           <span class="page-number">Page 3</span>
@@ -546,6 +571,7 @@
               id="projectTitle"
               type="text"
               [(ngModel)]="newProject.title"
+              (input)="updateProjectValidation()"
               placeholder="Name your project"
             />
           </div>
@@ -612,7 +638,7 @@
             }
           </div>
 
-          <button class="save-button" (click)="saveProject()" [disabled]="isSaving()">
+          <button class="save-button" (click)="saveProject()" [disabled]="isSaving() || !isProjectValid()">
             💾 Save Project
           </button>
           <span class="page-number">Page 9</span>
